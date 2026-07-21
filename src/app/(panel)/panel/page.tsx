@@ -95,10 +95,10 @@ export default async function DashboardPage() {
             <span className="font-mono text-[10px] text-[#d97644]">● EN VIVO</span>
           </div>
           <p className="font-display text-7xl sm:text-8xl font-light tracking-wider text-[#d97644] text-center my-4">
-            RV55
+            {barbershop.currentBoxCode}
           </p>
           <p className="font-mono text-[10px] text-[#5c554c] text-center">
-            Expira al registrar corte
+            Se renueva con cada check-in
           </p>
         </div>
 
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
               className="w-full h-full"
               style={{
                 backgroundImage: `url('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-                  `https://wa.me/${barbershop.whatsappNumber}?text=Hola,%20mi%20código%20de%20caja%20es%20RV55`
+                  `https://wa.me/${barbershop.whatsappNumber}?text=Hola,%20mi%20código%20de%20caja%20es%20${barbershop.currentBoxCode}`
                 )}')`,
                 backgroundSize: "cover",
               }}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface PendingVisit {
   id: string;
@@ -19,6 +20,7 @@ interface ApprovalQueueProps {
 export default function ApprovalQueue({ barbershopId }: ApprovalQueueProps) {
   const [pendingVisits, setPendingVisits] = useState<PendingVisit[]>([]);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (!barbershopId) return;
@@ -52,6 +54,7 @@ export default function ApprovalQueue({ barbershopId }: ApprovalQueueProps) {
       });
       if (response.ok) {
         setPendingVisits((prev) => prev.filter((v) => v.id !== visitId));
+        router.refresh(); // Refresca datos del Dashboard en vivo
       }
     } catch (error) {
       console.error("Error approving visit:", error);
@@ -70,6 +73,7 @@ export default function ApprovalQueue({ barbershopId }: ApprovalQueueProps) {
       });
       if (response.ok) {
         setPendingVisits((prev) => prev.filter((v) => v.id !== visitId));
+        router.refresh(); // Refresca datos del Dashboard en vivo
       }
     } catch (error) {
       console.error("Error rejecting visit:", error);

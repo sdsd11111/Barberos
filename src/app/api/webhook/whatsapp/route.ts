@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsAppMessage } from "@/lib/evolution";
+import { generateBoxCode } from "@/lib/boxcode";
 import webpush from "web-push";
 
 // Configurar credenciales VAPID globales para el envío de notificaciones push
@@ -83,12 +84,9 @@ async function processMessage(payload: WebhookPayload) {
   });
 
   // --- FLUJO DE CHECK-IN ---
-  const isCheckInMessage = 
-    messageText.toUpperCase() === "CHECKIN" || 
-    messageText.toUpperCase().includes("CÓDIGO DE CAJA") ||
-    messageText.toUpperCase().includes("CODIGO DE CAJA") ||
-    messageText.toUpperCase().includes("CÓDIGO") ||
-    messageText.toUpperCase().includes("CODIGO");
+  // Validar que el mensaje contenga EXACTAMENTE el código de caja activo de la barbería
+  const currentCode = barbershop.currentBoxCode?.toUpperCase() || "";
+  const isCheckInMessage = currentCode.length > 0 && messageText.toUpperCase().includes(currentCode);
 
   // Extraer nombre público del perfil de WhatsApp (pushName)
   const pushName = (payload.data as any)?.pushName || null;
@@ -146,14 +144,29 @@ async function processMessage(payload: WebhookPayload) {
       },
     });
 
-    // Enviar notificaciones push a los dispositivos del barbero en segundo plano
+    // Regenerar código de caja inmediatamente (cada código es de un solo uso)
+    const newCode = generateBoxCode();
+    await prisma.barbershop.update({
+      where: { id: barbershop.id },
+      data: { currentBoxCode: newCode },
+    });
+
+    // PRIORIDAD 1: Enviar respuesta por WhatsApp PRIMERO (latencia mínima para el cliente)
+    await sendWhatsAppMessage({
+      instance: barbershop.evolutionInstance,
+      apiKey: barbershop.evolutionApiKey,
+      to: whatsapp,
+      message: "¡Gracias! Avisándole a tu barbero para registrar tu corte. ✂️",
+    });
+
+    // PRIORIDAD 2: Enviar notificaciones push al barbero en segundo plano (no bloquea)
     prisma.pushSubscription
       .findMany({
         where: { barbershopId: barbershop.id },
       })
       .then((subs) => {
         const customerName = customer?.name || "Cliente Frecuente";
-        const payload = JSON.stringify({
+        const pushPayload = JSON.stringify({
           title: "✂️ ¡Nuevo Check-In!",
           body: `El cliente "${customerName}" (+${whatsapp}) ha solicitado registrar su corte.`,
           url: "/panel",
@@ -169,11 +182,10 @@ async function processMessage(payload: WebhookPayload) {
                   auth: sub.auth,
                 },
               },
-              payload
+              pushPayload
             )
             .catch((err) => {
               console.error("[WebPush] Fallo al notificar a endpoint:", sub.endpoint, err.message);
-              // Si la suscripción ya no es válida (410 Gone / 404), la limpiamos para mantener limpia la DB
               if (err.statusCode === 410 || err.statusCode === 404) {
                 prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
               }
@@ -182,12 +194,6 @@ async function processMessage(payload: WebhookPayload) {
       })
       .catch((e) => console.error("[WebPush] Error buscando suscripciones:", e));
 
-    await sendWhatsAppMessage({
-      instance: barbershop.evolutionInstance,
-      apiKey: barbershop.evolutionApiKey,
-      to: whatsapp,
-      message: "¡Gracias! Avisándole a tu barbero para registrar tu corte. ✂️",
-    });
     return;
   }
 

@@ -20,6 +20,7 @@ model Barbershop {
   whatsappConnected String?       // El número que realmente escaneó el código
   createdAt        DateTime       @default(now())
   loginPin         String         @default("") // PIN de acceso de 6 dígitos único
+  currentBoxCode   String         @default("RV55") // Código de caja dinámico activo para check-ins
   staff            BarberStaff[]
   customers        BarberCustomer[]
   pushSubscriptions PushSubscription[]
