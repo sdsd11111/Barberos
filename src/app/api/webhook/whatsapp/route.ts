@@ -1,0 +1,292 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { sendWhatsAppMessage } from "@/lib/evolution";
+import webpush from "web-push";
+
+// Configurar credenciales VAPID globales para el envío de notificaciones push
+if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    "mailto:soporte@barberosoftware.com",
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
+
+interface WebhookPayload {
+  event: string;
+  instance?: string;
+  data: {
+    key: {
+      remoteJid: string;
+      fromMe: boolean;
+    };
+    message: {
+      conversation?: string;
+      extendedTextMessage?: {
+        text?: string;
+      };
+      imageMessage?: {
+        caption?: string;
+      };
+    };
+  };
+}
+
+async function processMessage(payload: WebhookPayload) {
+  // Validar evento y mensaje
+  if (payload.event !== "messages.upsert") {
+    return;
+  }
+
+  const message = payload.data?.message;
+  if (!message) {
+    return;
+  }
+
+  const messageText = (
+    message.conversation ||
+    message.extendedTextMessage?.text ||
+    message.imageMessage?.caption ||
+    ""
+  ).trim();
+
+  if (!messageText) {
+    return;
+  }
+
+  // Extraer número de teléfono
+  const remoteJid = payload.data.key.remoteJid;
+  const whatsapp = remoteJid.replace("@s.whatsapp.net", "");
+
+  // Buscar barbería usando la instancia del webhook, con fallback
+  const evolutionInstance = payload.instance;
+  const barbershop = evolutionInstance
+    ? await prisma.barbershop.findFirst({ where: { evolutionInstance } })
+    : await prisma.barbershop.findFirst();
+
+  if (!barbershop) {
+    console.error("[Webhook WhatsApp] No se encontró ninguna barbería para la instancia:", evolutionInstance);
+    return;
+  }
+
+  // Buscar o crear cliente para esta barbería específica (multi-tenant)
+  let customer = await prisma.barberCustomer.findUnique({
+    where: {
+      barbershopId_whatsapp: {
+        barbershopId: barbershop.id,
+        whatsapp,
+      },
+    },
+    include: {
+      barbershop: true,
+    },
+  });
+
+  // --- FLUJO DE CHECK-IN ---
+  const isCheckInMessage = 
+    messageText.toUpperCase() === "CHECKIN" || 
+    messageText.toUpperCase().includes("CÓDIGO DE CAJA") ||
+    messageText.toUpperCase().includes("CODIGO DE CAJA") ||
+    messageText.toUpperCase().includes("CÓDIGO") ||
+    messageText.toUpperCase().includes("CODIGO");
+
+  if (isCheckInMessage) {
+    if (!customer) {
+      customer = await prisma.barberCustomer.create({
+        data: {
+          barbershopId: barbershop.id,
+          whatsapp,
+          cutsCount: 0,
+          sessionState: "IDLE",
+        },
+        include: {
+          barbershop: true,
+        },
+      });
+    }
+
+    // Regla de Negocio 1: Límite de 24 horas por cliente
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentVisit = await prisma.barberVisit.findFirst({
+      where: {
+        customerId: customer.id,
+        createdAt: {
+          gte: twentyFourHoursAgo,
+        },
+      },
+    });
+
+    if (recentVisit) {
+      await sendWhatsAppMessage({
+        instance: barbershop.evolutionInstance,
+        apiKey: barbershop.evolutionApiKey,
+        to: whatsapp,
+        message: "¡Hola! Hoy ya tienes un corte registrado o en espera de aprobación. ¡Nos vemos la próxima vez! 👋",
+      });
+      return;
+    }
+
+    // Crear la visita PENDING
+    await prisma.barberVisit.create({
+      data: {
+        customerId: customer.id,
+        status: "PENDING",
+        rating: null,
+      },
+    });
+
+    // Enviar notificaciones push a los dispositivos del barbero en segundo plano
+    prisma.pushSubscription
+      .findMany({
+        where: { barbershopId: barbershop.id },
+      })
+      .then((subs) => {
+        const customerName = customer?.name || "Cliente Frecuente";
+        const payload = JSON.stringify({
+          title: "✂️ ¡Nuevo Check-In!",
+          body: `El cliente "${customerName}" (+${whatsapp}) ha solicitado registrar su corte.`,
+          url: "/panel",
+        });
+
+        subs.forEach((sub) => {
+          webpush
+            .sendNotification(
+              {
+                endpoint: sub.endpoint,
+                keys: {
+                  p256dh: sub.p256dh,
+                  auth: sub.auth,
+                },
+              },
+              payload
+            )
+            .catch((err) => {
+              console.error("[WebPush] Fallo al notificar a endpoint:", sub.endpoint, err.message);
+              // Si la suscripción ya no es válida (410 Gone / 404), la limpiamos para mantener limpia la DB
+              if (err.statusCode === 410 || err.statusCode === 404) {
+                prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+              }
+            });
+        });
+      })
+      .catch((e) => console.error("[WebPush] Error buscando suscripciones:", e));
+
+    await sendWhatsAppMessage({
+      instance: barbershop.evolutionInstance,
+      apiKey: barbershop.evolutionApiKey,
+      to: whatsapp,
+      message: "¡Gracias! Avisándole a tu barbero para registrar tu corte. ✂️",
+    });
+    return;
+  }
+
+  // Si no es CHECKIN, validamos que el cliente exista en el sistema
+  if (!customer) {
+    return;
+  }
+
+  // Máquina de estados para calificaciones
+  if (customer.sessionState === "AWAITING_RATING") {
+    // Extraer rating (primer dígito numérico)
+    const ratingMatch = messageText.match(/\d/);
+    if (!ratingMatch) {
+      await sendWhatsAppMessage({
+        instance: barbershop.evolutionInstance,
+        apiKey: barbershop.evolutionApiKey,
+        to: whatsapp,
+        message: "Por favor, envía un número del 1 al 5 para calificar tu experiencia.",
+      });
+      return;
+    }
+
+    const rating = parseInt(ratingMatch[0], 10);
+    if (rating < 1 || rating > 5) {
+      await sendWhatsAppMessage({
+        instance: barbershop.evolutionInstance,
+        apiKey: barbershop.evolutionApiKey,
+        to: whatsapp,
+        message: "La calificación debe ser del 1 al 5. Intenta de nuevo.",
+      });
+      return;
+    }
+
+    // Buscar última visita aprobada sin rating
+    const lastVisit = await prisma.barberVisit.findFirst({
+      where: {
+        customerId: customer.id,
+        status: "APPROVED",
+        rating: null,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (lastVisit) {
+      await prisma.barberVisit.update({
+        where: { id: lastVisit.id },
+        data: { rating },
+      });
+    }
+
+    // Actualizar estado del cliente
+    await prisma.barberCustomer.update({
+      where: { id: customer.id },
+      data: { sessionState: "IDLE" },
+    });
+
+    await sendWhatsAppMessage({
+      instance: barbershop.evolutionInstance,
+      apiKey: barbershop.evolutionApiKey,
+      to: whatsapp,
+      message: "¡Gracias por tu calificación! Nos vemos en el próximo corte.",
+    });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  // Responder inmediatamente para evitar timeout de Evolution API
+  const responseStream = new NextResponse(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+
+  try {
+    const payload: any = await request.json();
+
+    // Manejar evento de actualización de conexión (WhatsApp QR escaneado o desconectado)
+    if (payload.event === "connection.update") {
+      const evolutionInstance = payload.instance;
+      const connectionState = payload.data?.state; // open, connecting, close
+      const whatsappConnectedNumber = payload.data?.statusReason || payload.data?.phone || null;
+
+      if (evolutionInstance) {
+        let connectionStatus = "DISCONNECTED";
+        if (connectionState === "open" || connectionState === "connected") {
+          connectionStatus = "CONNECTED";
+        } else if (connectionState === "connecting" || connectionState === "qrcode") {
+          connectionStatus = "WAITING_QR";
+        }
+
+        // Buscar barbería por instancia y actualizar
+        const barbershop = await prisma.barbershop.findFirst({ where: { evolutionInstance } });
+        if (barbershop) {
+          await prisma.barbershop.update({
+            where: { id: barbershop.id },
+            data: {
+              connectionStatus,
+              whatsappConnected: whatsappConnectedNumber ? String(whatsappConnectedNumber).replace(/\D/g, "") : barbershop.whatsappConnected,
+            },
+          });
+          console.log(`[Webhook WhatsApp] Sincronizado estado de conexión para instancia ${evolutionInstance}: ${connectionStatus}`);
+        }
+      }
+      return responseStream;
+    }
+
+    // Flujo normal de mensajes
+    await processMessage(payload);
+  } catch (error) {
+    console.error("[Webhook WhatsApp] Error processing webhook:", error);
+  }
+
+  return responseStream;
+}

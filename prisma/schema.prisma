@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Barbershop {
+  id               String         @id @default(cuid())
+  name             String
+  whatsappNumber   String         @unique
+  evolutionInstance String
+  evolutionApiKey  String         @default("") // Se puede usar la global
+  requiredCuts     Int            @default(5)
+  googleMapsUrl    String?
+  planStatus       String         @default("TRIAL")
+  trialEndsAt      DateTime?
+  connectionStatus String         @default("DISCONNECTED") // DISCONNECTED, CONNECTED, WAITING_QR
+  whatsappConnected String?       // El número que realmente escaneó el código
+  createdAt        DateTime       @default(now())
+  loginPin         String         @default("") // PIN de acceso de 6 dígitos único
+  staff            BarberStaff[]
+  customers        BarberCustomer[]
+  pushSubscriptions PushSubscription[]
+}
+
+model MagicToken {
+  id           String   @id @default(cuid())
+  barbershopId String
+  token        String   @unique
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime @default(now())
+}
+
+model BarberStaff {
+  id           String    @id @default(cuid())
+  barbershopId String
+  name         String
+  role         String    @default("BARBER")
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+}
+
+model BarberCustomer {
+  id                     String    @id @default(cuid())
+  barbershopId           String
+  whatsapp               String
+  name                   String?
+  cutsCount              Int       @default(0)
+  sessionState           String    @default("IDLE")
+  lastVisitAt            DateTime?
+  lastReactivationSentAt DateTime? // Campo para controlar el cron de reactivación
+  barbershop             Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  @@unique([barbershopId, whatsapp])
+}
+
+model BarberVisit {
+  id         String   @id @default(cuid())
+  customerId String
+  staffId    String?
+  rating     Int?
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+}
+
+model PushSubscription {
+  id           String     @id @default(cuid())
+  barbershopId String
+  endpoint     String     @unique @db.VarChar(500)
+  p256dh       String     @db.VarChar(500)
+  auth         String     @db.VarChar(500)
+  createdAt    DateTime   @default(now())
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+}
+

@@ -1,0 +1,21 @@
+{
+  "short_name": "BarberOS",
+  "name": "BarberOS Panel de Barbería",
+  "icons": [
+    {
+      "src": "/logos/barberos_isotipo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/logos/barberos_isotipo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": "/login",
+  "background_color": "#0a0807",
+  "theme_color": "#d97644",
+  "display": "standalone",
+  "orientation": "portrait"
+}

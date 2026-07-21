@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0807;
+  --foreground: #f3ece1;
+  --accent: #d97644;
+  --muted: #5c554c;
+  --border: #2a2520;
+  --card: #131110;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --font-display: var(--font-fraunces), serif;
+  --font-sans: var(--font-grotesk), sans-serif;
+  --font-mono: var(--font-mono), monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Custom cursor — solo en la Landing Page (marcada con .landing-mode) y con hover */
+@media (hover: hover) and (pointer: fine) {
+  html.landing-mode, html.landing-mode body {
+    cursor: none;
+  }
+  html.landing-mode a, 
+  html.landing-mode button, 
+  html.landing-mode [role="button"], 
+  html.landing-mode input, 
+  html.landing-mode textarea, 
+  html.landing-mode select {
+    cursor: none;
+  }
+}
+
+/* Ocultar scrollbar del storytelling horizontal */
+.storytelling-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Animación Marquee Infinito */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+/* Animación Parpadeo REC */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.animate-blink {
+  animation: blink 1.5s ease-in-out infinite;
+}
