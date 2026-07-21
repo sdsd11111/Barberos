@@ -1,13 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [pin, setPin] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error" | "checking">("checking");
   const [message, setMessage] = useState("");
   const router = useRouter();
+
+  // Verificar si ya hay sesión activa al cargar la página
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/barbershop/status");
+        if (res.ok) {
+          // Ya tiene sesión activa, redirigir al panel
+          router.replace("/panel");
+          return;
+        }
+      } catch {
+        // No hay sesión, mostrar formulario de login
+      }
+      setStatus("idle");
+    };
+    checkSession();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +63,20 @@ export default function LoginPage() {
       setMessage("Error de conexión con el servidor.");
     }
   };
+
+  // Mostrar pantalla de carga mientras se verifica la sesión
+  if (status === "checking") {
+    return (
+      <main className="min-h-screen bg-[#0a0807] text-[#f3ece1] flex items-center justify-center p-6">
+        <div className="text-center space-y-4">
+          <span className="inline-block w-8 h-8 border-2 border-[#d97644] border-t-transparent rounded-full animate-spin" />
+          <p className="font-mono text-xs tracking-[0.2em] uppercase text-[#5c554c]">
+            Verificando sesión...
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#0a0807] text-[#f3ece1] flex items-center justify-center p-6">
