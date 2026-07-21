@@ -20,13 +20,6 @@ export default function WhatsAppConnectionPage() {
         if (data.barbershopId) {
           setBarbershopId(data.barbershopId);
         }
-        
-        // Si el estado está esperando por un QR, procedemos a solicitar el QR
-        if (data.status === "WAITING_QR" || data.status === "DISCONNECTED") {
-          fetchQR();
-        } else {
-          setQrcode(null);
-        }
       } else {
         setStatus("ERROR");
       }
@@ -51,7 +44,8 @@ export default function WhatsAppConnectionPage() {
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 8000); // Polling del estado cada 8 segundos
+    fetchQR(); // Cargar el QR una única vez al entrar
+    const interval = setInterval(fetchStatus, 8000); // Polling únicamente de estado cada 8 segundos (sin refrescar el QR)
     return () => clearInterval(interval);
   }, []);
 
@@ -147,13 +141,23 @@ export default function WhatsAppConnectionPage() {
 
             <div className="text-center space-y-2">
               <p className="font-mono text-[10px] text-[#5c554c] uppercase tracking-wider">
-                El código QR se actualiza automáticamente.
+                Si el código expira, usa el botón de abajo para recargar uno nuevo.
               </p>
             </div>
           </div>
         )}
 
-        <div className="flex justify-end pt-4 border-t border-[#2a2520]">
+        <div className="flex justify-between items-center pt-4 border-t border-[#2a2520]">
+          {status !== "CONNECTED" ? (
+            <button
+              onClick={fetchQR}
+              className="px-4 py-2 font-mono text-[10px] tracking-[0.2em] uppercase text-[#d97644] border border-[#d97644]/40 hover:border-[#d97644] transition-all"
+            >
+              🔄 Recargar Código QR
+            </button>
+          ) : (
+            <div />
+          )}
           <button
             onClick={handleManualCheck}
             disabled={checking}
