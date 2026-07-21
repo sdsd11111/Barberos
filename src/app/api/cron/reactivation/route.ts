@@ -60,9 +60,57 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 4. PROCESAR TAREAS DEMORADAS (DelayedTask) p.ej. enviar reseña de Google a las 2 horas
+    const now = new Date();
+    const pendingTasks = await prisma.delayedTask.findMany({
+      where: {
+        processed: false,
+        scheduledFor: { lt: now },
+      },
+    });
+
+    let processedTasksCount = 0;
+
+    for (const task of pendingTasks) {
+      try {
+        const customer = await prisma.barberCustomer.findUnique({
+          where: { id: task.customerId },
+          include: { barbershop: true },
+        });
+
+        if (customer) {
+          const { barbershop } = customer;
+          // Generar la url acortada dinámica redirigiendo al Google Review de la barbería
+          // El host vendrá del header host o por configuración de entorno
+          const host = request.headers.get("host") || "barberos-teal.vercel.app";
+          const proto = host.includes("localhost") ? "http" : "https";
+          const shortUrl = `${proto}://${host}/r/${barbershop.id}`;
+
+          const reviewMessage = `👋 ¡Hola, ${customer.name || "bro"}! Gracias por visitarnos hoy en ${barbershop.name}. ✂️\n\nTu opinión es súper valiosa para nosotros. ¿Nos ayudarías dejando una reseña en Google? Solo te tomará 1 minuto y nos ayuda a seguir mejorando:\n\n👉 ${shortUrl}`;
+
+          await sendWhatsAppMessage({
+            instance: barbershop.evolutionInstance,
+            apiKey: barbershop.evolutionApiKey,
+            to: customer.whatsapp,
+            message: reviewMessage,
+          });
+        }
+
+        // Marcar la tarea como procesada
+        await prisma.delayedTask.update({
+          where: { id: task.id },
+          data: { processed: true },
+        });
+
+        processedTasksCount++;
+      } catch (taskErr) {
+        console.error(`[Cron DelayedTask] Error procesando tarea ${task.id}:`, taskErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Cron completado exitosamente. Reactivaciones enviadas: ${sentCount}`,
+      message: `Cron completado exitosamente. Reactivaciones enviadas: ${sentCount}. Reseñas enviadas: ${processedTasksCount}`,
     });
   } catch (error) {
     console.error("[Cron Reactivación] Error general:", error);

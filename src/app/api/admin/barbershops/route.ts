@@ -108,12 +108,16 @@ export async function POST(request: NextRequest) {
   }
 }
 
-const UpdateStatusSchema = z.object({
+const UpdateBarbershopSchema = z.object({
   barbershopId: z.string().min(1),
-  planStatus: z.enum(["TRIAL", "ACTIVE", "SUSPENDED"]),
+  planStatus: z.enum(["TRIAL", "ACTIVE", "SUSPENDED"]).optional(),
+  name: z.string().min(1).optional(),
+  whatsappNumber: z.string().min(1).optional(),
+  requiredCuts: z.number().optional(),
+  googleMapsUrl: z.string().nullable().optional(),
 });
 
-// PATCH /api/admin/barbershops - Cambiar planStatus manualmente
+// PATCH /api/admin/barbershops - Cambiar planStatus manualmente o editar datos de la barbería
 export async function PATCH(request: NextRequest) {
   if (!validateAdmin(request)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -121,17 +125,28 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const parsed = UpdateStatusSchema.safeParse(body);
+    const parsed = UpdateBarbershopSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+      return NextResponse.json({ error: "Datos inválidos", details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { barbershopId, planStatus } = parsed.data;
+    const { barbershopId, planStatus, name, whatsappNumber, requiredCuts, googleMapsUrl } = parsed.data;
+
+    // Construir data de actualización de forma dinámica
+    const updateData: any = {};
+    if (planStatus !== undefined) updateData.planStatus = planStatus;
+    if (name !== undefined) updateData.name = name;
+    if (requiredCuts !== undefined) updateData.requiredCuts = requiredCuts;
+    if (googleMapsUrl !== undefined) updateData.googleMapsUrl = googleMapsUrl;
+    
+    if (whatsappNumber !== undefined) {
+      updateData.whatsappNumber = normalizeWhatsapp(whatsappNumber);
+    }
 
     const updated = await prisma.barbershop.update({
       where: { id: barbershopId },
-      data: { planStatus },
+      data: updateData,
     });
 
     return NextResponse.json(updated);

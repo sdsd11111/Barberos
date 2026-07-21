@@ -11,6 +11,8 @@ interface Barbershop {
   trialEndsAt: string | null;
   createdAt: string;
   loginPin: string;
+  googleMapsUrl: string | null;
+  requiredCuts: number;
 }
 
 export default function AdminDashboard() {
@@ -24,6 +26,13 @@ export default function AdminDashboard() {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [requiredCuts, setRequiredCuts] = useState(5);
   const [googleMapsUrl, setGoogleMapsUrl] = useState("");
+
+  // Estado para la barbería en edición
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editWhatsappNumber, setEditWhatsappNumber] = useState("");
+  const [editRequiredCuts, setEditRequiredCuts] = useState(5);
+  const [editGoogleMapsUrl, setEditGoogleMapsUrl] = useState("");
 
   // Éxito de creación reciente
   const [createdPin, setCreatedPin] = useState("");
@@ -131,6 +140,48 @@ export default function AdminDashboard() {
       } else {
         const errData = await response.json();
         alert(errData.error || "Error al eliminar barbería.");
+      }
+    } catch {
+      alert("Error de conexión.");
+    }
+  };
+
+  const handleStartEdit = (shop: Barbershop) => {
+    setEditingId(shop.id);
+    setEditName(shop.name);
+    setEditWhatsappNumber(shop.whatsappNumber);
+    setEditRequiredCuts(shop.requiredCuts);
+    setEditGoogleMapsUrl(shop.googleMapsUrl || "");
+  };
+
+  const handleSaveEdit = async (barbershopId: string) => {
+    if (!editName.trim() || !editWhatsappNumber.trim()) {
+      alert("Nombre y WhatsApp son requeridos.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/barbershops", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminSecret}`,
+        },
+        body: JSON.stringify({
+          barbershopId,
+          name: editName,
+          whatsappNumber: editWhatsappNumber,
+          requiredCuts: Number(editRequiredCuts),
+          googleMapsUrl: editGoogleMapsUrl.trim() || null,
+        }),
+      });
+
+      if (response.ok) {
+        setEditingId(null);
+        fetchBarbershops(adminSecret);
+      } else {
+        const errData = await response.json();
+        alert(errData.error || "Error al actualizar barbería.");
       }
     } catch {
       alert("Error de conexión.");
@@ -295,49 +346,131 @@ export default function AdminDashboard() {
                   <tbody>
                     {barbershops.map((shop) => (
                       <tr key={shop.id} className="border-b border-[#1c1917] hover:bg-[#0a0807]">
-                        <td className="py-4 font-display text-base text-[#f3ece1] font-light">
-                          {shop.name}
-                        </td>
-                        <td className="py-4">+{shop.whatsappNumber}</td>
-                        <td className="py-4 font-mono font-bold text-amber-500">{shop.loginPin || "---"}</td>
-                        <td className="py-4">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] ${
-                              shop.planStatus === "ACTIVE"
-                                ? "bg-green-950/40 text-green-400 border border-green-800"
-                                : shop.planStatus === "TRIAL"
-                                ? "bg-blue-950/40 text-blue-400 border border-blue-800"
-                                : "bg-red-950/40 text-red-400 border border-red-800"
-                            }`}
-                          >
-                            {shop.planStatus}
-                          </span>
-                        </td>
-                        <td className="py-4">
-                          {shop.trialEndsAt
-                            ? new Date(shop.trialEndsAt).toLocaleDateString("es-EC", { timeZone: "America/Guayaquil" })
-                            : "N/A"}
-                        </td>
-                        <td className="py-4 text-right space-x-2">
-                          <button
-                            onClick={() => handleChangeStatus(shop.id, "ACTIVE")}
-                            className="px-2 py-1 bg-green-900/20 text-green-500 hover:bg-green-900/40 border border-green-900/60 rounded"
-                          >
-                            Activar
-                          </button>
-                          <button
-                            onClick={() => handleChangeStatus(shop.id, "SUSPENDED")}
-                            className="px-2 py-1 bg-red-900/20 text-red-500 hover:bg-red-900/40 border border-red-900/60 rounded"
-                          >
-                            Pausar
-                          </button>
-                          <button
-                            onClick={() => handleDelete(shop.id, shop.name)}
-                            className="px-2 py-1 bg-red-950/40 text-red-400 hover:bg-red-800/60 border border-red-700 rounded"
-                          >
-                            Eliminar
-                          </button>
-                        </td>
+                        {editingId === shop.id ? (
+                          <>
+                            {/* Formulario Inline de Edición */}
+                            <td className="py-4" colSpan={5}>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[#0a0807] border border-[#2a2520]">
+                                <div>
+                                  <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">Nombre</label>
+                                  <input
+                                    type="text"
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    className="w-full px-2 py-1 font-mono text-xs bg-[#131110] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">WhatsApp</label>
+                                  <input
+                                    type="text"
+                                    value={editWhatsappNumber}
+                                    onChange={(e) => setEditWhatsappNumber(e.target.value)}
+                                    className="w-full px-2 py-1 font-mono text-xs bg-[#131110] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">Cortes Meta</label>
+                                  <input
+                                    type="number"
+                                    value={editRequiredCuts}
+                                    onChange={(e) => setEditRequiredCuts(Number(e.target.value))}
+                                    className="w-full px-2 py-1 font-mono text-xs bg-[#131110] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">Google Maps URL</label>
+                                  <input
+                                    type="text"
+                                    value={editGoogleMapsUrl}
+                                    onChange={(e) => setEditGoogleMapsUrl(e.target.value)}
+                                    placeholder="Enlace largo de reseñas"
+                                    className="w-full px-2 py-1 font-mono text-xs bg-[#131110] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 text-right space-y-2">
+                              <button
+                                onClick={() => handleSaveEdit(shop.id)}
+                                className="w-full px-2 py-1 bg-green-900/30 text-green-400 hover:bg-green-800 border border-green-700 rounded block text-center font-bold"
+                              >
+                                Guardar
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="w-full px-2 py-1 bg-red-950/40 text-red-400 hover:bg-red-800/60 border border-red-700 rounded block text-center"
+                              >
+                                Cancelar
+                              </button>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            {/* Fila de Lectura Normal */}
+                            <td className="py-4 font-display text-base text-[#f3ece1] font-light">
+                              <div>{shop.name}</div>
+                              {shop.googleMapsUrl ? (
+                                <a
+                                  href={shop.googleMapsUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[9px] text-[#d97644] hover:underline block mt-0.5"
+                                >
+                                  Ver Mapa Reseña ↗
+                                </a>
+                              ) : (
+                                <span className="text-[9px] text-[#5c554c] block mt-0.5">Sin Link Reseñas</span>
+                              )}
+                            </td>
+                            <td className="py-4">+{shop.whatsappNumber}</td>
+                            <td className="py-4 font-mono font-bold text-amber-500">{shop.loginPin || "---"}</td>
+                            <td className="py-4">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] ${
+                                  shop.planStatus === "ACTIVE"
+                                    ? "bg-green-950/40 text-green-400 border border-green-800"
+                                    : shop.planStatus === "TRIAL"
+                                    ? "bg-blue-950/40 text-blue-400 border border-blue-800"
+                                    : "bg-red-950/40 text-red-400 border border-red-800"
+                                }`}
+                              >
+                                {shop.planStatus}
+                              </span>
+                            </td>
+                            <td className="py-4">
+                              {shop.trialEndsAt
+                                ? new Date(shop.trialEndsAt).toLocaleDateString("es-EC", { timeZone: "America/Guayaquil" })
+                                : "N/A"}
+                            </td>
+                            <td className="py-4 text-right space-x-1 space-y-1">
+                              <button
+                                onClick={() => handleStartEdit(shop)}
+                                className="px-2 py-1 bg-[#2a2520] text-[#a89e90] hover:text-[#f3ece1] border border-[#2a2520] rounded"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                onClick={() => handleChangeStatus(shop.id, "ACTIVE")}
+                                className="px-2 py-1 bg-green-900/20 text-green-500 hover:bg-green-900/40 border border-green-900/60 rounded"
+                              >
+                                Activar
+                              </button>
+                              <button
+                                onClick={() => handleChangeStatus(shop.id, "SUSPENDED")}
+                                className="px-2 py-1 bg-red-900/20 text-red-500 hover:bg-red-900/40 border border-red-900/60 rounded"
+                              >
+                                Pausar
+                              </button>
+                              <button
+                                onClick={() => handleDelete(shop.id, shop.name)}
+                                className="px-2 py-1 bg-red-950/40 text-red-400 hover:bg-red-800/60 border border-red-700 rounded"
+                              >
+                                Eliminar
+                              </button>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>

@@ -268,6 +268,16 @@ export default async function DashboardPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Ver Más */}
+            <div className="mt-4 flex justify-end">
+              <a
+                href="/panel/clientes?tab=todos"
+                className="font-mono text-[10px] tracking-widest text-[#d97644] hover:text-[#f3ece1] uppercase transition-colors"
+              >
+                Ver listado completo de clientes ↗
+              </a>
+            </div>
           </>
         )}
       </div>

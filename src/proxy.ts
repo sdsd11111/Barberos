@@ -19,7 +19,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/static") ||
     pathname.includes("favicon") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/api/admin")
+    pathname.startsWith("/api/admin") ||
+    pathname.startsWith("/r/")
   ) {
     return NextResponse.next();
   }

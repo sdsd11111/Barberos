@@ -35,9 +35,9 @@ export default function ApprovalQueue({ barbershopId }: ApprovalQueueProps) {
       }
     };
 
-    // Polling cada 2 segundos
+    // Polling cada 1 segundo para respuestas instantáneas en live
     fetchPending();
-    const interval = setInterval(fetchPending, 2000);
+    const interval = setInterval(fetchPending, 1000);
 
     return () => clearInterval(interval);
   }, [barbershopId]);

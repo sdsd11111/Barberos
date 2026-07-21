@@ -51,6 +51,7 @@ model BarberCustomer {
   sessionState           String    @default("IDLE")
   lastVisitAt            DateTime?
   lastReactivationSentAt DateTime? // Campo para controlar el cron de reactivación
+  firstReviewSent        Boolean   @default(false) // Indica si ya se le envió la solicitud de review de Google
   barbershop             Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
 
   @@unique([barbershopId, whatsapp])
@@ -73,5 +74,14 @@ model PushSubscription {
   auth         String     @db.VarChar(500)
   createdAt    DateTime   @default(now())
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+}
+
+model DelayedTask {
+  id           String   @id @default(cuid())
+  type         String   // p.ej., "SEND_GOOGLE_REVIEW"
+  customerId   String
+  scheduledFor DateTime // Hora programada para ejecutarse (ej. createdAt + 2 horas)
+  processed    Boolean  @default(false)
+  createdAt    DateTime @default(now())
 }
 

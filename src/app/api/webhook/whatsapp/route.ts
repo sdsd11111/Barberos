@@ -90,18 +90,29 @@ async function processMessage(payload: WebhookPayload) {
     messageText.toUpperCase().includes("CÓDIGO") ||
     messageText.toUpperCase().includes("CODIGO");
 
+  // Extraer nombre público del perfil de WhatsApp (pushName)
+  const pushName = (payload.data as any)?.pushName || null;
+
   if (isCheckInMessage) {
     if (!customer) {
       customer = await prisma.barberCustomer.create({
         data: {
           barbershopId: barbershop.id,
           whatsapp,
+          name: pushName, // Guardar el nombre de perfil público
           cutsCount: 0,
           sessionState: "IDLE",
         },
         include: {
           barbershop: true,
         },
+      });
+    } else if (!customer.name && pushName) {
+      // Si el cliente ya existía pero no tenía nombre asignado, lo actualizamos
+      customer = await prisma.barberCustomer.update({
+        where: { id: customer.id },
+        data: { name: pushName },
+        include: { barbershop: true },
       });
     }
 
@@ -233,6 +244,24 @@ async function processMessage(payload: WebhookPayload) {
       data: { sessionState: "IDLE" },
     });
 
+    // Programar la solicitud de reseña de Google si es la primera vez que el cliente califica
+    if (!customer.firstReviewSent) {
+      const twoHoursFromNow = new Date(Date.now() + 2 * 60 * 60 * 1000);
+      await prisma.delayedTask.create({
+        data: {
+          type: "SEND_GOOGLE_REVIEW",
+          customerId: customer.id,
+          scheduledFor: twoHoursFromNow,
+        },
+      });
+
+      // Marcar de una vez que ya tiene la tarea agendada para evitar duplicaciones
+      await prisma.barberCustomer.update({
+        where: { id: customer.id },
+        data: { firstReviewSent: true },
+      });
+    }
+
     await sendWhatsAppMessage({
       instance: barbershop.evolutionInstance,
       apiKey: barbershop.evolutionApiKey,
@@ -243,19 +272,14 @@ async function processMessage(payload: WebhookPayload) {
 }
 
 export async function POST(request: NextRequest) {
-  // Responder inmediatamente para evitar timeout de Evolution API
-  const responseStream = new NextResponse(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
-
   try {
     const payload: any = await request.json();
 
-    // Manejar evento de actualización de conexión (WhatsApp QR escaneado o desconectado)
+    // Ejecutar procesamiento asíncronamente en segundo plano sin bloquear el hilo de respuesta
+    // Esto asegura respuesta ultra rápida (<50ms) a Evolution API previniendo timeouts y reintentos.
     if (payload.event === "connection.update") {
       const evolutionInstance = payload.instance;
-      const connectionState = payload.data?.state; // open, connecting, close
+      const connectionState = payload.data?.state;
       const whatsappConnectedNumber = payload.data?.statusReason || payload.data?.phone || null;
 
       if (evolutionInstance) {
@@ -266,27 +290,32 @@ export async function POST(request: NextRequest) {
           connectionStatus = "WAITING_QR";
         }
 
-        // Buscar barbería por instancia y actualizar
-        const barbershop = await prisma.barbershop.findFirst({ where: { evolutionInstance } });
-        if (barbershop) {
-          await prisma.barbershop.update({
-            where: { id: barbershop.id },
-            data: {
-              connectionStatus,
-              whatsappConnected: whatsappConnectedNumber ? String(whatsappConnectedNumber).replace(/\D/g, "") : barbershop.whatsappConnected,
-            },
-          });
-          console.log(`[Webhook WhatsApp] Sincronizado estado de conexión para instancia ${evolutionInstance}: ${connectionStatus}`);
-        }
+        prisma.barbershop.findFirst({ where: { evolutionInstance } }).then(async (barbershop) => {
+          if (barbershop) {
+            await prisma.barbershop.update({
+              where: { id: barbershop.id },
+              data: {
+                connectionStatus,
+                whatsappConnected: whatsappConnectedNumber ? String(whatsappConnectedNumber).replace(/\D/g, "") : barbershop.whatsappConnected,
+              },
+            });
+          }
+        }).catch(err => console.error("Error connection.update async:", err));
       }
-      return responseStream;
+    } else {
+      // Mensajes regulares
+      processMessage(payload).catch((err) => {
+        console.error("[Webhook WhatsApp] Error en procesamiento asíncrono:", err);
+      });
     }
 
-    // Flujo normal de mensajes
-    await processMessage(payload);
   } catch (error) {
-    console.error("[Webhook WhatsApp] Error processing webhook:", error);
+    console.error("[Webhook WhatsApp] Error parsing JSON:", error);
   }
 
-  return responseStream;
+  // Retornar exitoso inmediatamente en menos de 10ms
+  return new NextResponse(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 }
