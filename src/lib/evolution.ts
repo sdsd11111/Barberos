@@ -118,24 +118,42 @@ export async function configureEvolutionWebhook(instanceName: string, webhookUrl
 }
 
 /**
- * Obtiene el código QR fresco para la instancia en formato base64/JSON
+ * Obtiene el código QR fresco para la instancia en formato base64/JSON con reintentos para máxima estabilidad
  */
 export async function getFreshQR(instanceName: string): Promise<{ qrcode?: string; code?: string; success: boolean }> {
-  try {
-    const url = `${EVOLUTION_API_URL}/instance/connect/${instanceName}`;
-    const response = await axios.get(url, {
-      headers: {
-        apikey: EVOLUTION_API_KEY,
-      },
-    });
-    if (response.data?.base64) {
-      return { qrcode: response.data.base64, code: response.data.code, success: true };
+  const url = `${EVOLUTION_API_URL}/instance/connect/${instanceName}`;
+  
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await axios.get(url, {
+        headers: {
+          apikey: EVOLUTION_API_KEY,
+        },
+        timeout: 5000,
+      });
+
+      const data = response.data;
+      const base64 = data?.base64 || data?.qrcode?.base64 || data?.code;
+
+      if (base64) {
+        // Asegurar prefijo data:image/png;base64, si viene raw
+        const formattedQr = base64.startsWith("data:") ? base64 : `data:image/png;base64,${base64}`;
+        return { qrcode: formattedQr, code: data?.pairingCode || data?.code, success: true };
+      }
+
+      // Si no devolvió QR en este intento, esperar 800ms y reintentar
+      if (attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      }
+    } catch (error: any) {
+      console.error(`[Evolution API] Intento ${attempt} fallido obteniendo QR:`, error.response?.data || error.message);
+      if (attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      }
     }
-    return { success: false };
-  } catch (error: any) {
-    console.error("[Evolution API] Error getting QR:", error.response?.data || error.message);
-    return { success: false };
   }
+
+  return { success: false };
 }
 
 /**

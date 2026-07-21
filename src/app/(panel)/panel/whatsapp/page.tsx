@@ -10,6 +10,8 @@ export default function WhatsAppConnectionPage() {
   const [checking, setChecking] = useState(false);
   const [barbershopId, setBarbershopId] = useState<string | null>(null);
 
+  const [loadingQR, setLoadingQR] = useState(false);
+
   const fetchStatus = async () => {
     try {
       const res = await fetch("/api/barbershop/status");
@@ -20,33 +22,57 @@ export default function WhatsAppConnectionPage() {
         if (data.barbershopId) {
           setBarbershopId(data.barbershopId);
         }
+        return data.status;
       } else {
         setStatus("ERROR");
       }
     } catch {
       setStatus("ERROR");
     }
+    return "ERROR";
   };
 
   const fetchQR = async () => {
+    setLoadingQR(true);
     try {
       const res = await fetch("/api/barbershop/qr");
       if (res.ok) {
         const data = await res.json();
         if (data.qrcode) {
           setQrcode(data.qrcode);
+          setStatus("WAITING_QR");
         }
       }
     } catch (err) {
       console.error("Error cargando QR:", err);
+    } finally {
+      setLoadingQR(false);
     }
   };
 
   useEffect(() => {
-    fetchStatus();
-    fetchQR(); // Cargar el QR una única vez al entrar
-    const interval = setInterval(fetchStatus, 8000); // Polling únicamente de estado cada 8 segundos (sin refrescar el QR)
-    return () => clearInterval(interval);
+    let isMounted = true;
+    const init = async () => {
+      const currentStatus = await fetchStatus();
+      if (isMounted && currentStatus !== "CONNECTED") {
+        fetchQR();
+      }
+    };
+
+    init();
+
+    // Polling rápido de estado (cada 3 segundos) para detectar el escaneo del celular al instante
+    const interval = setInterval(async () => {
+      const newStatus = await fetchStatus();
+      if (newStatus === "CONNECTED") {
+        setQrcode(null); // Limpiar QR cuando ya está conectado
+      }
+    }, 3000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const handleManualCheck = async () => {
@@ -151,9 +177,10 @@ export default function WhatsAppConnectionPage() {
           {status !== "CONNECTED" ? (
             <button
               onClick={fetchQR}
-              className="px-4 py-2 font-mono text-[10px] tracking-[0.2em] uppercase text-[#d97644] border border-[#d97644]/40 hover:border-[#d97644] transition-all"
+              disabled={loadingQR}
+              className="px-4 py-2 font-mono text-[10px] tracking-[0.2em] uppercase text-[#d97644] border border-[#d97644]/40 hover:border-[#d97644] transition-all disabled:opacity-50"
             >
-              🔄 Recargar Código QR
+              {loadingQR ? "Generando QR..." : "🔄 Recargar Código QR"}
             </button>
           ) : (
             <div />

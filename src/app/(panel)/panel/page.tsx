@@ -2,6 +2,7 @@ import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import ApprovalQueue from "@/components/ApprovalQueue";
 import RegisterVisitButton from "@/components/RegisterVisitButton";
+import DownloadQRButton from "@/components/DownloadQRButton";
 
 export default async function DashboardPage() {
   const session = await verifySession();
@@ -103,21 +104,29 @@ export default async function DashboardPage() {
         </div>
 
         {/* QR */}
-        <div className="bg-[#131110] border border-[#2a2520] p-6 flex flex-col items-center justify-center gap-4">
+        <div className="bg-[#131110] border border-[#2a2520] p-6 flex flex-col items-center justify-center gap-3">
           <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#5c554c]">
             QR Para Cliente
           </p>
-          <div className="bg-[#f3ece1] p-3 w-32 h-32 sm:w-36 sm:h-36">
-            <div
-              className="w-full h-full"
-              style={{
-                backgroundImage: `url('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-                  `https://wa.me/${barbershop.whatsappNumber}?text=Hola,%20mi%20código%20de%20caja%20es%20${barbershop.currentBoxCode}`
-                )}')`,
-                backgroundSize: "cover",
-              }}
-            />
-          </div>
+          {(() => {
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
+              `https://wa.me/${barbershop.whatsappNumber}?text=Hola,%20mi%20código%20de%20caja%20es%20${barbershop.currentBoxCode}`
+            )}`;
+            return (
+              <>
+                <div className="bg-[#f3ece1] p-3 w-32 h-32 sm:w-36 sm:h-36">
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      backgroundImage: `url('${qrImageUrl}')`,
+                      backgroundSize: "cover",
+                    }}
+                  />
+                </div>
+                <DownloadQRButton qrUrl={qrImageUrl} barbershopName={barbershop.name} />
+              </>
+            );
+          })()}
         </div>
       </div>
 
