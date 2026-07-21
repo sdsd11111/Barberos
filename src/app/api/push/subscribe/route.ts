@@ -25,6 +25,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Llaves criptográficas de push no provistas." }, { status: 400 });
     }
 
+    // Verificar si ya existe esta suscripción
+    const existingSub = await prisma.pushSubscription.findUnique({
+      where: { endpoint },
+    });
+
+    const isNewSubscription = !existingSub;
+
     // Almacenar o actualizar la suscripción del dispositivo
     await prisma.pushSubscription.upsert({
       where: { endpoint },
@@ -41,26 +48,28 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Enviar notificación Push de confirmación de bienvenida inmediata
-    try {
-      const welcomePayload = JSON.stringify({
-        title: "🔔 Alertas Activadas",
-        body: "¡Listo, bro! Ahora recibirás una notificación al instante cuando un cliente pida registrar un corte.",
-        url: "/panel",
-      });
+    // Enviar notificación Push de bienvenida SOLO cuando es una suscripción nueva
+    if (isNewSubscription) {
+      try {
+        const welcomePayload = JSON.stringify({
+          title: "🔔 Alertas Activadas",
+          body: "¡Listo, bro! Ahora recibirás una notificación al instante cuando un cliente pida registrar un corte.",
+          url: "/panel",
+        });
 
-      await webpush.sendNotification(
-        {
-          endpoint,
-          keys: {
-            p256dh: keys.p256dh,
-            auth: keys.auth,
+        await webpush.sendNotification(
+          {
+            endpoint,
+            keys: {
+              p256dh: keys.p256dh,
+              auth: keys.auth,
+            },
           },
-        },
-        welcomePayload
-      );
-    } catch (pushErr) {
-      console.error("[WebPush] Error al enviar notificación de bienvenida:", pushErr);
+          welcomePayload
+        );
+      } catch (pushErr) {
+        console.error("[WebPush] Error al enviar notificación de bienvenida:", pushErr);
+      }
     }
 
     return NextResponse.json({ success: true, message: "Dispositivo suscrito a notificaciones push." });

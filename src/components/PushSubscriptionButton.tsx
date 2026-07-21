@@ -19,14 +19,29 @@ export default function PushSubscriptionButton({ barbershopId }: PushSubscriptio
 
     setPermission(Notification.permission);
 
-    // Revisar si ya tiene una suscripción activa localmente
+    // Revisar si ya tiene una suscripción activa localmente y re-sincronizar con el servidor
     navigator.serviceWorker.ready.then(async (reg) => {
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
         setSubscribed(true);
+
+        // Re-sincronizar silenciosamente con el servidor en cada carga
+        // Esto cubre el caso de que el endpoint haya rotado o el SW se haya actualizado
+        try {
+          await fetch("/api/push/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              barbershopId,
+              subscription: sub.toJSON(),
+            }),
+          });
+        } catch {
+          // Silencioso: si falla la re-sincronización, no afecta al usuario
+        }
       }
     });
-  }, []);
+  }, [barbershopId]);
 
   const urlBase64ToUint8Array = (base64String: string) => {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
