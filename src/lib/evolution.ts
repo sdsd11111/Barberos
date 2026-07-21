@@ -25,9 +25,6 @@ export async function sendWhatsAppMessage({
       {
         number,
         text: message,
-        options: {
-          delay: 1200,
-        },
         textMessage: {
           text: message,
         },
@@ -37,6 +34,7 @@ export async function sendWhatsAppMessage({
           apikey: apiKey || EVOLUTION_API_KEY,
           "Content-Type": "application/json",
         },
+        timeout: 5000, // 5 segundos máximo para no bloquear
       }
     );
   } catch (error) {

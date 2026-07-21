@@ -135,29 +135,29 @@ async function processMessage(payload: WebhookPayload) {
       return;
     }
 
-    // Crear la visita PENDING
-    await prisma.barberVisit.create({
-      data: {
-        customerId: customer.id,
-        status: "PENDING",
-        rating: null,
-      },
-    });
-
-    // Regenerar código de caja inmediatamente (cada código es de un solo uso)
+    // Crear visita + regenerar código EN PARALELO (no dependen entre sí)
     const newCode = generateBoxCode();
-    await prisma.barbershop.update({
-      where: { id: barbershop.id },
-      data: { currentBoxCode: newCode },
-    });
+    await Promise.all([
+      prisma.barberVisit.create({
+        data: {
+          customerId: customer.id,
+          status: "PENDING",
+          rating: null,
+        },
+      }),
+      prisma.barbershop.update({
+        where: { id: barbershop.id },
+        data: { currentBoxCode: newCode },
+      }),
+    ]);
 
     // PRIORIDAD 1: Enviar respuesta por WhatsApp PRIMERO (latencia mínima para el cliente)
-    await sendWhatsAppMessage({
+    sendWhatsAppMessage({
       instance: barbershop.evolutionInstance,
       apiKey: barbershop.evolutionApiKey,
       to: whatsapp,
       message: "¡Gracias! Avisándole a tu barbero para registrar tu corte. ✂️",
-    });
+    }).catch((err) => console.error("[WA Reply] Error:", err));
 
     // PRIORIDAD 2: Enviar notificaciones push al barbero en segundo plano (no bloquea)
     prisma.pushSubscription
@@ -278,11 +278,18 @@ async function processMessage(payload: WebhookPayload) {
 }
 
 export async function POST(request: NextRequest) {
+  // Parsear el payload lo más rápido posible
+  let payload: any;
   try {
-    const payload: any = await request.json();
+    payload = await request.json();
+  } catch (error) {
+    console.error("[Webhook WhatsApp] Error parsing JSON:", error);
+    return NextResponse.json({ success: false }, { status: 400 });
+  }
 
-    // Ejecutar procesamiento asíncronamente en segundo plano sin bloquear el hilo de respuesta
-    // Esto asegura respuesta ultra rápida (<50ms) a Evolution API previniendo timeouts y reintentos.
+  // Procesar ANTES de retornar para garantizar que Vercel no mate el proceso
+  // Con delay eliminado y DB ops en paralelo, esto toma <500ms
+  try {
     if (payload.event === "connection.update") {
       const evolutionInstance = payload.instance;
       const connectionState = payload.data?.state;
@@ -296,32 +303,25 @@ export async function POST(request: NextRequest) {
           connectionStatus = "WAITING_QR";
         }
 
-        prisma.barbershop.findFirst({ where: { evolutionInstance } }).then(async (barbershop) => {
-          if (barbershop) {
-            await prisma.barbershop.update({
-              where: { id: barbershop.id },
-              data: {
-                connectionStatus,
-                whatsappConnected: whatsappConnectedNumber ? String(whatsappConnectedNumber).replace(/\D/g, "") : barbershop.whatsappConnected,
-              },
-            });
-          }
-        }).catch(err => console.error("Error connection.update async:", err));
+        const barbershop = await prisma.barbershop.findFirst({ where: { evolutionInstance } });
+        if (barbershop) {
+          await prisma.barbershop.update({
+            where: { id: barbershop.id },
+            data: {
+              connectionStatus,
+              whatsappConnected: whatsappConnectedNumber ? String(whatsappConnectedNumber).replace(/\D/g, "") : barbershop.whatsappConnected,
+            },
+          });
+        }
       }
     } else {
-      // Mensajes regulares
-      processMessage(payload).catch((err) => {
-        console.error("[Webhook WhatsApp] Error en procesamiento asíncrono:", err);
-      });
+      // Mensajes regulares — procesar completo antes de retornar
+      await processMessage(payload);
     }
-
-  } catch (error) {
-    console.error("[Webhook WhatsApp] Error parsing JSON:", error);
+  } catch (err) {
+    console.error("[Webhook WhatsApp] Error en procesamiento:", err);
   }
 
-  // Retornar exitoso inmediatamente en menos de 10ms
-  return new NextResponse(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  // Retornar 200 a Evolution API
+  return NextResponse.json({ success: true });
 }

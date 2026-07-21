@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import CTABlock from "@/components/shared/CTABlock";
 import StructuredData from "@/components/shared/StructuredData";
+import VideoFAQ from "@/components/landing/VideoFAQ";
 
 // ⚠️ COPY PROVISIONAL — pendiente de sello final contra 04-SISTEMA-DE-COMUNICACION.md
 // No publicar a producción sin aprobación explícita de César sobre este texto.
@@ -176,6 +177,22 @@ export default function ResenasPage() {
           </div>
         </div>
       </section>
+
+      {/* ── RESEÑAS EN VIDEO ──────────────────────────────────── */}
+      <VideoFAQ
+        label="Video Testimonio"
+        title="Experiencias reales en barberías"
+        subtitle="Mira cómo los barberos gestionan la recurrencia de sus clientes."
+        items={[
+          {
+            id: "01",
+            pregunta: "¿Qué opinan las barberías que ya probaron el sistema?",
+            respuestaCorta: "Testimonio directo sobre el impacto en el flujo diario de cortes y fidelización.",
+            duracion: "00:45",
+            videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/rese%C3%B1as%20v2.mp4",
+          },
+        ]}
+      />
 
       {/* ── CTA ÚNICO ────────────────────────────────────────── */}
       <CTABlock

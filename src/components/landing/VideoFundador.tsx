@@ -12,11 +12,10 @@ export default function VideoFundador() {
         <Reveal className="order-2 lg:order-1">
           <div className="relative aspect-video w-full bg-[#131110] border border-[#2a2520] overflow-hidden group">
             <video
-              src="https://iframe.mediadelivery.net/play/132174/db29a7de-7fa2-46a4-9467-f3c7e4ffc059" // Este es un placeholder de Bunny.net que se puede actualizar
-              poster="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1200&auto=format&fit=crop"
+              src="https://activaqr-archivos.b-cdn.net/barberos/fundadores%20C%C3%A9sar.mp4"
               controls
               playsInline
-              className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity duration-300"
+              className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
             />
           </div>
         </Reveal>

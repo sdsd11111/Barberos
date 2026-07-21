@@ -138,39 +138,45 @@ const GOLPE_FINAL =
 const objecionesHome: FAQCard[] = [
   {
     id: "01",
-    pregunta: "¿Por qué no me sirvió la tarjeta de fidelidad clásica?",
+    pregunta: "¿No es esto lo mismo que ya trato de hacer a mano?",
     respuestaCorta: "Te lo ofrecieron. Pero no te lo dieron. Te vendieron una tarjeta. No una relación.",
     duracion: "00:30",
+    videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/No%20es%20esto%20lo%20mismo%20que%20ya%20trato%20de%20hacer%20a.mp4",
   },
   {
     id: "02",
     pregunta: "¿Lo puedo hacer con ChatGPT?",
     respuestaCorta: "ChatGPT no tiene el historial de tus clientes en tiempo real, ni sabe quién entró por tu puerta hoy.",
     duracion: "00:30",
+    videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/chatgpt%20lo%20puede%20hacer.mp4",
   },
   {
     id: "03",
     pregunta: "¿Necesito otra aplicación?",
     respuestaCorta: "No. Cero apps. Tus clientes usan su WhatsApp de siempre. Tú entras desde tu navegador sin contraseñas.",
     duracion: "00:30",
+    videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/cero%20aplicaciones.mp4",
   },
   {
     id: "04",
     pregunta: "¿Qué pasa si no tengo tiempo?",
     respuestaCorta: "El registro toma 3 segundos en el check-in. El sistema hace el resto del seguimiento en segundo plano.",
     duracion: "00:30",
+    videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/no%20tengo%20tiempo.mp4",
   },
   {
     id: "05",
     pregunta: "¿Y si tengo varios barberos?",
     respuestaCorta: "Cada barbero tiene su cuenta. El sistema te dice quién está fidelizando clientes de verdad y quién no.",
     duracion: "00:30",
+    videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/Varios%20Barberos.mp4",
   },
   {
     id: "06",
-    pregunta: "¿Y si mi cliente no usa tecnología?",
+    pregunta: "¿Y si mi cliente no sabe enviar un WhatsApp?",
     respuestaCorta: "Si sabe enviar un mensaje por WhatsApp, sabe usar BarberOS. Y si no, lo registras tú a mano en un clic.",
     duracion: "00:30",
+    videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/Y%20si%20mi%20cliente%20no%20sabe%20enviar%20un%20whatsapp.mp4",
   },
 ];
 
@@ -385,22 +391,16 @@ export default function InicioPage() {
             </p>
           </CinematicScene>
 
-          {/* Video placeholder — reemplazar con <video> o embed en producción */}
+          {/* Video Real — "Video Home (corregido)" */}
           <CinematicScene delay={300} className="mt-16">
-            <div
-              className="bg-[#131110] border border-[#2a2520] aspect-video flex items-center justify-center"
-              role="region"
-              aria-label="Video de BarberOS — próximamente"
-            >
-              <div className="text-center">
-                <span className="block text-[#d97644] text-4xl mb-4" aria-hidden="true">▶</span>
-                <p className="font-mono text-xs tracking-widest uppercase text-[#5c554c]">
-                  Video / 60-90 segundos — próximamente
-                </p>
-                <p className="font-display italic text-[#3a3530] text-sm mt-2 font-light">
-                  Placeholder — reemplazar con video emocional final
-                </p>
-              </div>
+            <div className="relative aspect-video bg-[#131110] border border-[#2a2520] overflow-hidden group shadow-2xl">
+              <video
+                src="https://activaqr-archivos.b-cdn.net/barberos/video%20home%20corregido%20.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full h-full object-cover"
+              />
             </div>
           </CinematicScene>
         </div>

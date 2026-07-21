@@ -26,31 +26,35 @@ export const metadata: Metadata = {
 const faqItems: FAQCard[] = [
   {
     id: "01",
+    pregunta: "¿Necesito WhatsApp Business?",
+    respuestaCorta:
+      "Funciona con WhatsApp normal o Business. La integración se conecta con la línea oficial que ya usa tu barbería.",
+    duracion: "00:30",
+    videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/%C2%BFNecesito%20WhatsApp%20Business.mp4",
+  },
+  {
+    id: "02",
+    pregunta: "¿Necesito descargar alguna aplicación?",
+    respuestaCorta:
+      "No. Cero descargas. Funciona desde el navegador sin contraseñas y tus clientes usan su WhatsApp de siempre.",
+    duracion: "00:30",
+    videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/cero%20aplicaciones.mp4",
+  },
+  {
+    id: "03",
+    pregunta: "¿Qué pasa si no tengo tiempo para administrarlo?",
+    respuestaCorta:
+      "El registro toma 3 segundos en el check-in. El sistema automatiza el seguimiento en segundo plano sin que hagas nada.",
+    duracion: "00:30",
+    videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/no%20tengo%20tiempo.mp4",
+  },
+  {
+    id: "04",
     pregunta: "¿Qué pasa si un cliente no tiene WhatsApp?",
     respuestaCorta:
       "WhatsApp tiene más del 90% de penetración. Para casos excepcionales, haces el check-in manual desde el panel.",
     duracion: "00:30",
-  },
-  {
-    id: "02",
-    pregunta: "¿Necesito saber programar para configurar BarberOS?",
-    respuestaCorta:
-      "No. El onboarding tarda menos de 30 minutos y nosotros hacemos la configuración inicial contigo.",
-    duracion: "00:30",
-  },
-  {
-    id: "03",
-    pregunta: "¿Cómo sé que el link mágico es seguro?",
-    respuestaCorta:
-      "Cada link es único y expira en 15 minutos. Es el mismo mecanismo de los bancos modernos para entrar sin contraseña.",
-    duracion: "00:30",
-  },
-  {
-    id: "04",
-    pregunta: "¿El sistema funciona si no tengo internet en la barbería?",
-    respuestaCorta:
-      "El panel requiere conexión, pero los clientes pueden enviar su WhatsApp y el sistema lo procesa en cuanto hay señal.",
-    duracion: "00:30",
+    videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/Y%20si%20mi%20cliente%20no%20sabe%20enviar%20un%20whatsapp.mp4",
   },
 ];
 
