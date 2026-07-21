@@ -81,13 +81,7 @@ export default function ApprovalQueue({ barbershopId }: ApprovalQueueProps) {
   if (!barbershopId) return null;
 
   if (pendingVisits.length === 0) {
-    return (
-      <div className="fixed bottom-4 right-4 z-40 bg-[#131110] border border-[#2a2520] px-4 py-2 text-center">
-        <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-[#5c554c]">
-          Esperando check-ins...
-        </p>
-      </div>
-    );
+    return null;
   }
 
   // Tomamos el primero de la cola para procesar uno a uno

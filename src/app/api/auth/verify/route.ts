@@ -57,11 +57,15 @@ export async function GET(request: NextRequest) {
     // Preparar redirección y adjuntar la cookie HTTP-Only
     const response = NextResponse.redirect(new URL("/panel", request.url));
     
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
     response.cookies.set("session", jwt, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60, // 30 días
+      maxAge: 365 * 24 * 60 * 60, // 365 días
+      expires: oneYearFromNow,
       path: "/",
     });
 

@@ -37,12 +37,16 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({ success: true, message: "Autenticación exitosa." });
 
-    // Guardar la sesión en la cookie
+    // Guardar la sesión en la cookie (permanente por 1 año, configurable para PWA/móviles)
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
     response.cookies.set("session", jwt, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true, // Siempre secure para cookies persistentes en PWA
       sameSite: "lax",
       maxAge: 365 * 24 * 60 * 60, // 365 días
+      expires: oneYearFromNow, // Clave para mantener activa la cookie en Safari/Chrome de móviles tras reiniciar
       path: "/",
     });
 

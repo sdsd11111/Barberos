@@ -207,6 +207,7 @@ export default async function DashboardPage() {
                     </span>
                     <span className="text-[#5c554c]">
                       {new Date(visit.createdAt).toLocaleDateString("es-EC", {
+                        timeZone: "America/Guayaquil",
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
@@ -257,6 +258,7 @@ export default async function DashboardPage() {
                       </td>
                       <td className="py-3 px-4 text-right">
                         {new Date(visit.createdAt).toLocaleDateString("es-EC", {
+                          timeZone: "America/Guayaquil",
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
