@@ -13,9 +13,9 @@ import StructuredData from "@/components/shared/StructuredData";
 // - Referencia: 03-ARQUITECTURA-WEB.md — Página 6 / Precios.
 
 export const metadata: Metadata = {
-  title: "Precios — BarberOS — Setup + Mensualidad sin sorpresas",
+  title: "Precios — BarberOS — Sin sorpresas",
   description:
-    "BarberOS Pro: USD 350 setup + USD 9.99/mes. BarberOS Premium: USD 500 setup + USD 19.99/mes. Sin permanencia, sin letra pequeña.",
+    "BarberOS Pro desde $9.99/mes o $500 lifetime. BarberOS Premium desde $19.99/mes o $1000 lifetime. Sin permanencia, sin letra pequeña.",
   openGraph: {
     title: "Precios BarberOS — Sin ambigüedad",
     description:
@@ -77,17 +77,22 @@ const productoProSchema = {
     priceSpecification: [
       {
         "@type": "UnitPriceSpecification",
-        price: "350",
-        priceCurrency: "USD",
-        name: "Pago único de activación (setup)",
-        referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "C62" },
-      },
-      {
-        "@type": "UnitPriceSpecification",
         price: "9.99",
         priceCurrency: "USD",
         billingDuration: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
         name: "Mensualidad",
+      },
+      {
+        "@type": "UnitPriceSpecification",
+        price: "99",
+        priceCurrency: "USD",
+        name: "Anual",
+      },
+      {
+        "@type": "UnitPriceSpecification",
+        price: "500",
+        priceCurrency: "USD",
+        name: "Lifetime",
       },
     ],
     availability: "https://schema.org/InStock",
@@ -109,17 +114,22 @@ const productoPremiumSchema = {
     priceSpecification: [
       {
         "@type": "UnitPriceSpecification",
-        price: "500",
-        priceCurrency: "USD",
-        name: "Pago único de activación (setup)",
-        referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "C62" },
-      },
-      {
-        "@type": "UnitPriceSpecification",
         price: "19.99",
         priceCurrency: "USD",
         billingDuration: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
         name: "Mensualidad",
+      },
+      {
+        "@type": "UnitPriceSpecification",
+        price: "199",
+        priceCurrency: "USD",
+        name: "Anual",
+      },
+      {
+        "@type": "UnitPriceSpecification",
+        price: "1000",
+        priceCurrency: "USD",
+        name: "Lifetime",
       },
     ],
     availability: "https://schema.org/InStock",
@@ -137,12 +147,27 @@ const faqSchema = {
   })),
 };
 
-const planes = [
+const planesPro = [
   {
-    nombre: "BarberOS Pro",
-    setup: "USD 350",
-    mensualidad: "USD 9.99 / mes",
-    descripcion: "Para barberías individuales que quieren dejar de operar a ciegas.",
+    tipo: "Gratis",
+    precio: "$0",
+    periodo: "/ mes",
+    descripcion: "Inicia sin costo. Hasta 20 clientes al mes.",
+    incluye: [
+      "Check-in por WhatsApp",
+      "Panel de clientes y visitas",
+      "Fidelización automática",
+      "Dashboard básico",
+    ],
+    nota: "Ideal para empezar",
+    destacado: false,
+    whatsapp: false,
+  },
+  {
+    tipo: "Mensual",
+    precio: "$9.99",
+    periodo: "/ mes",
+    descripcion: "Paga mes a mes sin compromiso.",
     incluye: [
       "Check-in por WhatsApp",
       "Panel de clientes y visitas",
@@ -152,20 +177,94 @@ const planes = [
       "Sistema de premios",
       "Integración Google Reviews",
     ],
+    nota: "",
+    destacado: false,
+    whatsapp: false,
   },
   {
-    nombre: "BarberOS Premium",
-    setup: "USD 500",
-    mensualidad: "USD 19.99 / mes",
-    descripcion: "Para barberos con equipo que exigen control absoluto e inteligencia del negocio.",
+    tipo: "Anual",
+    precio: "$99",
+    periodo: "/ año",
+    descripcion: "Ahorra más de USD 20 al año.",
     incluye: [
-      "Todo lo de Pro",
+      "Check-in por WhatsApp",
+      "Panel de clientes y visitas",
+      "Fidelización automática",
+      "Dashboard en tiempo real",
+      "Reportes de desempeño",
+      "Sistema de premios",
+      "Integración Google Reviews",
+    ],
+    nota: "Equivale a $8.25/mes",
+    destacado: false,
+    whatsapp: false,
+  },
+  {
+    tipo: "Lifetime",
+    precio: "$500",
+    periodo: "pago único",
+    descripcion: "Acceso permanente sin mensalidades.",
+    incluye: [
+      "Todo lo del plan Anual",
+      "Actualizaciones gratis de por vida",
+      "Sin costos mensuales",
+      "Soporte por WhatsApp",
+    ],
+    nota: "O hasta 12 cuotas sin intereses con tarjeta",
+    destacado: true,
+    whatsapp: true,
+  },
+];
+
+const planesPremium = [
+  {
+    tipo: "Mensual",
+    precio: "$19.99",
+    periodo: "/ mes",
+    descripcion: "Paga mes a mes sin compromiso.",
+    incluye: [
+      "Todo lo del plan Pro",
       "Motor de Conocimiento",
       "IA especializada en tu barbería",
       "Recomendaciones automáticas",
       "Alertas inteligentes",
       "Consultor IA 24/7",
     ],
+    nota: "+ USD 5/mes en tokens de IA",
+    destacado: false,
+    whatsapp: false,
+  },
+  {
+    tipo: "Anual",
+    precio: "$199",
+    periodo: "/ año",
+    descripcion: "Ahorra más de USD 40 al año.",
+    incluye: [
+      "Todo lo del plan Pro",
+      "Motor de Conocimiento",
+      "IA especializada en tu barbería",
+      "Recomendaciones automáticas",
+      "Alertas inteligentes",
+      "Consultor IA 24/7",
+    ],
+    nota: "Equivale a $16.58/mes + tokens",
+    destacado: false,
+    whatsapp: false,
+  },
+  {
+    tipo: "Lifetime",
+    precio: "$1000",
+    periodo: "pago único",
+    descripcion: "Acceso permanente sin mensalidades.",
+    incluye: [
+      "Todo lo del plan Anual",
+      "Actualizaciones gratis de por vida",
+      "Sin costos mensuales",
+      "Soporte prioritario por WhatsApp",
+    ],
+    nota: "Tokens de IA incluidos por 2 años. O hasta 12 cuotas sin intereses",
+    destacado: true,
+    whatsapp: true,
   },
 ];
 
@@ -211,72 +310,170 @@ export default function PreciosPage() {
         </div>
       </section>
 
-      {/* ── PLANES — jerarquía visual idéntica ────────────────── */}
+      {/* ── PLANES — 4 tiers por plan ────────────────── */}
       <section className="py-24 px-6 border-b border-[#2a2520]" aria-labelledby="planes-titulo">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <p
             id="planes-titulo"
-            className="font-mono text-xs tracking-[0.4em] uppercase text-[#5c554c] mb-16"
+            className="font-mono text-xs tracking-[0.4em] uppercase text-[#5c554c] mb-16 text-center"
           >
-            Los dos planes / Misma jerarquía visual
+            Elige tu plan / Sin sorpresas
           </p>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {planes.map((plan) => (
-              <article
-                key={plan.nombre}
-                className="bg-[#131110] border border-[#2a2520] p-10 flex flex-col"
-              >
-                {/* Nombre */}
-                <p className="font-mono text-xs tracking-[0.3em] uppercase text-[#5c554c] mb-6">
-                  {plan.nombre}
-                </p>
-
-                {/* Setup — SIEMPRE separado de la mensualidad */}
-                <div className="mb-2">
-                  <span className="font-mono text-xs text-[#5c554c] uppercase tracking-widest">
-                    Activación (pago único)
-                  </span>
-                  <p className="font-display text-5xl font-light text-[#f3ece1] mt-1">
-                    {plan.setup}
+          {/* ── BarberOS Pro ── */}
+          <div className="mb-20">
+            <h2 className="font-display text-3xl md:text-4xl font-light text-[#f3ece1] mb-8 text-center">
+              BarberOS <em className="not-italic text-[#d97644] font-normal">Pro</em>
+            </h2>
+            
+            {/* Cards horizontal en móvil, grid en desktop */}
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:grid md:grid-cols-4 md:overflow-visible pb-4 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0">
+              {planesPro.map((plan) => (
+                <article
+                  key={plan.tipo}
+                  className={`snap-center shrink-0 w-[85vw] md:w-auto bg-[#131110] border border-[#2a2520] p-6 flex flex-col ${
+                    plan.destacado ? "border-[#d97644]/50" : ""
+                  }`}
+                >
+                  {/* Tipo de plan */}
+                  <p className={`font-mono text-xs tracking-[0.3em] uppercase mb-3 ${
+                    plan.destacado ? "text-[#d97644]" : "text-[#5c554c]"
+                  }`}>
+                    {plan.tipo}
                   </p>
-                </div>
 
-                {/* Mensualidad */}
-                <div className="mb-10 pb-10 border-b border-[#2a2520]">
-                  <span className="font-mono text-xs text-[#5c554c] uppercase tracking-widest">
-                    Mensualidad
-                  </span>
-                  <p className="font-display text-3xl font-light text-[#d97644] mt-1">
-                    {plan.mensualidad}
+                  {/* Precio */}
+                  <div className="mb-3">
+                    <p className="font-display text-4xl font-light text-[#f3ece1]">
+                      {plan.precio}
+                    </p>
+                    <p className="font-mono text-xs text-[#5c554c] mt-1">
+                      {plan.periodo}
+                    </p>
+                  </div>
+
+                  {/* Descripción */}
+                  <p className="font-display italic text-[#a89e90] font-light text-xs leading-relaxed mb-4">
+                    {plan.descripcion}
                   </p>
-                </div>
 
-                {/* Descripción */}
-                <p className="font-display italic text-[#a89e90] font-light text-sm leading-relaxed mb-8">
-                  {plan.descripcion}
-                </p>
+                  {/* Incluye */}
+                  <ul className="space-y-1 flex-1 mb-4" role="list">
+                    {plan.incluye.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-[#d97644] font-mono text-xs mt-0.5 shrink-0" aria-hidden="true">
+                          ✓
+                        </span>
+                        <span className="font-mono text-xs text-[#a89e90] tracking-wide">
+                          {item}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
 
-                {/* Incluye */}
-                <ul className="space-y-3 flex-1 mb-10" role="list">
-                  {plan.incluye.map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="text-[#d97644] font-mono text-xs mt-0.5 shrink-0" aria-hidden="true">
-                        ✓
-                      </span>
-                      <span className="font-mono text-xs text-[#a89e90] tracking-wide">
-                        {item}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
+                  {/* Nota */}
+                  {plan.nota && (
+                    <p className="font-mono text-xs text-[#5c554c] italic mb-3">
+                      {plan.nota}
+                    </p>
+                  )}
+
+                  {/* Botón Payphone para Lifetime */}
+                  {plan.whatsapp && (
+                    <a
+                      href="https://wa.me/593963410409?text=Hola%2C%20quiero%20comprar%20BarberOS%20Pro%20Lifetime"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-auto w-full bg-[#d97644] hover:bg-[#c0653a] text-white font-mono text-xs tracking-wider uppercase px-4 py-3 flex items-center justify-center gap-2 transition-colors rounded"
+                    >
+                      Aceptamos Payphone
+                    </a>
+                  )}
+                </article>
+              ))}
+            </div>
           </div>
 
-          {/* Nota aclaratoria — nunca combinar cifras */}
-          <p className="mt-8 font-mono text-xs text-[#5c554c] text-center tracking-wide">
-            El setup es un pago único por activación de tu barbería. La mensualidad es aparte y se renueva cada mes.
+          {/* ── BarberOS Premium ── */}
+          <div>
+            <h2 className="font-display text-3xl md:text-4xl font-light text-[#f3ece1] mb-8 text-center">
+              BarberOS <em className="not-italic text-[#d97644] font-normal">Premium</em>
+            </h2>
+            <p className="font-mono text-xs text-[#5c554c] text-center mb-8">
+              Con IA + tokens incluidos o aparte según el plan
+            </p>
+            
+            {/* Cards en grid vertical */}
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:grid md:grid-cols-3 md:overflow-visible pb-4 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0">
+              {planesPremium.map((plan) => (
+                <article
+                  key={plan.tipo}
+                  className={`snap-center shrink-0 w-[85vw] md:w-auto bg-[#131110] border border-[#2a2520] p-6 flex flex-col ${
+                    plan.destacado ? "border-[#d97644]/50" : ""
+                  }`}
+                >
+                  {/* Tipo de plan */}
+                  <p className={`font-mono text-xs tracking-[0.3em] uppercase mb-3 ${
+                    plan.destacado ? "text-[#d97644]" : "text-[#5c554c]"
+                  }`}>
+                    {plan.tipo}
+                  </p>
+
+                  {/* Precio */}
+                  <div className="mb-3">
+                    <p className="font-display text-4xl font-light text-[#f3ece1]">
+                      {plan.precio}
+                    </p>
+                    <p className="font-mono text-xs text-[#5c554c] mt-1">
+                      {plan.periodo}
+                    </p>
+                  </div>
+
+                  {/* Descripción */}
+                  <p className="font-display italic text-[#a89e90] font-light text-xs leading-relaxed mb-4">
+                    {plan.descripcion}
+                  </p>
+
+                  {/* Incluye */}
+                  <ul className="space-y-1 flex-1 mb-4" role="list">
+                    {plan.incluye.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-[#d97644] font-mono text-xs mt-0.5 shrink-0" aria-hidden="true">
+                          ✓
+                        </span>
+                        <span className="font-mono text-xs text-[#a89e90] tracking-wide">
+                          {item}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Nota */}
+                  {plan.nota && (
+                    <p className="font-mono text-xs text-[#5c554c] italic mb-3">
+                      {plan.nota}
+                    </p>
+                  )}
+
+                  {/* Botón Payphone para Lifetime */}
+                  {plan.whatsapp && (
+                    <a
+                      href="https://wa.me/593963410409?text=Hola%2C%20quiero%20comprar%20BarberOS%20Premium%20Lifetime"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-auto w-full bg-[#d97644] hover:bg-[#c0653a] text-white font-mono text-xs tracking-wider uppercase px-4 py-3 flex items-center justify-center gap-2 transition-colors rounded"
+                    >
+                      Aceptamos Payphone
+                    </a>
+                  )}
+                </article>
+              ))}
+            </div>
+          </div>
+
+          {/* Nota aclaratoria */}
+          <p className="mt-12 font-mono text-xs text-[#5c554c] text-center tracking-wide">
+            Empieza gratis. Hasta 20 clientes al mes es difícil de alcanzar — cuando lo logres, ya estarás listo para escalar.
           </p>
         </div>
       </section>

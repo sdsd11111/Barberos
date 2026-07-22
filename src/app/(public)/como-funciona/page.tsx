@@ -68,7 +68,7 @@ const howToSchema = {
       "@type": "HowToStep",
       position: 1,
       name: "El cliente llega y hace check-in",
-      text: "El cliente envía su número a tu WhatsApp de barbería. BarberOS lo registra automáticamente.",
+      text: "El cliente envía un código por WhatsApp. BarberOS lo registra automáticamente.",
     },
     {
       "@type": "HowToStep",
@@ -160,7 +160,7 @@ export default function ComoFuncionaPage() {
                 paso: "01",
                 titulo: "El cliente llega y hace check-in",
                 detalle:
-                  "Envía su número a tu WhatsApp de negocio. BarberOS lo identifica, registra la visita y actualiza su tarjeta de fidelidad automáticamente. Sin app, sin formulario.",
+                  "Envía un código por WhatsApp. BarberOS lo identifica, registra la visita y actualiza su tarjeta de fidelidad automáticamente. Sin app, sin formulario.",
               },
               {
                 paso: "02",
@@ -276,10 +276,13 @@ export default function ComoFuncionaPage() {
         <div className="max-w-4xl mx-auto">
           <p
             id="comparativa-titulo"
-            className="font-mono text-xs tracking-[0.4em] uppercase text-[#5c554c] mb-16"
+            className="font-mono text-xs tracking-[0.4em] uppercase text-[#5c554c] mb-6"
           >
             Comparativa / vs. lo que hay hoy en el mercado
           </p>
+          <h2 className="font-display text-4xl md:text-5xl font-light text-[#f3ece1] mb-16 leading-tight">
+            Todo lo que usas hoy <em className="not-italic text-[#d97644] font-normal">¿Funciona?</em>
+          </h2>
 
           <div className="grid md:grid-cols-3 gap-px bg-[#2a2520] border border-[#2a2520]">
             {[
