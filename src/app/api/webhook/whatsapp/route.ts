@@ -114,25 +114,22 @@ async function processMessage(payload: WebhookPayload) {
       });
     }
 
-    // Regla de Negocio 1: Límite de 24 horas por cliente
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const recentVisit = await prisma.barberVisit.findFirst({
+    // Si el cliente envía el código de caja, el check-in TIENE PRIORIDAD ABSOLUTA.
+    // Limpiar cualquier visita PENDING anterior no procesada por el barbero
+    await prisma.barberVisit.deleteMany({
       where: {
         customerId: customer.id,
-        createdAt: {
-          gte: twentyFourHoursAgo,
-        },
+        status: "PENDING",
       },
     });
 
-    if (recentVisit) {
-      await sendWhatsAppMessage({
-        instance: barbershop.evolutionInstance,
-        apiKey: barbershop.evolutionApiKey,
-        to: whatsapp,
-        message: "¡Hola! Hoy ya tienes un corte registrado o en espera de aprobación. ¡Nos vemos la próxima vez! 👋",
+    // Resetear cualquier estado de sesión previo congelado (ej: si no respondió una calificación previa)
+    if (customer.sessionState !== "IDLE") {
+      await prisma.barberCustomer.update({
+        where: { id: customer.id },
+        data: { sessionState: "IDLE" },
       });
-      return;
+      customer.sessionState = "IDLE";
     }
 
     // Crear visita + regenerar código EN PARALELO (no dependen entre sí)
