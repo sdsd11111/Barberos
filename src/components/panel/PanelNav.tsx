@@ -7,7 +7,7 @@ import { useState } from "react";
 const navLinks = [
   { href: "/panel", label: "Dashboard", exact: true },
   { href: "/panel/clientes", label: "Clientes" },
-  { href: "/panel/whatsapp", label: "WhatsApp" },
+  { href: "/panel/whatsapp", label: "Configuración" },
 ];
 
 export default function PanelNav({

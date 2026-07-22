@@ -199,7 +199,66 @@ async function processMessage(payload: WebhookPayload) {
     return;
   }
 
-  // Máquina de estados para calificaciones
+  // Máquina de estados para selección de profesional o calificaciones
+  if (customer.sessionState === "AWAITING_STAFF") {
+    const staffMembers = await prisma.barberStaff.findMany({
+      where: { barbershopId: barbershop.id },
+      orderBy: { name: "asc" },
+    });
+
+    let selectedStaff = null;
+    const inputNumber = parseInt(messageText.trim(), 10);
+
+    if (!isNaN(inputNumber) && inputNumber >= 1 && inputNumber <= staffMembers.length) {
+      selectedStaff = staffMembers[inputNumber - 1];
+    } else {
+      // Intentar coincidir por nombre
+      selectedStaff = staffMembers.find((s) =>
+        messageText.toLowerCase().includes(s.name.toLowerCase())
+      );
+    }
+
+    if (!selectedStaff && staffMembers.length > 0) {
+      const optionsText = staffMembers
+        .map((s, idx) => `${idx + 1}. ${s.name}`)
+        .join("\n");
+      await sendWhatsAppMessage({
+        instance: barbershop.evolutionInstance,
+        apiKey: barbershop.evolutionApiKey,
+        to: whatsapp,
+        message: `Por favor, elige el número de la persona que te atendió hoy:\n\n${optionsText}`,
+      });
+      return;
+    }
+
+    // Buscar la última visita del cliente
+    const lastVisit = await prisma.barberVisit.findFirst({
+      where: { customerId: customer.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (lastVisit && selectedStaff) {
+      await prisma.barberVisit.update({
+        where: { id: lastVisit.id },
+        data: { staffId: selectedStaff.id },
+      });
+    }
+
+    // Transicionar al estado de calificación AWAITING_RATING
+    await prisma.barberCustomer.update({
+      where: { id: customer.id },
+      data: { sessionState: "AWAITING_RATING" },
+    });
+
+    await sendWhatsAppMessage({
+      instance: barbershop.evolutionInstance,
+      apiKey: barbershop.evolutionApiKey,
+      to: whatsapp,
+      message: `¡Excelente! Por último, del 1 al 5, ¿cómo calificas tu servicio con ${selectedStaff ? selectedStaff.name : "nosotros"} hoy? ⭐`,
+    });
+    return;
+  }
+
   if (customer.sessionState === "AWAITING_RATING") {
     // Extraer rating (primer dígito numérico)
     const ratingMatch = messageText.match(/\d/);

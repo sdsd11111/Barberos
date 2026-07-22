@@ -79,13 +79,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Actualizar cliente (incrementar cortes y pedir rating)
+    // Verificar si la barbería tiene equipo configurado
+    const staffMembers = await prisma.barberStaff.findMany({
+      where: { barbershopId: barbershop.id },
+      orderBy: { name: "asc" },
+    });
+
+    const hasStaffOptions = staffMembers.length > 0 && !staffId;
+    const nextState = hasStaffOptions ? "AWAITING_STAFF" : "AWAITING_RATING";
+
+    // Actualizar cliente (incrementar cortes y pedir profesional o rating)
     const updatedCustomer = await prisma.barberCustomer.update({
       where: { id: customer.id },
       data: {
         cutsCount: { increment: 1 },
         lastVisitAt: new Date(),
-        sessionState: "AWAITING_RATING",
+        sessionState: nextState,
       },
     });
 
@@ -95,9 +104,18 @@ export async function POST(request: NextRequest) {
 
     let message = "";
     if (updatedCustomer.cutsCount >= barbershop.requiredCuts) {
-      message = `✂️ ¡Tu check-in ha sido aprobado!\n\nTu progreso: ${progressBar}\n\n🎉 ¡Felicidades! Has ganado tu premio. Menciónalo en tu próxima visita.\n\nPor favor, responde del 1 al 5 para calificar la atención de hoy.`;
+      message = `✂️ ¡Tu check-in ha sido aprobado!\n\nTu progreso: ${progressBar}\n\n🎉 ¡Felicidades! Has ganado tu premio. Menciónalo en tu próxima visita.`;
     } else {
-      message = `✂️ ¡Tu check-in ha sido aprobado!\n\nTu progreso: ${progressBar}\n\n¡Te faltan ${remaining} cortes para tu premio!\n\nPor favor, responde del 1 al 5 para calificar la atención de hoy.`;
+      message = `✂️ ¡Tu check-in ha sido aprobado!\n\nTu progreso: ${progressBar}\n\n¡Te faltan ${remaining} cortes para tu premio!`;
+    }
+
+    if (hasStaffOptions) {
+      const optionsText = staffMembers
+        .map((s, idx) => `${idx + 1}. ${s.name}`)
+        .join("\n");
+      message += `\n\nAntes de finalizar, ¿quién te atendió hoy?\n\n${optionsText}\n\nResponde con el nombre o número.`;
+    } else {
+      message += `\n\nPor favor, responde del 1 al 5 para calificar la atención de hoy.`;
     }
 
     await sendWhatsAppMessage({

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import PushSubscriptionButton from "@/components/PushSubscriptionButton";
+import StaffManager from "@/components/panel/StaffManager";
 
 export default function WhatsAppConnectionPage() {
   const [status, setStatus] = useState<"LOADING" | "CONNECTED" | "WAITING_QR" | "DISCONNECTED" | "ERROR">("LOADING");
@@ -85,9 +86,9 @@ export default function WhatsAppConnectionPage() {
     <div className="max-w-xl mx-auto space-y-8">
       <header className="mb-8">
         <p className="font-mono text-xs tracking-[0.3em] uppercase text-[#5c554c] mb-2">
-          Configuración
+          Ajustes de la Barbería
         </p>
-        <h2 className="font-display text-5xl font-light">WhatsApp</h2>
+        <h2 className="font-display text-5xl font-light">Configuración</h2>
       </header>
 
       <div className="border border-[#2a2520] bg-[#131110] p-8 space-y-6 relative overflow-hidden">
@@ -194,6 +195,9 @@ export default function WhatsAppConnectionPage() {
           </button>
         </div>
       </div>
+
+      {/* Gestión del Equipo de Trabajo */}
+      <StaffManager />
 
       {barbershopId && (
         <PushSubscriptionButton barbershopId={barbershopId} />
