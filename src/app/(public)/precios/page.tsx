@@ -395,6 +395,14 @@ export default function PreciosPage() {
                 </article>
               ))}
             </div>
+            
+            {/* Hint deslizar solo en móvil */}
+            <div className="flex md:hidden items-center justify-center gap-2 mt-4 text-[#5c554c]">
+              <span className="font-mono text-xs uppercase tracking-wider">Desliza</span>
+              <svg className="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
           </div>
 
           {/* ── BarberOS Premium ── */}
@@ -471,6 +479,14 @@ export default function PreciosPage() {
                   )}
                 </article>
               ))}
+            </div>
+            
+            {/* Hint deslizar solo en móvil */}
+            <div className="flex md:hidden items-center justify-center gap-2 mt-4 text-[#5c554c]">
+              <span className="font-mono text-xs uppercase tracking-wider">Desliza</span>
+              <svg className="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </div>
           </div>
 
