@@ -38,12 +38,12 @@ export default function NavPublic() {
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-full">
           {/* Logotipo */}
-          <Link
-            href="/"
-            className="font-display text-xl font-light tracking-widest text-[#f3ece1] hover:text-[#d97644] transition-colors"
-            aria-label="BarberOS — Inicio"
-          >
-            BarberOS
+          <Link href="/" aria-label="BarberOS — Inicio">
+            <img
+              src="/logos/barberos_logo_concept_1 - copia.jpg"
+              alt="BarberOS"
+              className="h-8 w-auto object-contain"
+            />
           </Link>
 
           {/* Links desktop */}
