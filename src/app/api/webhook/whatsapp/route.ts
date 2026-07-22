@@ -86,78 +86,10 @@ async function processMessage(payload: WebhookPayload) {
   // --- FLUJO DE CHECK-IN ---
   // Validar que el mensaje contenga EXACTAMENTE el código de caja activo de la barbería
   const currentCode = barbershop.currentBoxCode?.toUpperCase() || "";
-  const upperMessage = messageText.toUpperCase();
-  const isCheckInMessage = currentCode.length > 0 && upperMessage.includes(currentCode);
-
-  // Detectar mensajes genéricos de check-in (ej: desde QR impreso fijo en la mesa)
-  const CHECKIN_KEYWORDS = ["registrar mi corte", "registrar corte", "quiero registrar", "checkin", "check-in"];
-  const isGenericCheckIn = CHECKIN_KEYWORDS.some((kw) => messageText.toLowerCase().includes(kw));
+  const isCheckInMessage = currentCode.length > 0 && messageText.toUpperCase().includes(currentCode);
 
   // Extraer nombre público del perfil de WhatsApp (pushName)
   const pushName = (payload.data as any)?.pushName || null;
-
-  // --- PASO 1: Mensaje genérico de check-in (QR fijo impreso en mesa) ---
-  // El cliente escanea el QR impreso → su WhatsApp envía "Hola, quiero registrar mi corte"
-  // El bot le pide el código de 4 dígitos que ve en la pantalla de la caja
-  if (isGenericCheckIn && !isCheckInMessage) {
-    // Crear/actualizar cliente si no existe
-    if (!customer) {
-      customer = await prisma.barberCustomer.create({
-        data: {
-          barbershopId: barbershop.id,
-          whatsapp,
-          name: pushName,
-          cutsCount: 0,
-          sessionState: "AWAITING_BOXCODE",
-        },
-        include: { barbershop: true },
-      });
-    } else {
-      // Limpiar visitas PENDING anteriores y resetear estado
-      await prisma.barberVisit.deleteMany({
-        where: { customerId: customer.id, status: "PENDING" },
-      });
-      await prisma.barberCustomer.update({
-        where: { id: customer.id },
-        data: {
-          sessionState: "AWAITING_BOXCODE",
-          ...((!customer.name && pushName) ? { name: pushName } : {}),
-        },
-      });
-      customer.sessionState = "AWAITING_BOXCODE";
-    }
-
-    await sendWhatsAppMessage({
-      instance: barbershop.evolutionInstance,
-      apiKey: barbershop.evolutionApiKey,
-      to: whatsapp,
-      message: "¡Hola! 👋 Para registrar tu corte, envíame el código de 4 dígitos que ves en la pantalla de la caja (ej: NK21).",
-    });
-    return;
-  }
-
-  // --- PASO 2: El cliente está en AWAITING_BOXCODE y envía el código ---
-  if (customer?.sessionState === "AWAITING_BOXCODE") {
-    if (isCheckInMessage) {
-      // El código es correcto → proceder con el check-in normal (cae al bloque de abajo)
-      // Primero resetear el estado para que no entre aquí de nuevo
-      await prisma.barberCustomer.update({
-        where: { id: customer.id },
-        data: { sessionState: "IDLE" },
-      });
-      customer.sessionState = "IDLE";
-      // No hacer return — dejar que caiga al flujo normal de check-in abajo
-    } else {
-      // El código no coincide → pedir de nuevo
-      await sendWhatsAppMessage({
-        instance: barbershop.evolutionInstance,
-        apiKey: barbershop.evolutionApiKey,
-        to: whatsapp,
-        message: "❌ Ese código no coincide. Por favor, mira la pantalla de la caja y envíame los 4 dígitos que ves ahí.",
-      });
-      return;
-    }
-  }
 
   if (isCheckInMessage) {
     if (!customer) {

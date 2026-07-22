@@ -103,18 +103,17 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* QR — Fijo e imprimible (no cambia nunca) */}
+        {/* QR — Fijo e imprimible (el código de caja se inyecta dinámicamente al escanear) */}
         <div className="bg-[#131110] border border-[#2a2520] p-6 flex flex-col items-center justify-center gap-3">
           <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#5c554c]">
             QR Para Cliente
           </p>
           {(() => {
-            // QR FIJO: usa un mensaje genérico sin el código de caja.
-            // El cliente escanea → el bot le pide el código de 4 dígitos que ve en pantalla.
-            // Así el QR se imprime UNA VEZ y sirve para siempre.
-            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-              `https://wa.me/${barbershop.whatsappNumber}?text=Hola,%20quiero%20registrar%20mi%20corte`
-            )}`;
+            // QR FIJO: apunta a /c/{barbershopId} que redirige a wa.me con el código ACTUAL.
+            // Al escanear, el servidor lee el código de caja vigente de la BD y lo inyecta.
+            // El QR se imprime UNA VEZ y sirve para siempre. ✂️
+            const checkinUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://barberos-teal.vercel.app"}/c/${barbershop.id}`;
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(checkinUrl)}`;
             return (
               <>
                 <div className="bg-[#f3ece1] p-3 w-32 h-32 sm:w-36 sm:h-36">
