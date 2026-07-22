@@ -103,14 +103,17 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* QR */}
+        {/* QR — Fijo e imprimible (no cambia nunca) */}
         <div className="bg-[#131110] border border-[#2a2520] p-6 flex flex-col items-center justify-center gap-3">
           <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#5c554c]">
             QR Para Cliente
           </p>
           {(() => {
+            // QR FIJO: usa un mensaje genérico sin el código de caja.
+            // El cliente escanea → el bot le pide el código de 4 dígitos que ve en pantalla.
+            // Así el QR se imprime UNA VEZ y sirve para siempre.
             const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-              `https://wa.me/${barbershop.whatsappNumber}?text=Hola,%20mi%20código%20de%20caja%20es%20${barbershop.currentBoxCode}`
+              `https://wa.me/${barbershop.whatsappNumber}?text=Hola,%20quiero%20registrar%20mi%20corte`
             )}`;
             return (
               <>
@@ -124,6 +127,9 @@ export default async function DashboardPage() {
                   />
                 </div>
                 <DownloadQRButton qrUrl={qrImageUrl} barbershopName={barbershop.name} />
+                <p className="font-mono text-[9px] text-[#5c554c] text-center max-w-[180px]">
+                  Imprímelo y pégalo en tu mesa — funciona para siempre ✂️
+                </p>
               </>
             );
           })()}
