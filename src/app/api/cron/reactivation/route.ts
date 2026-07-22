@@ -2,13 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsAppMessage } from "@/lib/evolution";
 
-export async function POST(request: NextRequest) {
-  try {
-    // 1. Proteger el endpoint con un secreto de cron
-    const authHeader = request.headers.get("Authorization");
-    const cronSecret = process.env.CRON_SECRET || "cron_secret_desarrollo_local";
+// Verificar autenticación por header Authorization O por query param ?secret=
+function isAuthorized(request: NextRequest): boolean {
+  const cronSecret = process.env.CRON_SECRET || "cron_secret_desarrollo_local";
+  // Opción 1: Authorization header (para Vercel Cron u otros servicios)
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader === `Bearer ${cronSecret}`) return true;
+  // Opción 2: Query param ?secret= (para cPanel cron jobs con curl)
+  const urlSecret = request.nextUrl.searchParams.get("secret");
+  if (urlSecret === cronSecret) return true;
+  return false;
+}
 
-    if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
+// Lógica principal del cron (compartida entre GET y POST)
+async function runCron(request: NextRequest) {
+  try {
+    if (!isAuthorized(request)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
@@ -116,4 +125,14 @@ export async function POST(request: NextRequest) {
     console.error("[Cron Reactivación] Error general:", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
+}
+
+// GET: para cPanel cron jobs (curl simple)
+export async function GET(request: NextRequest) {
+  return runCron(request);
+}
+
+// POST: para Vercel Cron u otros servicios
+export async function POST(request: NextRequest) {
+  return runCron(request);
 }
