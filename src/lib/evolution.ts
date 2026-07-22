@@ -19,31 +19,38 @@ export async function sendWhatsAppMessage({
   const url = `${EVOLUTION_API_URL}/message/sendText/${instance}`;
   const number = to.replace(/\D/g, "");
 
-  try {
-    await axios.post(
-      url,
-      {
-        number,
-        text: message,
-        textMessage: {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await axios.post(
+        url,
+        {
+          number,
           text: message,
+          textMessage: {
+            text: message,
+          },
         },
-      },
-      {
-        headers: {
-          apikey: apiKey || EVOLUTION_API_KEY,
-          "Content-Type": "application/json",
-        },
-        timeout: 5000, // 5 segundos máximo para no bloquear
+        {
+          headers: {
+            apikey: apiKey || EVOLUTION_API_KEY,
+            "Content-Type": "application/json",
+          },
+          timeout: 15000, // 15 segundos máximo por intento
+        }
+      );
+      return; // Éxito
+    } catch (error) {
+      const axiosError = error as { response?: { data?: unknown }; message?: string };
+      console.error(`[Evolution API] Intento ${attempt} fallido al enviar mensaje:`, axiosError.message ?? error);
+      if (attempt === 2) {
+        if (axiosError.response?.data) {
+          console.error("[Evolution API] Response data:", JSON.stringify(axiosError.response.data, null, 2));
+        }
+        throw error;
       }
-    );
-  } catch (error) {
-    const axiosError = error as { response?: { data?: unknown }; message?: string };
-    console.error("[Evolution API] Error sending WhatsApp message:", axiosError.message ?? error);
-    if (axiosError.response?.data) {
-      console.error("[Evolution API] Response data:", JSON.stringify(axiosError.response.data, null, 2));
+      // Esperar 1 segundo antes de reintentar
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    throw error;
   }
 }
 
