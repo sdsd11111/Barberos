@@ -13,9 +13,9 @@ import StructuredData from "@/components/shared/StructuredData";
 // - Referencia: 03-ARQUITECTURA-WEB.md — Página 6 / Precios.
 
 export const metadata: Metadata = {
-  title: "Precios — BarberOS — Sin sorpresas",
+  title: "Precios — BarberOS — Setup $50 + Prueba 15 días gratis",
   description:
-    "BarberOS Pro desde $9.99/mes o $500 lifetime. BarberOS Premium desde $19.99/mes o $1000 lifetime. Sin permanencia, sin letra pequeña.",
+    "BarberOS Pro: Setup $50 + desde $9.99/mes o $500 lifetime. BarberOS Premium: Setup $50 + desde $19.99/mes o $1000 lifetime. Prueba 15 días gratis.",
   openGraph: {
     title: "Precios BarberOS — Sin ambigüedad",
     description:
@@ -149,17 +149,20 @@ const faqSchema = {
 
 const planesPro = [
   {
-    tipo: "Gratis",
+    tipo: "Prueba 15 días",
     precio: "$0",
-    periodo: "/ mes",
-    descripcion: "Inicia sin costo. Hasta 20 clientes al mes.",
+    periodo: "15 días",
+    descripcion: "Prueba BarberOS Pro gratis. Sin tarjeta, sin compromiso.",
     incluye: [
       "Check-in por WhatsApp",
       "Panel de clientes y visitas",
       "Fidelización automática",
-      "Dashboard básico",
+      "Dashboard en tiempo real",
+      "Reportes de desempeño",
+      "Sistema de premios",
+      "Integración Google Reviews",
     ],
-    nota: "Ideal para empezar",
+    nota: "Setup USD 50 al activar",
     destacado: false,
     whatsapp: false,
   },
@@ -177,7 +180,7 @@ const planesPro = [
       "Sistema de premios",
       "Integración Google Reviews",
     ],
-    nota: "",
+    nota: "Setup USD 50 al activar",
     destacado: false,
     whatsapp: false,
   },
@@ -195,7 +198,7 @@ const planesPro = [
       "Sistema de premios",
       "Integración Google Reviews",
     ],
-    nota: "Equivale a $8.25/mes",
+    nota: "Equivale a $8.25/mes + Setup USD 50",
     destacado: false,
     whatsapp: false,
   },
@@ -210,7 +213,7 @@ const planesPro = [
       "Sin costos mensuales",
       "Soporte por WhatsApp",
     ],
-    nota: "O hasta 12 cuotas sin intereses con tarjeta",
+    nota: "Setup USD 50 incluido. O hasta 12 cuotas sin intereses",
     destacado: true,
     whatsapp: true,
   },
@@ -230,7 +233,7 @@ const planesPremium = [
       "Alertas inteligentes",
       "Consultor IA 24/7",
     ],
-    nota: "+ USD 5/mes en tokens de IA",
+    nota: "+ USD 5/mes tokens IA. Setup USD 50 al activar",
     destacado: false,
     whatsapp: false,
   },
@@ -247,7 +250,7 @@ const planesPremium = [
       "Alertas inteligentes",
       "Consultor IA 24/7",
     ],
-    nota: "Equivale a $16.58/mes + tokens",
+    nota: "Equivale a $16.58/mes + tokens. Setup USD 50",
     destacado: false,
     whatsapp: false,
   },
@@ -262,7 +265,7 @@ const planesPremium = [
       "Sin costos mensuales",
       "Soporte prioritario por WhatsApp",
     ],
-    nota: "Tokens de IA incluidos por 2 años. O hasta 12 cuotas sin intereses",
+    nota: "Setup USD 50 incluido. Tokens IA 2 años. Hasta 12 cuotas",
     destacado: true,
     whatsapp: true,
   },
@@ -287,8 +290,8 @@ export default function PreciosPage() {
               <em className="not-italic text-[#d97644]">qué obtienes exactamente</em>.
             </h1>
             <p className="font-display italic text-xl text-[#a89e90] font-light max-w-xl leading-relaxed mb-8">
-              Un pago único de activación. Una mensualidad baja. Sin letra pequeña,
-              sin cargos escondidos, sin permanencia.
+              Setup de USD 50. Mensualidades bajas. Prueba 15 días gratis.
+              Sin letra pequeña, sin cargos escondidos, sin permanencia.
             </p>
           </div>
           
@@ -473,7 +476,7 @@ export default function PreciosPage() {
 
           {/* Nota aclaratoria */}
           <p className="mt-12 font-mono text-xs text-[#5c554c] text-center tracking-wide">
-            Empieza gratis. Hasta 20 clientes al mes es difícil de alcanzar — cuando lo logres, ya estarás listo para escalar.
+            Prueba 15 días gratis. Sin tarjeta, sin compromiso. El setup de USD 50 se paga solo cuando decides continuar.
           </p>
         </div>
       </section>
