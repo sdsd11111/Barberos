@@ -63,6 +63,7 @@ model BarberVisit {
   customerId String
   staffId    String?
   rating     Int?
+  comment    String?  @db.Text
   status     String   @default("PENDING")
   createdAt  DateTime @default(now())
 }

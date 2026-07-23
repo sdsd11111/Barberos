@@ -5,6 +5,7 @@ import { useState } from "react";
 interface ReviewItem {
   id: string;
   rating: number;
+  comment?: string | null;
   createdAt: string;
   customerName: string;
   customerWhatsapp: string;
@@ -209,18 +210,25 @@ export default function BarberosView({
             <>
               <div className="border border-[#2a2520] bg-[#131110] divide-y divide-[#1c1917]">
                 {visibleReviews.map((rev) => (
-                  <div key={rev.id} className="p-4 flex items-center justify-between gap-4">
-                    <div>
-                      <p className="font-display text-base text-[#f3ece1] font-light">
-                        {rev.customerName}
-                      </p>
-                      {rev.customerWhatsapp && (
-                        <p className="font-mono text-[10px] text-[#5c554c]">
-                          +{rev.customerWhatsapp}
+                  <div key={rev.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-display text-base text-[#f3ece1] font-light">
+                          {rev.customerName}
+                        </p>
+                        {rev.customerWhatsapp && (
+                          <span className="font-mono text-[10px] text-[#5c554c]">
+                            (+{rev.customerWhatsapp})
+                          </span>
+                        )}
+                      </div>
+                      {rev.comment && (
+                        <p className="font-sans text-xs text-[#a89e90] bg-[#0a0807] border border-[#2a2520] p-2.5 rounded-sm italic max-w-xl">
+                          "{rev.comment}"
                         </p>
                       )}
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right shrink-0">
                       <StarDisplay rating={rev.rating} />
                       <p className="font-mono text-[10px] text-[#5c554c] mt-0.5">
                         {new Date(rev.createdAt).toLocaleDateString("es-EC", {

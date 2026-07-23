@@ -66,6 +66,7 @@ export default async function BarberosPage() {
       return {
         id: v.id,
         rating: v.rating!,
+        comment: v.comment || null,
         createdAt: v.createdAt.toISOString(),
         customerName: cust?.name || "Cliente Registrado",
         customerWhatsapp: cust?.whatsapp || "",

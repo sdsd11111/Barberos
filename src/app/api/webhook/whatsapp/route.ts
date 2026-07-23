@@ -259,6 +259,35 @@ async function processMessage(payload: WebhookPayload) {
     return;
   }
 
+  if (customer.sessionState === "AWAITING_FEEDBACK") {
+    // Buscar la última visita del cliente para adjuntar el comentario
+    const lastVisit = await prisma.barberVisit.findFirst({
+      where: { customerId: customer.id, status: "APPROVED" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (lastVisit) {
+      await prisma.barberVisit.update({
+        where: { id: lastVisit.id },
+        data: { comment: messageText },
+      });
+    }
+
+    // Resetear sesión del cliente
+    await prisma.barberCustomer.update({
+      where: { id: customer.id },
+      data: { sessionState: "IDLE" },
+    });
+
+    await sendWhatsAppMessage({
+      instance: barbershop.evolutionInstance,
+      apiKey: barbershop.evolutionApiKey,
+      to: whatsapp,
+      message: "¡Muchas gracias por tus comentarios! 📝 Los tomaremos muy en cuenta para darte siempre la mejor experiencia. ¡Nos vemos pronto! ✂️",
+    });
+    return;
+  }
+
   if (customer.sessionState === "AWAITING_RATING") {
     // Extraer rating (primer dígito numérico)
     const ratingMatch = messageText.match(/\d/);
@@ -300,36 +329,35 @@ async function processMessage(payload: WebhookPayload) {
       });
     }
 
-    // Actualizar estado del cliente
-    await prisma.barberCustomer.update({
-      where: { id: customer.id },
-      data: { sessionState: "IDLE" },
-    });
-
-    // Programar la solicitud de reseña de Google si es la primera vez que el cliente califica
-    if (!customer.firstReviewSent) {
-      const twoHoursFromNow = new Date(Date.now() + 2 * 60 * 60 * 1000);
-      await prisma.delayedTask.create({
-        data: {
-          type: "SEND_GOOGLE_REVIEW",
-          customerId: customer.id,
-          scheduledFor: twoHoursFromNow,
-        },
-      });
-
-      // Marcar de una vez que ya tiene la tarea agendada para evitar duplicaciones
+    if (rating === 5) {
+      // 5 Estrellas: Enviar de inmediato la invitación a dejar reseña en Google
       await prisma.barberCustomer.update({
         where: { id: customer.id },
-        data: { firstReviewSent: true },
+        data: { sessionState: "IDLE", firstReviewSent: true },
+      });
+
+      const shortUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://barberos-teal.vercel.app"}/r/${barbershop.id}`;
+
+      await sendWhatsAppMessage({
+        instance: barbershop.evolutionInstance,
+        apiKey: barbershop.evolutionApiKey,
+        to: whatsapp,
+        message: `¡Nos alegra muchísimo que tu experiencia haya sido de 5 estrellas! ⭐⭐⭐⭐⭐\n\n¿Nos ayudarías un mundo dejando tu opinión pública en Google? Solo toma 10 segundos:\n👉 ${shortUrl}\n\n¡Gracias por preferirnos! ✂️`,
+      });
+    } else {
+      // 1 a 4 Estrellas: Pedir opinión por escrito para mejorar internamente
+      await prisma.barberCustomer.update({
+        where: { id: customer.id },
+        data: { sessionState: "AWAITING_FEEDBACK" },
+      });
+
+      await sendWhatsAppMessage({
+        instance: barbershop.evolutionInstance,
+        apiKey: barbershop.evolutionApiKey,
+        to: whatsapp,
+        message: "Queremos darte siempre un servicio de 5 estrellas. 💬 ¿Nos podrías contar brevemente qué ocurrió o qué podemos mejorar para tu próxima visita?",
       });
     }
-
-    await sendWhatsAppMessage({
-      instance: barbershop.evolutionInstance,
-      apiKey: barbershop.evolutionApiKey,
-      to: whatsapp,
-      message: "¡Gracias por tu calificación! Nos vemos en el próximo corte.",
-    });
   }
 }
 
