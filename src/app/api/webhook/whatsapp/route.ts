@@ -336,13 +336,14 @@ async function processMessage(payload: WebhookPayload) {
         data: { sessionState: "IDLE", firstReviewSent: true },
       });
 
-      const shortUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://barberos-teal.vercel.app"}/r/${barbershop.id}`;
+      // Si existe la URL directa configurada en la barbería, la usamos; si no, el acortador
+      const reviewUrl = barbershop.googleMapsUrl || `${process.env.NEXT_PUBLIC_BASE_URL || "https://barberos-teal.vercel.app"}/r/${barbershop.id}`;
 
       await sendWhatsAppMessage({
         instance: barbershop.evolutionInstance,
         apiKey: barbershop.evolutionApiKey,
         to: whatsapp,
-        message: `¡Nos alegra muchísimo que tu experiencia haya sido de 5 estrellas! ⭐⭐⭐⭐⭐\n\n¿Nos ayudarías un mundo dejando tu opinión pública en Google? Solo toma 10 segundos:\n👉 ${shortUrl}\n\n¡Gracias por preferirnos! ✂️`,
+        message: `¡Nos alegra muchísimo que tu experiencia haya sido de 5 estrellas! ⭐⭐⭐⭐⭐\n\n¿Nos ayudarías un mundo dejando tu opinión pública en Google? Solo toma 10 segundos:\n👉 ${reviewUrl}\n\n¡Gracias por preferirnos! ✂️`,
       });
     } else {
       // 1 a 4 Estrellas: Pedir opinión por escrito para mejorar internamente

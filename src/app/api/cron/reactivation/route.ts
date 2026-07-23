@@ -93,9 +93,9 @@ async function runCron(request: NextRequest) {
           // El host vendrá del header host o por configuración de entorno
           const host = request.headers.get("host") || "barberos-teal.vercel.app";
           const proto = host.includes("localhost") ? "http" : "https";
-          const shortUrl = `${proto}://${host}/r/${barbershop.id}`;
+          const reviewUrl = barbershop.googleMapsUrl || `${proto}://${host}/r/${barbershop.id}`;
 
-          const reviewMessage = `👋 ¡Hola, ${customer.name || "bro"}! Gracias por visitarnos hoy en ${barbershop.name}. ✂️\n\nTu opinión es súper valiosa para nosotros. ¿Nos ayudarías dejando una reseña en Google? Solo te tomará 1 minuto y nos ayuda a seguir mejorando:\n\n👉 ${shortUrl}`;
+          const reviewMessage = `👋 ¡Hola, ${customer.name || "bro"}! Gracias por visitarnos hoy en ${barbershop.name}. ✂️\n\nTu opinión es súper valiosa para nosotros. ¿Nos ayudarías dejando una reseña en Google? Solo te tomará 1 minuto y nos ayuda a seguir mejorando:\n\n👉 ${reviewUrl}`;
 
           await sendWhatsAppMessage({
             instance: barbershop.evolutionInstance,
