@@ -13,7 +13,7 @@ model Barbershop {
   evolutionInstance String
   evolutionApiKey  String         @default("") // Se puede usar la global
   requiredCuts     Int            @default(5)
-  googleMapsUrl    String?
+  googleMapsUrl    String?        @db.Text
   planStatus       String         @default("TRIAL")
   trialEndsAt      DateTime?
   connectionStatus String         @default("DISCONNECTED") // DISCONNECTED, CONNECTED, WAITING_QR

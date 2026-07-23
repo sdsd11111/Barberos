@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BarberOS Checklist</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  body { background: #0a0a0a; color: #fff; font-family: 'Inter', sans-serif; padding-bottom: 100px; -webkit-tap-highlight-color: transparent; }
+  .font-display { font-family: 'Bebas Neue', sans-serif; }
+  .card { background: #141414; border: 1px solid #2a2a2a; border-radius: 12px; }
+  textarea, input { background: #0a0a0a; border: 1px solid #333; color: #fff; border-radius: 8px; width: 100%; padding: 14px; box-sizing: border-box; font-size: 16px; }
+  textarea:focus, input:focus { outline: none; border-color: #FF6B1A; }
+  .btn-primary { background: #FF6B1A; color: black; font-weight: 800; padding: 18px; border-radius: 12px; width: 100%; border: none; font-size: 18px; transition: all 0.2s; }
+  .q-text { font-size: 1.3rem; font-weight: 800; color: #fff; line-height: 1.3; }
+  .step-badge { background: #FF6B1A; color: #000; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; margin-top: 2px;}
+  .toggle-btn { background: #1a1a1a; border: 1px solid #333; color: #888; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; width: 100%; text-align: center; }
+  .toggle-btn.active { background: #FF6B1A; color: #000; border-color: #FF6B1A; }
+  .hidden { display: none; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 50; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+  .hist-item { background: #141414; border: 1px solid #2a2a2a; padding: 14px; border-radius: 8px; margin-bottom: 10px; }
+  .hint { font-size: 13px; color: #aaa; font-style: italic; margin-bottom: 8px; display: block; }
+</style>
+</head>
+<body>
+
+<div class="max-w-md mx-auto p-4">
+  <div class="flex justify-between items-center mb-5">
+    <h1 class="font-display text-3xl text-[#FF6B1A]">BarberOS</h1>
+    <button onclick="openHistory()" class="text-sm text-gray-400 underline">Ver Historial (<span id="histCount">0</span>)</button>
+  </div>
+  
+  <div class="card p-3 mb-4">
+    <input type="text" id="barberName" placeholder="Nombre del barbero/local" class="!bg-transparent !border-none text-lg font-bold">
+  </div>
+
+  <div class="space-y-4">
+    
+    <!-- 0 -->
+    <div class="card p-4">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="step-badge">0</div>
+        <div class="q-text">"¿Cómo te va con la barbería? ¿Cómo la llevas ahora mismo?"</div>
+      </div>
+      <textarea id="p0" rows="2" placeholder="Respuesta..."></textarea>
+    </div>
+
+    <!-- 1 -->
+    <div class="card p-4">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="step-badge">1</div>
+        <div class="q-text">"¿Tienes idea de cuántos clientes reales tienes ahorita?"</div>
+      </div>
+      <span class="hint">Si duda ("unos 200, creo"), anotar "creo" textual.</span>
+      <textarea id="p1" rows="2" placeholder="Respuesta..."></textarea>
+    </div>
+
+    <!-- 2 -->
+    <div class="card p-4">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="step-badge">2</div>
+        <div class="q-text">"¿Más o menos tienes calculado cuántos cortes necesitas al mes para cubrir arriendo, agua, luz, tu casa?"</div>
+      </div>
+      <textarea id="p2" rows="2" placeholder="Respuesta..."></textarea>
+      
+      <button id="btn_p2" class="toggle-btn mt-3" onclick="toggleField('p2_extra', 'btn_p2')">Repreguntar (cruce de "no sé")</button>
+      <div id="p2_extra" class="hidden mt-3 pt-3 border-t border-gray-800">
+        <div class="q-text text-lg mb-2">"¿Pero no tienes la cifra exacta, verdad? Y tampoco sabes exactamente cuántos clientes tienes, ¿no?"</div>
+        <textarea id="p2_resp" rows="2" placeholder="Reacción al doble 'no sé'..."></textarea>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="card p-4">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="step-badge">3</div>
+        <div class="q-text">"De esos, ¿cuántos dirías que van a volver este mes?"</div>
+      </div>
+      <textarea id="p3" rows="2" placeholder="Respuesta..."></textarea>
+    </div>
+
+    <!-- 4 -->
+    <div class="card p-4">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="step-badge">4</div>
+        <div class="q-text">Pregunta sobre sus barberos</div>
+      </div>
+      <button id="btn_p4" class="toggle-btn" onclick="toggleField('p4_extra', 'btn_p4')">Desplegar si tiene barberos</button>
+      <div id="p4_extra" class="hidden mt-3 pt-3 border-t border-gray-800 space-y-4">
+        <div>
+          <div class="q-text text-lg mb-2">4A: "¿Cuál de tus barberos hace que más clientes regresen?"</div>
+          <textarea id="p4a" rows="2" placeholder='Respuesta (suele decir "se siente")...'></textarea>
+        </div>
+        <div>
+          <div class="q-text text-lg mb-2">4B: "Si mañana ese barbero se va, ¿esos clientes se quedan contigo o se van con él?"</div>
+          <textarea id="p4b" rows="2" placeholder="Respuesta..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="card p-4">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="step-badge">5</div>
+        <div class="q-text">"Este mes, ¿cuánto crees que se te fue por esa puerta sin que lo notaras?"</div>
+      </div>
+      <span class="hint">Silencio de 2-3 segundos. No completar tú el silencio.</span>
+      <textarea id="p5" rows="2" placeholder="Respuesta..."></textarea>
+    </div>
+
+    <!-- 6 -->
+    <div class="card p-4">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="step-badge">6</div>
+        <div class="q-text">"¿Vale la pena tener esas respuestas con certeza?"</div>
+      </div>
+      <textarea id="p6" rows="2" placeholder="Cierre y respuesta..."></textarea>
+    </div>
+
+    <!-- Avatar -->
+    <div class="card p-4">
+      <div class="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">Avatar Detectado</div>
+      <div class="grid grid-cols-3 gap-2">
+        <button class="toggle-btn avatar-btn" data-val="1" onclick="selectAvatar(this)">Avatar 1</button>
+        <button class="toggle-btn avatar-btn" data-val="2" onclick="selectAvatar(this)">Avatar 2</button>
+        <button class="toggle-btn avatar-btn" data-val="fuera" onclick="selectAvatar(this)">Fuera</button>
+      </div>
+      <textarea id="notes" rows="2" placeholder="Notas finales..." class="mt-3"></textarea>
+    </div>
+  </div>
+
+  <!-- Barra inferior fija -->
+  <div class="fixed bottom-0 left-0 right-0 bg-[#0a0a0a] p-4 border-t border-gray-800" style="max-width: 448px; margin: 0 auto;">
+    <button id="saveBtn" class="btn-primary" onclick="saveSession()">GUARDAR SESIÓN</button>
+  </div>
+
+  <!-- Modal Historial -->
+  <div id="histModal" class="modal hidden">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold">Historial</h2>
+      <button onclick="closeHistory()" class="text-3xl text-gray-400">&times;</button>
+    </div>
+    <div id="histList"></div>
+  </div>
+</div>
+
+<script>
+  // Memoria interna por si el navegador bloquea el localStorage
+  let memoryStorage = [];
+  let selectedAvatar = '';
+
+  // Cargar historial al inicio
+  try {
+    const saved = localStorage.getItem('barberos_sessions');
+    if (saved) memoryStorage = JSON.parse(saved);
+  } catch(e) { console.log("LocalStorage bloqueado, usando memoria temporal"); }
+
+  updateHistCount();
+
+  function toggleField(id, btnId) {
+    const el = document.getElementById(id);
+    const btn = document.getElementById(btnId);
+    el.classList.toggle('hidden');
+    if (!el.classList.contains('hidden')) btn.classList.add('active');
+    else btn.classList.remove('active');
+  }
+
+  function selectAvatar(btn) {
+    document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedAvatar = btn.dataset.val;
+  }
+
+  function saveSession() {
+    const data = {
+      barberName: document.getElementById('barberName').value,
+      p0: document.getElementById('p0').value,
+      p1: document.getElementById('p1').value,
+      p2: document.getElementById('p2').value,
+      p2_resp: document.getElementById('p2_resp').value,
+      p3: document.getElementById('p3').value,
+      p4a: document.getElementById('p4a').value,
+      p4b: document.getElementById('p4b').value,
+      p5: document.getElementById('p5').value,
+      p6: document.getElementById('p6').value,
+      avatar: selectedAvatar,
+      notes: document.getElementById('notes').value
+    };
+
+    if (!data.barberName && !data.p0) {
+      alert("Escribe al menos el nombre o la primera respuesta.");
+      return;
+    }
+
+    data.id = Date.now();
+    data.date = new Date().toLocaleString('es-CO');
+    
+    // Guardar en memoria
+    memoryStorage.unshift(data);
+    
+    // Intentar guardar permanente
+    try {
+      localStorage.setItem('barberos_sessions', JSON.stringify(memoryStorage));
+    } catch(e) {
+      alert("Tu navegador está bloqueando el guardado permanente. La sesión se guardó solo por esta sesión.");
+    }
+    
+    updateHistCount();
+
+    // Feedback visual
+    const btn = document.getElementById('saveBtn');
+    btn.innerText = "¡GUARDADO!";
+    btn.style.background = "#10b981";
+    btn.style.color = "white";
+    if(navigator.vibrate) navigator.vibrate(200);
+    
+    setTimeout(() => {
+      btn.innerText = "GUARDAR SESIÓN";
+      btn.style.background = "#FF6B1A";
+      btn.style.color = "black";
+      clearForm();
+    }, 1500);
+  }
+
+  function clearForm() {
+    document.querySelectorAll('textarea, input').forEach(el => el.value = '');
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.hidden').forEach(el => el.classList.add('hidden')); 
+    selectedAvatar = '';
+  }
+
+  function updateHistCount() {
+    document.getElementById('histCount').innerText = memoryStorage.length;
+  }
+
+  function openHistory() {
+    const list = document.getElementById('histList');
+    
+    if (memoryStorage.length === 0) {
+      list.innerHTML = '<p class="text-gray-500 text-center mt-10">No hay sesiones guardadas.</p>';
+    } else {
+      list.innerHTML = memoryStorage.map(s => `
+        <div class="hist-item" onclick="viewDetail(${s.id})">
+          <div class="flex justify-between items-center">
+            <div class="font-bold text-base">${s.barberName || 'Sin nombre'}</div>
+            <div class="text-xs text-gray-500">${s.date}</div>
+          </div>
+          <div class="text-sm text-gray-400 mt-1 truncate">
+            ${s.avatar ? `<span class="text-orange-500 font-bold uppercase">${s.avatar}</span> · ` : ''}
+            ${s.p0 ? s.p0.substring(0, 40) + '...' : 'Sin respuesta'}
+          </div>
+        </div>
+      `).join('');
+    }
+    document.getElementById('histModal').classList.remove('hidden');
+  }
+
+  function closeHistory() {
+    document.getElementById('histModal').classList.add('hidden');
+  }
+
+  function viewDetail(id) {
+    const s = memoryStorage.find(x => x.id == id);
+    if (!s) return;
+    
+    let html = <div class="mb-6"><strong class="text-orange-500 text-xl block">${s.barberName}</strong><small class="text-gray-500">${s.date}</small></div>;
+    
+    const fields = [
+      ['P0', s.p0], ['P1', s.p1], ['P2', s.p2], ['P2 Cruce', s.p2_resp],
+      ['P3', s.p3], ['P4A', s.p4a], ['P4B', s.p4b], ['P5', s.p5],
+      ['P6', s.p6], ['Avatar', s.avatar], ['Notas', s.notes]
+    ];
+    
+    fields.forEach(([label, val]) => {
+      if (val) {
+        html += <div class="mb-4"><div class="text-xs text-gray-500 uppercase font-bold mb-1">${label}</div><div class="bg-[#141414] p-3 rounded text-sm">${val}</div></div>;
+      }
+    });
+    
+    html += `<div class="flex gap-2 mt-8">
+      <button onclick="deleteSession(${id})" class="bg-red-900 text-red-200 px-4 py-3 rounded-lg text-sm font-bold">Eliminar</button>
+      <button onclick="openHistory()" class="bg-gray-800 text-gray-300 px-4 py-3 rounded-lg text-sm font-bold">Volver</button>
+    </div>`;
+    
+    document.getElementById('histList').innerHTML = html;
+  }
+
+  function deleteSession(id) {
+    if (!confirm("¿Eliminar esta sesión?")) return;
+    memoryStorage = memoryStorage.filter(s => s.id != id);
+    try {
+      localStorage.setItem('barberos_sessions', JSON.stringify(memoryStorage));
+    } catch(e) {}
+    updateHistCount();
+    openHistory();
+  }
+</script>
+
+</body>
+</html>

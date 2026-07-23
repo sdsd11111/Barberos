@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Barbershop {
   id: string;
@@ -20,6 +20,7 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   // Formulario de creación
   const [name, setName] = useState("");
@@ -49,14 +50,30 @@ export default function AdminDashboard() {
         const data = await response.json();
         setBarbershops(data);
         setIsAuthenticated(true);
+        setAdminSecret(secret);
         setError("");
+        // Persistir sesión
+        try { localStorage.setItem("admin_secret", secret); } catch {}
       } else {
         setError("Secreto de administración inválido.");
+        try { localStorage.removeItem("admin_secret"); } catch {}
       }
     } catch {
       setError("Error de red.");
     }
   };
+
+  // Auto-login al cargar la página si hay sesión guardada
+  useEffect(() => {
+    const saved = localStorage.getItem("admin_secret");
+    if (saved) {
+      setAdminSecret(saved);
+      fetchBarbershops(saved).finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,7 +249,11 @@ export default function AdminDashboard() {
             <h1 className="font-display text-5xl font-light">SuperAdmin</h1>
           </div>
           <button
-            onClick={() => setIsAuthenticated(false)}
+            onClick={() => {
+              try { localStorage.removeItem("admin_secret"); } catch {}
+              setIsAuthenticated(false);
+              setAdminSecret("");
+            }}
             className="font-mono text-xs tracking-[0.2em] uppercase text-[#5c554c] hover:text-[#d97644] transition-colors"
           >
             Cerrar Sesión
@@ -303,13 +324,13 @@ export default function AdminDashboard() {
 
               <div>
                 <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">
-                  Google Maps URL (Opcional)
+                  Link Reseña Google (Opcional)
                 </label>
                 <input
-                  type="url"
+                  type="text"
                   value={googleMapsUrl}
                   onChange={(e) => setGoogleMapsUrl(e.target.value)}
-                  placeholder="https://maps.google.com/..."
+                  placeholder="Pegar enlace directo de reseña Google"
                   className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
                 />
               </div>
@@ -379,12 +400,12 @@ export default function AdminDashboard() {
                                   />
                                 </div>
                                 <div>
-                                  <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">Google Maps URL</label>
+                                  <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">Link Reseña Google</label>
                                   <input
                                     type="text"
                                     value={editGoogleMapsUrl}
                                     onChange={(e) => setEditGoogleMapsUrl(e.target.value)}
-                                    placeholder="Enlace largo de reseñas"
+                                    placeholder="Pegar enlace directo de reseña Google"
                                     className="w-full px-2 py-1 font-mono text-xs bg-[#131110] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
                                   />
                                 </div>
@@ -417,10 +438,10 @@ export default function AdminDashboard() {
                                   rel="noopener noreferrer"
                                   className="text-[9px] text-[#d97644] hover:underline block mt-0.5"
                                 >
-                                  Ver Mapa Reseña ↗
+                                  Ver Reseña Google ↗
                                 </a>
                               ) : (
-                                <span className="text-[9px] text-[#5c554c] block mt-0.5">Sin Link Reseñas</span>
+                                <span className="text-[9px] text-[#5c554c] block mt-0.5">Sin Link de Reseña</span>
                               )}
                             </td>
                             <td className="py-4">+{shop.whatsappNumber}</td>

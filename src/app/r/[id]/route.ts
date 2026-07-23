@@ -18,8 +18,8 @@ export async function GET(
     });
 
     if (barbershop?.googleMapsUrl) {
-      // Redirigir al link real guardado en base de datos
-      return NextResponse.redirect(new URL(barbershop.googleMapsUrl).toString());
+      // Redirigir directamente con el string URL original para preservar fragmentos # (#lrd=...)
+      return NextResponse.redirect(barbershop.googleMapsUrl);
     }
   } catch (error) {
     console.error("[Redirección Reseña] Error:", error);
