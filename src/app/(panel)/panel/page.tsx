@@ -49,9 +49,11 @@ export default async function DashboardPage() {
   const recurrentCustomers = customers.filter((c) => c.cutsCount >= 2).length;
 
   const recentVisitsData = await prisma.barberVisit.findMany({
-    where: { customerId: { in: customerIds } },
+    where: {
+      customerId: { in: customerIds },
+      createdAt: { gte: startOfDay },
+    },
     orderBy: { createdAt: "desc" },
-    take: 10,
   });
 
   const recentVisits = recentVisitsData.map((visit) => {
@@ -173,10 +175,10 @@ export default async function DashboardPage() {
         {recentVisits.length === 0 ? (
           <div className="border border-[#2a2520] bg-[#131110] p-10 text-center">
             <p className="font-display italic text-lg text-[#5c554c] mb-2">
-              Aún no hay registros
+              No hay visitas registradas el día de hoy
             </p>
             <p className="font-mono text-[10px] text-[#5c554c] tracking-widest">
-              Cuando registres el primer corte o un cliente haga check-in, aparecerá aquí.
+              Usa el botón "Registrar corte" para registrar una visita de forma manual.
             </p>
           </div>
         ) : (
