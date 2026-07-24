@@ -91,7 +91,7 @@ async function runCron(request: NextRequest) {
           const { barbershop } = customer;
           // Generar la url acortada dinámica redirigiendo al Google Review de la barbería
           // El host vendrá del header host o por configuración de entorno
-          const host = request.headers.get("host") || "barberos-teal.vercel.app";
+          const host = request.headers.get("host") || "www.barberosplus.com";
           const proto = host.includes("localhost") ? "http" : "https";
           const reviewUrl = barbershop.googleMapsUrl || `${proto}://${host}/r/${barbershop.id}`;
 

@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     "gestión de clientes barbería",
     "barberos ecuador",
   ],
-  metadataBase: new URL("https://barberos-teal.vercel.app"),
+  metadataBase: new URL("http://www.barberosplus.com"),
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -50,11 +50,11 @@ export const metadata: Metadata = {
     title: "BarberOS — Sistema Inteligente de Fidelización y Gestión para Barberías",
     description:
       "Aumenta la frecuencia de tus clientes y automatiza tu barbería por WhatsApp. Fidelización rápida, métricas en vivo y avisos automáticos.",
-    url: "https://barberos-teal.vercel.app",
+    url: "http://www.barberosplus.com",
     siteName: "BarberOS",
     images: [
       {
-        url: "/logos/barberos_logo_concept_1.webp",
+        url: "http://www.barberosplus.com/logos/barberos_logo_concept_1.webp",
         width: 1200,
         height: 630,
         alt: "BarberOS - Software e Inteligencia para Barberías",
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     title: "BarberOS — Sistema Inteligente de Fidelización y Gestión para Barberías",
     description:
       "Aumenta la frecuencia de tus clientes y automatiza tu barbería por WhatsApp.",
-    images: ["/logos/barberos_logo_concept_1.webp"],
+    images: ["http://www.barberosplus.com/logos/barberos_logo_concept_1.webp"],
   },
 };
 

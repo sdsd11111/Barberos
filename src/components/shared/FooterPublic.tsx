@@ -49,7 +49,15 @@ export default function FooterPublic() {
             © {new Date().getFullYear()} BarberOS. Todos los derechos reservados.
           </p>
           <p className="font-mono text-xs text-[#3a3530]">
-            Ecuador — Operado por Grupo Empresarial Reyes
+            Ecuador — Operado por{" "}
+            <a
+              href="https://www.cesarreyesjaramillo.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#a89e90] underline transition-colors"
+            >
+              Grupo Empresarial Reyes
+            </a>
           </p>
         </div>
       </div>

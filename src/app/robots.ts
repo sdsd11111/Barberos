@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://barberos-teal.vercel.app";
+  const baseUrl = "http://www.barberosplus.com";
 
   return {
     rules: [

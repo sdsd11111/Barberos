@@ -337,7 +337,7 @@ async function processMessage(payload: WebhookPayload) {
       });
 
       // Si existe la URL directa configurada en la barbería, la usamos; si no, el acortador
-      const reviewUrl = barbershop.googleMapsUrl || `${process.env.NEXT_PUBLIC_BASE_URL || "https://barberos-teal.vercel.app"}/r/${barbershop.id}`;
+      const reviewUrl = barbershop.googleMapsUrl || `${process.env.NEXT_PUBLIC_BASE_URL || "http://www.barberosplus.com"}/r/${barbershop.id}`;
 
       await sendWhatsAppMessage({
         instance: barbershop.evolutionInstance,
