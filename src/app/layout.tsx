@@ -37,6 +37,9 @@ export const metadata: Metadata = {
     "barberos ecuador",
   ],
   metadataBase: new URL("http://www.barberosplus.com"),
+  verification: {
+    google: "S4YO9FbiTiBeFAGaOowZq0VlK1T-uhzQjbEIhWNTt9o",
+  },
   manifest: "/manifest.json",
   icons: {
     icon: [
