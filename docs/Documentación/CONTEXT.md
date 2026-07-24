@@ -1,5 +1,5 @@
 # CONTEXT.md
-> Última actualización: 2026-07-22 | Estado: Activo | Autor: Antigravity
+> Última actualización: 2026-07-19 | Estado: Activo | Autor: Antigravity
 
 Este documento actúa como la **memoria de ejecución actual** del proyecto BarberOS. Mantiene al equipo y a cualquier agente de desarrollo alineados con la realidad del código en producción en todo momento, evitando confusiones de versiones o supuestos.
 
@@ -7,13 +7,13 @@ Este documento actúa como la **memoria de ejecución actual** del proyecto Barb
 
 ## 📌 Estado de Sprints & Fases
 
-### Fase 0 — Validación (Completada ✅)
+### Fase 0 — Validación (Completada)
 - **Next.js + Prisma + PostgreSQL**: Operando y configurado con Supabase (Transaction Pooler + Session Pooler).
 - **Check-in vía WhatsApp**: Totalmente funcional (`src/app/api/webhook/whatsapp/route.ts`).
   - Límite estricto de 24 horas por cliente.
   - Generación de visitas en estado `PENDING`.
   - Cola de aprobación en tiempo real (`ApprovalQueue`) mediante polling.
-  - Calificación post-servicio (1 a 5) y máquina de estados `IDLE → AWAITING_RATING → IDLE`.
+  - Calificación post-servicio (1 a 5) y máquina de estados `IDLE → AWAITING_RATING → [AWAITING_FEEDBACK →] IDLE`. Si rating = 5 → envío automático de link Google. Si rating < 5 → estado `AWAITING_FEEDBACK` con recordatorio a las 4-5h (dentro de horario Ecuador hasta 8pm) y tabla `CustomerFeedback`.
 - **Magic Link de Acceso**: Backend y UI listos. Genera `MagicToken` de 15 minutos y se envía vía Evolution API.
 - **Seguridad y Aislamiento Multi-tenant (Sprint 5)**: 
   - ✅ **Completado**. Firma/lectura de JWT mediante la cookie `session` en `src/proxy.ts` y DAL (`src/lib/dal.ts`) para Server Components.
@@ -30,6 +30,13 @@ Este documento actúa como la **memoria de ejecución actual** del proyecto Barb
   - `ApprovalQueue.tsx` se mantiene como fallback para cuando el panel está abierto.
   - Nombre de WhatsApp (`pushName`) ahora se guarda al crear/actualizar clientes desde el webhook.
 - **Arquitectura de Avatares & Nueva Web**: 🔄 **En Progreso**. Sitemap de 7 páginas estructurado con SEO y JSON-LD. Pendiente de implementar la Dirección Cinematográfica de la Home (10 escenas) basada en el Avatar 1.
+- **Sistema automático de reseñas (2026-07-24)**: ✅ **Implementado**. Basado en rating del cliente:
+  - Rating = 5 → envío automático de link Google My Business (vía `DelayedTask` tipo `SEND_GOOGLE_REVIEW`).
+  - Rating < 5 → estado `AWAITING_FEEDBACK` con recordatorio a las 4-5h (ventana Ecuador hasta 8pm).
+  - Guardia anti-duplicado: campo `firstReviewSent` en `BarberCustomer`.
+  - Nueva tabla `CustomerFeedback` para historial (no sobrescribe).
+  - Nueva tabla `DelayedTask` para scheduling de tareas.
+  - Copy placeholders: `[PLACEHOLDER_FEEDBACK_REQUEST]` y `[PLACEHOLDER_FEEDBACK_REMINDER]` (pendiente César).
 
 ### Fase 2 — BarberOS Premium
 - **Motor de Conocimiento (07)**: ❄️ **CONGELADO**. Cero código.
@@ -56,29 +63,6 @@ Este documento actúa como la **memoria de ejecución actual** del proyecto Barb
 ### Componentes y Rutas No Documentados Anteriormente
 1. **SuperAdmin (`/admin`)**: Panel completo para onboarding de nuevas barberías y control de `planStatus` (TRIAL/ACTIVE/SUSPENDED) autenticado con `ADMIN_SECRET_KEY` vía Bearer.
 2. **`planStatus` / `trialEndsAt`**: Campos definidos en el modelo `Barbershop` para control comercial.
-
----
-
-### Modelo de Datos - Actualización 2026-07-22
-
-Nuevos campos y modelos en `prisma/schema.prisma`:
-
-| Modelo | Campo | Propósito |
-|--------|-------|-----------|
-| `Barbershop` | `loginPin` | PIN de acceso de 6 dígitos único |
-| `Barbershop` | `currentBoxCode` | Código de caja dinámico para check-ins (ej. "RV55") |
-| `Barbershop` | `whatsappConnected` | Número que realmente escaneó el código QR |
-| `Barbershop` | `connectionStatus` | DISCONNECTED, CONNECTED, WAITING_QR |
-| `BarberCustomer` | `firstReviewSent` | Indica si ya se envió solicitud de Google review |
-| `BarberCustomer` | `lastReactivationSentAt` | Control del cron de reactivación |
-| `PushSubscription` | — | Suscripciones push de los barberos (implementado Sprint 8) |
-| `DelayedTask` | — | Tareas demoradas (ej. envío de review Google 2h después) |
-
-### Flujo de Reseñas Google (2026-07-22)
-
-- **NO es automático por defecto** — el barbero decide cuándo el cliente salió satisfecho
-- Modelo `DelayedTask` con tipo `SEND_GOOGLE_REVIEW` programmed para `createdAt + 2 horas`
-- Campo `firstReviewSent` en `BarberCustomer` previene envíos duplicados
 
 ---
 

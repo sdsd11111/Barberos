@@ -29,6 +29,8 @@ relacionado:
 
 Definir cómo BarberOS aparece cuando alguien busca una solución a su problema, no cuando busca "un software".
 
+> **Nota de Posicionamiento (Silencio Estratégico):** Según `18-PLAN-ESTRATEGICO-MARKETING.md`, el SEO y el contenido orgánico representan la **única cara pública activa** durante el Horizonte 1. Funcionan en paralelo pero sin cruzarse con el motor privado de ventas directas (Leones Fundadores).
+
 ---
 
 # Principio rector

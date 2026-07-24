@@ -28,10 +28,10 @@ export const metadata: Metadata = {
     description:
       "Setup único en promoción + mensualidad baja. Dos planes claros para barberías que quieren control real.",
     type: "website",
-    url: "https://barberos-rho-henna.vercel.app/precios",
+    url: "https://barberosplus.com/precios",
   },
   alternates: {
-    canonical: "https://barberos-rho-henna.vercel.app/precios",
+    canonical: "https://barberosplus.com/precios",
   },
 };
 
@@ -103,7 +103,7 @@ const productoProSchema = {
       },
     ],
     availability: "https://schema.org/InStock",
-    url: "https://barberos-rho-henna.vercel.app/precios",
+    url: "https://barberosplus.com/precios",
   },
 };
 
@@ -140,7 +140,7 @@ const productoPremiumSchema = {
       },
     ],
     availability: "https://schema.org/InStock",
-    url: "https://barberos-rho-henna.vercel.app/precios",
+    url: "https://barberosplus.com/precios",
   },
 };
 

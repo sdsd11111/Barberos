@@ -4,7 +4,7 @@ titulo: Librería de Componentes
 categoria: tecnico
 estado: activo
 sprint: fase-0-completada
-ultima_revision: 2026-07-22
+ultima_revision: 2026-07-19
 relacionado:
   - 09-ROADMAP-TECNICO
   - 06-DASHBOARD
@@ -51,29 +51,16 @@ Inventariar los componentes ya construidos y los pendientes, para que el desarro
 - Lista alimentada por `GET /api/visits/pending`.
 - **Detalle técnico pendiente de confirmar con el hijo** (spec de implementación del push).
 
-## Solicitud de Reseña Google (a discreción del barbero)
+## Sistema automático de reseñas post-calificación
 
-- **Nuevo (2026-07-22):** La solicitud de reseña de Google **no es automática por defecto**.
-- El barbero decide si el cliente salió satisfecho antes de aprobar el envío del mensaje de reseña (no se dispara a las 2h de forma automática y ciega).
-- Esto evita reseñas negativas de clientes que no quedaron conformes.
-- El copy del sitio que prometía "envío automático a las 2h" debe actualizarse para reflejar esta decisión — tarea pendiente de alineación web.
-
-## Componentes del Panel (src/components/panel/)
-
-### `PanelNav.tsx`
-- Navegación principal del panel con sidebar.
-- Fondo `#0a0807`, links en `font-mono`, uppercase.
-- Estado activo: borde izquierdo naranja + fondo `#131110`.
-
-### `ClientesTabs.tsx`
-- Gestión de clientes con tabs (activos/inactivos).
-- Muestra historial de visitas y datos del cliente.
-
-### `StaffManager.tsx`
-- Gestión de personal de la barbería (barberos).
-- CRUD de `BarberStaff`.
-
----
+- **Nuevo (2026-07-23):** La solicitud de reseña de Google **es automática según el rating que el propio cliente dio**.
+- **Rating = 5** → se dispara automáticamente el link de Google My Business vía `DelayedTask` tipo `SEND_GOOGLE_REVIEW`.
+- Guardia anti-duplicado: campo `firstReviewSent` en `BarberCustomer` (ya existe en schema).
+- **Rating < 5** → NO se envía link de Google. Se envía un mensaje solicitando comentario o recomendación (copy pendiente de redacción).
+- **Máquina de estados nueva:** `IDLE → AWAITING_RATING → AWAITING_FEEDBACK → IDLE` (solo cuando rating < 5).
+- **Timeout de `AWAITING_FEEDBACK`:** recordatorio a las 4-5 horas dentro de horario aceptable Ecuador (hasta 8:00 pm). Si la ventana cae después de 8pm, posponer a la mañana siguiente. Tras el recordatorio sin respuesta, vuelve a `IDLE`.
+- **Nueva tabla `CustomerFeedback`:** `id`, `barbershopId`, `customerId`, `visitId` (opcional), `rating`, `message`, `createdAt`. Se consulta como parte del expediente del cliente — no es módulo ni pantalla nueva.
+- **Exclusividad del número telefónico:** el check-in ya corre sobre el WhatsApp Business de la barbería (`whatsappConnected`, vía Evolution API), no sobre el número personal del barbero. Ya está en producción.
 
 ## Sidebar del panel
 
@@ -139,6 +126,15 @@ Inventariar los componentes ya construidos y los pendientes, para que el desarro
 - Reemplaza el "Libro Diario" vacío.
 - Dashboard consume métricas reales en vivo de la BD PostgreSQL filtradas estrictamente por `barbershopId` de la sesión.
 - No incluye todavía predicción de churn ni LTV — eso pertenece a la Fase 2 (Premium).
+
+## `salesAgent` (Pendiente de desarrollo)
+
+- Campo existente en schema `Barbershop`.
+- Pendiente construir:
+  a) Lógica de cálculo de comisión sobre mensualidad excluyendo tokens IA.
+  b) Vista simple (panel) para el León de sus barberías activas e ingresos ($, no jerga).
+  c) Mecanismo de reasignación de código tras 15 días sin actividad.
+- *Nota:* Bloqueante antes de escalar a los 20 Leones.
 
 ---
 

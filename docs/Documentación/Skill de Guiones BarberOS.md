@@ -94,3 +94,11 @@ Secuencia obligatoria — una pregunta a la vez, anotar respuesta textual, no ad
    → Aquí, y solo aquí, se revela la oferta de socio fundador.
 
 Regla de oro: las preguntas 1-3 llevan reencuadre inmediato (Error 002 — nunca dejar una respuesta "no sé" sonando a acusación). La pregunta 4 rompe el patrón deliberadamente: no se alivia, se deja pesar.
+
+8. REGLAS DE RECLUTAMIENTO Y ESTRATEGIA LEONES (Enmienda 2026-07-24)
+
+- Piloto Loja Primero: La estrategia de Leones se valida exclusivamente en Loja antes de replicar en Cuenca u otra ciudad.
+- Techo Finito de 10 Leones: El canal de Leones es de apertura inicial y está acotado a 10 Leones en total. No es un canal de reclutamiento masivo o infinito.
+- Límite de Operación Manual: Máximo 3 Leones activos en simultáneo mientras las comisiones se lleven en Excel. Reclutar el León #4 requiere tener el panel de comisiones construido en código.
+- Regla Anti-Promesas Falsas de Reseñas: NUNCA prometer envío automático de reseña de Google en un plazo fijo (ej. "a las 2 horas"). Explicar el mecanismo real: "Si el cliente sale contento (5 estrellas), el sistema le pide la reseña de Google en el momento justo. Si no, te avisa a ti antes de que se publique nada."
+- Silencio Estratégico & Geotargeting: No hay pauta fría paga en ciudades donde haya un León activo. La pauta se activa recién en Horizonte 2/3 tras acumular prueba social visible en `/historias` y `/resenas`.

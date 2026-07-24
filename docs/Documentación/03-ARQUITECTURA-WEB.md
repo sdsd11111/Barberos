@@ -117,26 +117,6 @@ Quiero saber si realmente estoy construyendo un negocio.
 
 ---
 
-## Sitemap real implementado (2026-07-22)
-
-El sitio actual tiene 8 rutas públicas en `src/app/(public)/`:
-
-| URL | Página | Prioridad |
-|-----|--------|-----------|
-| `/` | Home/Inicio | 1.0 |
-| `/como-funciona` | Cómo Funciona | 0.8 |
-| `/precios` | Precios | 0.8 |
-| `/historias` | Historias de Barberías | 0.7 |
-| `/historias/[slug]` | Historias individuales (dynamic) | 0.6 |
-| `/login` | Magic Link Login | 0.5 |
-| `/resenas` | Reseñas Google | 0.5 |
-| `/acceso` | Acceso/Términos | 0.5 |
-| `/billing` | Facturación (Stripe) | 0.4 |
-
-> ✅ Las páginas `/resenas`, `/acceso` y `/billing` ya están documentadas en este archivo (páginas 4, 5 y 7 respectivamente).
-
----
-
 ## Objetivo SEO
 
 Posicionar BarberOS como la mejor respuesta para empresarios que buscan comprender mejor su barbería.
@@ -589,17 +569,17 @@ Quiero mi acceso a BarberOS.
 
 ## Debe contener
 
-Tres opciones de pago (mensual, anual, lifetime) y dos planes (Pro, Premium), mostrados con la misma jerarquía visual, sin uno "tachado" artificialmente:
+Tres opciones de pago (mensual, anual, lifetime) y dos planes (Pro, Premium), mostrados con precio tachado para el de lista y precio promocional destacado:
 
-- **BarberOS Pro** — Setup USD 50 (pago único) + USD 9.99/mes. Tokens IA opcionales: USD 5/mes. Incluye: check-in por WhatsApp, clientes, fidelización, dashboard, reportes, premios, Google Reviews (a discreción del barbero).
-- **BarberOS Premium** — Setup USD 50 (pago único) + USD 19.99/mes. Tokens IA opcionales: USD 5/mes. Incluye todo lo anterior + Motor de Conocimiento, IA especializada, recomendaciones, alertas inteligentes, consultor IA.
+- **BarberOS Pro** — Setup USD 100 (precio lista) / USD 50 (promoción visible) + USD 9.99/mes. Tokens IA opcionales: USD 5/mes. Incluye: check-in por WhatsApp, clientes, fidelización, dashboard, reportes, premios, Google Reviews (automático si rating = 5).
+- **BarberOS Premium** — Setup USD 100 (precio lista) / USD 50 (promoción visible) + USD 19.99/mes. Tokens IA opcionales: USD 5/mes. Incluye todo lo anterior + Motor de Conocimiento, IA especializada, recomendaciones, alertas inteligentes, consultor IA.
 - **Planes Anuales**: Pro USD 99/año, Premium USD 199/año.
 - **Planes Lifetime**: Pro USD 500, Premium USD 1000 (hasta 12 cuotas vía Payphone).
 - **Trial**: 15 días gratis sin tarjeta de crédito.
 
 Aclaración explícita de que el setup es pago único y la mensualidad es aparte — nunca combinarlos en una sola cifra ambigua tipo "$350/año".
 
-**FAQ de cambio de plan:** Al migrar de Pro a Premium, el dueño paga solo la diferencia de mensualidad (ambas tienen el mismo setup USD 50). No se cobra setup nuevamente.
+**FAQ de cambio de plan:** Al migrar de Pro a Premium, el dueño paga solo la diferencia de mensualidad (ambas tienen el mismo setup precio lista USD 100). No se cobra setup nuevamente si ya pagó.
 
 Una FAQ corta específica de precio (¿hay contrato de permanencia? ¿qué pasa si dejo de pagar la mensualidad? ¿el setup se repite si cambio de plan?).
 

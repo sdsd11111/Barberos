@@ -33,17 +33,17 @@ const PILOTOS = [
 ];
 
 export const metadata: Metadata = {
-  title: "Historias de Barberías — BarberOS en acción",
+  title: "Historias de Barberías — Casos de Éxito con BarberOS",
   description:
-    "Historias reales de barberías que cambiaron cómo gestionan su negocio con BarberOS. Antes y después, en sus propias palabras.",
+    "Casos de estudio y transformaciones reales de barberías piloto. Revisa el antes y después en la gestión de sus clientes.",
   openGraph: {
     title: "Historias de Barberías que usan BarberOS",
     description: "Casos reales, datos reales, transformaciones reales.",
     type: "website",
-    url: "https://barberos-rho-henna.vercel.app/historias",
+    url: "https://barberosplus.com/historias",
   },
   alternates: {
-    canonical: "https://barberos-rho-henna.vercel.app/historias",
+    canonical: "https://barberosplus.com/historias",
   },
 };
 
@@ -51,8 +51,8 @@ const breadcrumbSchema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Inicio", item: "https://barberos-rho-henna.vercel.app/" },
-    { "@type": "ListItem", position: 2, name: "Historias", item: "https://barberos-rho-henna.vercel.app/historias" },
+    { "@type": "ListItem", position: 1, name: "Inicio", item: "https://barberosplus.com/" },
+    { "@type": "ListItem", position: 2, name: "Historias", item: "https://barberosplus.com/historias" },
   ],
 };
 

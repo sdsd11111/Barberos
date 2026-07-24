@@ -4,6 +4,33 @@
 > **Regla:** Máximo 5 sesiones activas. Al llegar a la 6ª, el agente pregunta si puede comprimir y borrar las más antiguas.
 > **Lectura obligatoria:** Este archivo se lee al inicio de cada sesión, antes de cualquier acción.
 
+### Sesión 2026-07-24 — Sistema Auto-gestión de Reseñas + Ajuste de Precio Setup
+
+**Tareas completadas:**
+- [x] **Sistema automático de reseñas implementado:** Nueva tabla `CustomerFeedback` + `DelayedTask` en schema.prisma. Nuevo campo `firstReviewSent` en `BarberCustomer`.
+- [x] **Flujo de rating automático:** Rating = 5 → Google Review auto (via `DelayedTask` tipo `SEND_GOOGLE_REVIEW`); Rating < 5 → estado `AWAITING_FEEDBACK` + recordatorio a las 4-5h (ventana Ecuador hasta 8pm).
+- [x] **Cron de DelayedTasks creado:** `/api/cron/delayed-tasks` ejecuta cada 5 minutos, procesa `SEND_GOOGLE_REVIEW` y `SEND_FEEDBACK_REMINDER`.
+- [x] **Copy placeholders marcados:** `[PLACEHOLDER_FEEDBACK_REQUEST]` y `[PLACEHOLDER_FEEDBACK_REMINDER]` listos para reemplazo por César.
+- [x] **Campo `salesAgent` en Barbershop:** Agregado para trazabilidad de agentes de ventas (sin cálculo de comisión todavía).
+- [x] **Verificación WhatsApp Business:** Confirmado que el check-in y mensajes corren sobre el número de la barbería vía Evolution API, no número personal del barbero.
+
+**Decisión de negocio revertida:**
+- La decisión de la sesión 2026-07-22 ("reseñas a discreción del barbero") se revierte. Nueva regla: **automático basado en rating del cliente**.
+- Esto estaba documentado en CONTEXT.md y 13-COMPONENTES.md pero nunca se implementó — ahora sí.
+
+**Pendientes:**
+- [ ] **Copy definitivo de feedback:** César debe entregar el texto real para `[PLACEHOLDER_FEEDBACK_REQUEST]` y `[PLACEHOLDER_FEEDBACK_REMINDER]`.
+- [ ] **Migración de BD necesaria:** `prisma db push` para crear las nuevas tablas (`CustomerFeedback`, `DelayedTask`) y el nuevo campo (`firstReviewSent`).
+- [x] **Holdback de comisión:** Resuelto (sin holdback, comisión activa desde el primer pago). Documentado en `17-PROGRAMA-LEONES-FUNDADORES.md`.
+- [x] **Separación founder deal vs. precio completo:** Resuelto (Barbería Fundadora vs. León Fundador). Documentado en `17-PROGRAMA-LEONES-FUNDADORES.md`.
+- [ ] **Panel de comisiones para Leones:** Construcción técnica del panel de visualización y cálculo de comisiones. Bloqueante antes de escalar a los 20 Leones.
+- [ ] **Marketing Horizonte 1 (Salida):** Definir criterio numérico exacto de salida (ciudades, barberías activas).
+- [ ] **Relación ActivaQR vs BarberOS:** Aclarar la postura pública sobre la relación entre ambas marcas.
+- [ ] **Voceros Horizonte 3:** Definir quién más, aparte de César, puede hablar en nombre de la marca.
+- [ ] **Estrategia PR/Medios:** Redactar la estrategia concreta una vez cumplido el Horizonte 2.
+
+---
+
 ### Sesión 2026-07-22 — Reestructuración de Precios, Primer Lifetime Vendido, Push Notifications
 
 **Tareas completadas:**

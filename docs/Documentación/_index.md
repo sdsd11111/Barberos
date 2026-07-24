@@ -10,6 +10,9 @@ Este es el punto de acceso central a la base de conocimiento de BarberOS. Para o
 - [[02-ARQUITECTURA-ESTRATEGICA]] — **Arquitectura Estratégica**: Plan estratégico de negocio y objetivos macro del SaaS.
 - [[10-ROADMAP-COMERCIAL]] — **Roadmap Comercial**: Estrategia de penetración de mercado y adquisición de pilotos.
 - [[11-ROADMAP-SEO]] — **Roadmap SEO**: Estructura de indexación y optimización para captar tráfico orgánico de dueños de barbería.
+- [[17-PROGRAMA-LEONES-FUNDADORES]] — **Leones Fundadores**: Programa de distribución comercial sin pauta.
+- [[18-PLAN-ESTRATEGICO-MARKETING]] — **Plan Estratégico de Marketing**: Horizontes de posicionamiento y silencio estratégico.
+- [[Skill de Guiones BarberOS]] — **Skill de Guiones**: Reglas de tono, microhooks y protocolo de validación para piezas publicitarias y pitches.
 
 ## 💻 Arquitectura y Desarrollo Técnico (El Software)
 - [[03-ARQUITECTURA-WEB]] — **Arquitectura Web**: Estructura de páginas, sitemap y layouts del sitio y panel.

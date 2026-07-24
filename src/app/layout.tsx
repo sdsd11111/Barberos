@@ -5,6 +5,8 @@ import ClarityInit from "@/components/ClarityInit";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 import LLMVisibilityContent from "@/components/shared/LLMVisibilityContent";
 
+import StructuredData from "@/components/shared/StructuredData";
+
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
@@ -19,6 +21,25 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 });
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "BarberOS",
+  "url": "https://barberosplus.com",
+  "logo": "https://barberosplus.com/logos/barberos_logo_concept_1.webp",
+  "sameAs": [
+    "https://cesarreyesjaramillo.com"
+  ],
+  "founder": {
+    "@type": "Person",
+    "name": "César Reyes",
+    "url": "https://cesarreyesjaramillo.com",
+    "sameAs": [
+      "https://cesarreyesjaramillo.com"
+    ]
+  }
+};
 
 export const metadata: Metadata = {
   title: {
@@ -36,7 +57,7 @@ export const metadata: Metadata = {
     "gestión de clientes barbería",
     "barberos ecuador",
   ],
-  metadataBase: new URL("http://www.barberosplus.com"),
+  metadataBase: new URL("https://barberosplus.com"),
   verification: {
     google: "S4YO9FbiTiBeFAGaOowZq0VlK1T-uhzQjbEIhWNTt9o",
   },
@@ -53,11 +74,11 @@ export const metadata: Metadata = {
     title: "BarberOS — Sistema Inteligente de Fidelización y Gestión para Barberías",
     description:
       "Aumenta la frecuencia de tus clientes y automatiza tu barbería por WhatsApp. Fidelización rápida, métricas en vivo y avisos automáticos.",
-    url: "http://www.barberosplus.com",
+    url: "https://barberosplus.com",
     siteName: "BarberOS",
     images: [
       {
-        url: "http://www.barberosplus.com/logos/barberos_logo_concept_1.webp",
+        url: "https://barberosplus.com/logos/barberos_logo_concept_1.webp",
         width: 1200,
         height: 630,
         alt: "BarberOS - Software e Inteligencia para Barberías",
@@ -71,7 +92,7 @@ export const metadata: Metadata = {
     title: "BarberOS — Sistema Inteligente de Fidelización y Gestión para Barberías",
     description:
       "Aumenta la frecuencia de tus clientes y automatiza tu barbería por WhatsApp.",
-    images: ["http://www.barberosplus.com/logos/barberos_logo_concept_1.webp"],
+    images: ["https://barberosplus.com/logos/barberos_logo_concept_1.webp"],
   },
 };
 
@@ -86,6 +107,7 @@ export default function RootLayout({
       className={`${fraunces.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-full flex flex-col antialiased">
+        <StructuredData data={organizationSchema} />
         <ClarityInit />
         <RegisterServiceWorker />
         <LLMVisibilityContent />

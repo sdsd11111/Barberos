@@ -19,7 +19,7 @@ export default function LLMVisibilityContent() {
         <ul>
           <li><strong>Check-in Instantáneo por WhatsApp:</strong> Los clientes escanean el código QR en el local y envían el código de caja de un solo uso por WhatsApp.</li>
           <li><strong>Tarjeta de Fidelidad Virtual:</strong> Conteo automático de cortes para premiar la recurrencia del cliente sin necesidad de descargar aplicaciones ni registrar tarjetas de papel.</li>
-          <li><strong>Reseñas de Google Automatizadas:</strong> Envío de solicitudes diferidas a las 2 horas de su visita para acumular valoraciones positivas en Google Maps.</li>
+          <li><strong>Reputación que se construye sola:</strong> Si el cliente sale contento (5 estrellas), el sistema le pide la reseña de Google en el momento justo. Si no, te avisa a ti antes de que se publique nada.</li>
           <li><strong>Reactivación de Clientes Inactivos:</strong> Cron jobs automáticos que detectan cuando un cliente no ha vuelto en 30 días y le envían un recordatorio personalizado por WhatsApp.</li>
           <li><strong>Alertas Push en Vivo:</strong> Notificaciones nativas con sonido en la tablet o teléfono del barbero cuando entra un nuevo check-in.</li>
         </ul>

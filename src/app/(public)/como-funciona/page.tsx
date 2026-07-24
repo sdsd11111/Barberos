@@ -8,18 +8,18 @@ import StructuredData from "@/components/shared/StructuredData";
 // No publicar a producción sin aprobación explícita de César sobre este texto.
 
 export const metadata: Metadata = {
-  title: "Cómo funciona BarberOS — Fidelización automática para barberías",
+  title: "Cómo funciona BarberOS — Fidelización automática por WhatsApp",
   description:
-    "Sin usuarios ni contraseñas. Un link mágico por WhatsApp, un dashboard en tiempo real y mensajes automáticos de reactivación. Así funciona BarberOS.",
+    "Sin usuarios ni contraseñas. Un link mágico por WhatsApp, dashboard en tiempo real y avisos automáticos de reactivación para tu barbería.",
   openGraph: {
     title: "Cómo funciona BarberOS",
     description:
       "Dashboard real, link mágico, reactivación automática. Sin apps, sin complicaciones.",
     type: "website",
-    url: "https://barberos-rho-henna.vercel.app/como-funciona",
+    url: "https://barberosplus.com/como-funciona",
   },
   alternates: {
-    canonical: "https://barberos-rho-henna.vercel.app/como-funciona",
+    canonical: "https://barberosplus.com/como-funciona",
   },
 };
 

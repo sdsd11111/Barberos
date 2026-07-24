@@ -30,6 +30,8 @@ relacionado:
 
 Definir cómo se vende BarberOS, a qué precio, y con qué mecanismo de validación, sin contradecir lo que la página pública comunica.
 
+> **Aviso de Posicionamiento:** La adquisición comercial y las campañas públicas están supeditadas a la fase de Silencio Estratégico (Horizonte 1) definida en `18-PLAN-ESTRATEGICO-MARKETING.md`.
+
 ---
 
 # Principio rector
@@ -150,6 +152,82 @@ No se vende software. Se hacen preguntas que generan incomodidad y luego se ofre
 - ¿Cuánto dinero se fue por esa puerta este mes sin que lo notaras?
 
 Cierre de la solución, en una frase: *"No necesitas usuario ni contraseña. Con tu número de teléfono te llega un link mágico de WhatsApp. Adentro tienes un asistente al que le preguntas lo que quieras. No hay dashboards que aprender."*
+---
+
+## Checklist de campo completo (versión 2026-07-23)
+
+**Regla de oro:** el diagnóstico no se declara. Se parafrasea lo que ya salió de su boca. El filtro no es "¿quiere crecer?" — es "¿reconoce una zona de incertidumbre?", así esté conforme con el tamaño de su negocio.
+
+### Paso 0 — Apertura
+
+> *"¿Cómo te va con la barbería? ¿Cómo la llevas ahora mismo?"*
+> Escuchar sin dirigir. No corregir, no completar su frase.
+
+### Paso 1 — Cifra fantasma
+
+> *"¿Tienes idea de cuántos clientes reales tienes ahorita?"*
+
+| Respuesta | Lectura |
+|---|---|
+| Cifra exacta con seguridad | Posible exclusión — seguir al Paso 2 antes de descartar |
+| Cifra aproximada, dudando ("unos 200, creo") | "Creer no es lo mismo que saber" — anotar la palabra "creo" literal |
+| No tiene idea | Señal fuerte, seguir |
+
+### Paso 2 — Cruce con gastos fijos
+
+> *"¿Más o menos tienes calculado cuántos cortes necesitas al mes para cubrir arriendo, agua, luz, tu casa?"*
+> Si da cifra redonda sin desglose o duda → repreguntar:
+> *"¿Pero no tienes la cifra exacta, verdad? Y tampoco sabes exactamente cuántos clientes tienes, ¿no?"*
+> Este cruce de dos "no sé" en la misma respuesta es más fuerte que cada pregunta por separado.
+
+### Paso 3 — Creer vs. saber
+
+> *"De esos, ¿cuántos dirías que van a volver este mes?"*
+
+### Paso 4 — Fuga de clientela (si tiene barberos)
+
+4A: *"¿Cuál de tus barberos hace que más clientes regresen?"* (normalmente responde "se siente" — anotar literal)
+4B: *"Si mañana ese barbero se va, ¿esos clientes se quedan contigo o se van con él?"*
+Si duda o admite que se los lleva → mencionar que el sistema conserva la relación con la barbería, no con el número personal del barbero.
+
+### Paso 5 — La pregunta que no se suaviza
+
+> *"Este mes, ¿cuánto crees que se te fue por esa puerta sin que lo notaras?"*
+> Silencio de 2-3 segundos. No completar tú el silencio.
+
+### Paso 6 — Cierre
+
+Parafrasear sus propios "no sé" con sus palabras exactas, luego:
+> *"¿Vale la pena tener esas respuestas con certeza?"*
+
+### Regla de exclusión real (cuándo sí te vas sin insistir)
+
+Solo si se cumplen las DOS condiciones:
+1. Responde con seguridad y método real (verificable, no "porque los conozco") en Pasos 1-2-3-4, **y**
+2. Ante el Paso 5 responde con calma y cifra razonada, sin ponerse defensivo ni evasivo.
+
+Si se pone incómodo en el Paso 5 aunque haya "pasado" los anteriores, sigue habiendo grieta — insistir.
+
+### Matriz de avatar (una vez detectado el "no sé")
+
+| Señal en su lenguaje | Avatar |
+|---|---|
+| Arriendo, sueldos, sobrevivir el mes, "espero que llegue" | Avatar 1 (miedo a la ruina) |
+| Competencia, otras barberías, verse profesional, "el que tiene sistema manda" | Avatar 2 (rango/estatus) |
+| Ningún "no sé" real, tono tranquilo y verificable | Fuera — despedirse sin insistir |
+
+### Oferta fundador (si el precio detiene el cierre)
+
+Perdón del setup de $50 a cambio de: reseña real en Google + video-testimonio + uso mínimo 60 días. Presentarla como oferta activa desde el inicio para las primeras barberías de cada ciudad — nunca como concesión reactiva de último momento. Mismas condiciones que Loja (2026-07-22), documentado arriba en este mismo documento.
+---
+
+# Programa de Distribución vía Leones Fundadores
+
+Referencia: `17-PROGRAMA-LEONES-FUNDADORES.md`.
+
+El precio público de setup (USD 50) no cambia bajo ninguna circunstancia. El split de USD 25 para el León Fundador y USD 25 para la empresa es una operación interna, no un precio nuevo al público.
+
+El tier "Starter" privado sigue existiendo y es independiente de este programa — el León Fundador no lo ofrece por su cuenta, solo César lo negocia caso a caso.
 
 ---
 

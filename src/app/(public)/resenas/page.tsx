@@ -30,18 +30,18 @@ const RESENAS_PLACEHOLDER = [
 ];
 
 export const metadata: Metadata = {
-  title: "Reseñas — ¿Qué dicen las barberías que usan BarberOS?",
+  title: "Reseñas de BarberOS — Opiniones y Calificaciones Verificadas ⭐⭐⭐⭐⭐",
   description:
-    "Opiniones verificadas de barberías reales usando BarberOS. Calificaciones, testimonios y Google Reviews de los primeros pilotos.",
+    "Descubre las opiniones y testimonios reales de barberos en Ecuador que automatizaron su fidelización con BarberOS.",
   openGraph: {
     title: "Reseñas reales de BarberOS — Lo que dicen los barberos",
     description:
       "Descubre cómo barberos en Ecuador están aumentando la frecuencia de sus clientes y ordenando su caja con BarberOS.",
     type: "website",
-    url: "http://www.barberosplus.com/resenas",
+    url: "https://barberosplus.com/resenas",
     images: [
       {
-        url: "http://www.barberosplus.com/logos/barberos_logo_concept_1.webp",
+        url: "https://barberosplus.com/logos/barberos_logo_concept_1.webp",
         width: 1200,
         height: 630,
         alt: "BarberOS - Reseñas",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     ],
   },
   alternates: {
-    canonical: "http://www.barberosplus.com/resenas",
+    canonical: "https://barberosplus.com/resenas",
   },
 };
 

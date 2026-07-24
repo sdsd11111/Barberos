@@ -89,7 +89,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "article",
     },
     alternates: {
-      canonical: `https://barberos-rho-henna.vercel.app/historias/${slug}`,
+      canonical: `https://barberosplus.com/historias/${slug}`,
     },
   };
 }
@@ -116,7 +116,7 @@ export default async function HistoriaPage({ params }: Props) {
   const localBusinessSchema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `https://barberos-rho-henna.vercel.app/historias/${slug}`,
+    "@id": `https://barberosplus.com/historias/${slug}`,
     name: piloto.nombre,
     address: {
       "@type": "PostalAddress",

@@ -88,7 +88,7 @@ Toda funcionalidad del producto existe para sostener una de estas cuatro emocion
 - Plan Lifetime: USD 1000 (hasta 12 cuotas vía Payphone)
 - Trial: 15 días gratis sin tarjeta
 
-**Nota:** La solicitud de reseñas de Google **no es automática por defecto**. El barbero decide si el cliente salió satisfecho antes de aprobar el envío del mensaje de reseña. Esto evita reseñas negativas de clientes que no quedaron conformes.
+**Nota:** La solicitud de reseñas de Google **es automática según el rating que el cliente dio**. Si el cliente califica con 5 estrellas, se envía automáticamente el link de Google My Business. Si califica con menos de 5, el sistema envía un mensaje de solicitud de comentario o recomendación en lugar de solicitar una reseña pública. El barbero ya no tiene discrecionalidad sobre este flujo — el sistema decide según la calificación del propio cliente.
 
 ## BarberOS Enterprise
 
