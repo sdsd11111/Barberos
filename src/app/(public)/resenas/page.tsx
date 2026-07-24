@@ -34,13 +34,22 @@ export const metadata: Metadata = {
   description:
     "Opiniones verificadas de barberías reales usando BarberOS. Calificaciones, testimonios y Google Reviews de los primeros pilotos.",
   openGraph: {
-    title: "Reseñas de BarberOS",
-    description: "Lo que dicen los barberos que ya lo usan.",
+    title: "Reseñas reales de BarberOS — Lo que dicen los barberos",
+    description:
+      "Descubre cómo barberos en Ecuador están aumentando la frecuencia de sus clientes y ordenando su caja con BarberOS.",
     type: "website",
-    url: "https://barberos-rho-henna.vercel.app/resenas",
+    url: "http://www.barberosplus.com/resenas",
+    images: [
+      {
+        url: "http://www.barberosplus.com/logos/barberos_logo_concept_1.webp",
+        width: 1200,
+        height: 630,
+        alt: "BarberOS - Reseñas",
+      },
+    ],
   },
   alternates: {
-    canonical: "https://barberos-rho-henna.vercel.app/resenas",
+    canonical: "http://www.barberosplus.com/resenas",
   },
 };
 

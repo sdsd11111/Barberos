@@ -23,9 +23,24 @@ export const metadata: Metadata = {
     description:
       "Si no puedes responderlo... entonces no estás administrando una barbería. Estás adivinando.",
     type: "website",
-    url: "https://barberos-rho-henna.vercel.app/",
+    url: "http://www.barberosplus.com",
+    images: [
+      {
+        url: "http://www.barberosplus.com/logos/barberos_logo_concept_1.webp",
+        width: 1200,
+        height: 630,
+        alt: "BarberOS - Software e Inteligencia para Barberías",
+      },
+    ],
   },
-  alternates: { canonical: "https://barberos-rho-henna.vercel.app/" },
+  twitter: {
+    card: "summary_large_image",
+    title: "¿Cuántos clientes tiene realmente tu barbería?",
+    description:
+      "Si no puedes responderlo... entonces no estás administrando una barbería. Estás adivinando.",
+    images: ["http://www.barberosplus.com/logos/barberos_logo_concept_1.webp"],
+  },
+  alternates: { canonical: "http://www.barberosplus.com" },
   robots: { index: true, follow: true },
 };
 
