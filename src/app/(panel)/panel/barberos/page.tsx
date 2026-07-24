@@ -6,21 +6,21 @@ export default async function BarberosPage() {
   const session = await verifySession();
   const barbershopId = session.barbershopId;
 
-  // Obtener staff de la barbería
-  const staff = await prisma.barberStaff.findMany({
-    where: { barbershopId },
-    orderBy: { name: "asc" },
-  });
+  // Obtener staff y clientes simultáneamente en PARALELO
+  const [staff, customers] = await Promise.all([
+    prisma.barberStaff.findMany({
+      where: { barbershopId },
+      orderBy: { name: "asc" },
+    }),
+    prisma.barberCustomer.findMany({
+      where: { barbershopId },
+      select: { id: true, name: true, whatsapp: true },
+    }),
+  ]);
 
-  // Obtener todos los clientes de esta barbería
-  const customers = await prisma.barberCustomer.findMany({
-    where: { barbershopId },
-    select: { id: true, name: true, whatsapp: true },
-  });
   const customerMap = new Map(customers.map((c) => [c.id, c]));
   const customerIds = customers.map((c) => c.id);
 
-  // Obtener todas las visitas aprobadas con calificación
   const visits = await prisma.barberVisit.findMany({
     where: {
       customerId: { in: customerIds },

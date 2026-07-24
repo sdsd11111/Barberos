@@ -15,6 +15,7 @@ export default function VideoFundador() {
               src="https://activaqr-archivos.b-cdn.net/barberos/fundadores%20C%C3%A9sar.mp4"
               controls
               playsInline
+              preload="metadata"
               className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
             />
           </div>

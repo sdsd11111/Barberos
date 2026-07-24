@@ -153,6 +153,7 @@ export default function VideoFAQ({ label, title, subtitle, items }: VideoFAQProp
                 src={modalVideo.videoSrc}
                 controls
                 autoPlay
+                preload="metadata"
                 className="w-full h-full object-contain"
               />
             </div>

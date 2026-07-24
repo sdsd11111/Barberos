@@ -8,9 +8,41 @@ export default async function DashboardPage() {
   const session = await verifySession();
   const barbershopId = session.barbershopId;
 
-  const barbershop = await prisma.barbershop.findUnique({
-    where: { id: barbershopId },
+  const customers = await prisma.barberCustomer.findMany({
+    where: { barbershopId },
   });
+  const customerIds = customers.map((c) => c.id);
+
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Ejecutar las demás consultas en PARALELO
+  const [barbershop, cutsToday, newCustomersThisMonth, recentVisitsData] = await Promise.all([
+    prisma.barbershop.findUnique({
+      where: { id: barbershopId },
+    }),
+    prisma.barberVisit.count({
+      where: {
+        customerId: { in: customerIds },
+        status: "APPROVED",
+        createdAt: { gte: startOfDay },
+      },
+    }),
+    prisma.barberCustomer.count({
+      where: {
+        barbershopId,
+        lastVisitAt: { gte: startOfMonth },
+      },
+    }),
+    prisma.barberVisit.findMany({
+      where: {
+        customerId: { in: customerIds },
+        createdAt: { gte: startOfDay },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   if (!barbershop) {
     return (
@@ -20,41 +52,8 @@ export default async function DashboardPage() {
     );
   }
 
-  const customers = await prisma.barberCustomer.findMany({
-    where: { barbershopId },
-  });
-  const customerIds = customers.map((c) => c.id);
-
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  const cutsToday = await prisma.barberVisit.count({
-    where: {
-      customerId: { in: customerIds },
-      status: "APPROVED",
-      createdAt: { gte: startOfDay },
-    },
-  });
-
   const totalCustomers = customers.length;
-
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const newCustomersThisMonth = await prisma.barberCustomer.count({
-    where: {
-      barbershopId,
-      lastVisitAt: { gte: startOfMonth },
-    },
-  });
-
   const recurrentCustomers = customers.filter((c) => c.cutsCount >= 2).length;
-
-  const recentVisitsData = await prisma.barberVisit.findMany({
-    where: {
-      customerId: { in: customerIds },
-      createdAt: { gte: startOfDay },
-    },
-    orderBy: { createdAt: "desc" },
-  });
 
   const recentVisits = recentVisitsData.map((visit) => {
     const customer = customers.find((c) => c.id === visit.customerId);
