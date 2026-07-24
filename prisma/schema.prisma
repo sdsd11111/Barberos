@@ -21,6 +21,7 @@ model Barbershop {
   createdAt        DateTime       @default(now())
   loginPin         String         @default("") // PIN de acceso de 6 dígitos único
   currentBoxCode   String         @default("RV55") // Código de caja dinámico activo para check-ins
+  salesAgent       String?        // Nombre/código del vendedor o referido que trajo la cuenta
   staff            BarberStaff[]
   customers        BarberCustomer[]
   pushSubscriptions PushSubscription[]

@@ -12,14 +12,21 @@ import StructuredData from "@/components/shared/StructuredData";
 // - El tier económico privado ("Starter") NO aparece aquí bajo ninguna circunstancia.
 // - Referencia: 03-ARQUITECTURA-WEB.md — Página 6 / Precios.
 
+// Configuración de precios de Setup (Configurable para promociones)
+const PRICING_CONFIG = {
+  setupListPrice: Number(process.env.NEXT_PUBLIC_SETUP_LIST_PRICE) || 100,
+  setupPromoPrice: Number(process.env.NEXT_PUBLIC_SETUP_PROMO_PRICE) || 50,
+  isPromoActive: true,
+};
+
 export const metadata: Metadata = {
-  title: "Precios — BarberOS — Setup $50 + Prueba 15 días gratis",
+  title: "Precios — BarberOS — Setup $50 (Promo) + Prueba 15 días gratis",
   description:
-    "BarberOS Pro: Setup $50 + desde $9.99/mes o $500 lifetime. BarberOS Premium: Setup $50 + desde $19.99/mes o $1000 lifetime. Prueba 15 días gratis.",
+    "BarberOS Pro: Setup $50 (antes $100) + desde $9.99/mes o $500 lifetime. BarberOS Premium: Setup $50 (antes $100) + desde $19.99/mes o $1000 lifetime. Prueba 15 días gratis.",
   openGraph: {
     title: "Precios BarberOS — Sin ambigüedad",
     description:
-      "Setup único + mensualidad baja. Dos planes claros para barberías que quieren control real.",
+      "Setup único en promoción + mensualidad baja. Dos planes claros para barberías que quieren control real.",
     type: "website",
     url: "https://barberos-rho-henna.vercel.app/precios",
   },
@@ -49,7 +56,7 @@ const objecionesPrecio: FAQCard[] = [
     id: "03",
     pregunta: "¿El setup se repite si cambio de plan?",
     respuestaCorta:
-      "No. El setup es pago único por activación de tu barbería. Si migras de Pro a Premium, solo pagas la diferencia de mensualidad.",
+      "No. El setup promocional de USD 50 (precio regular USD 100) es un pago único por activación de tu barbería. Si migras de Pro a Premium, solo pagas la diferencia de mensualidad.",
     duracion: "00:30",
     videoSrc: "https://activaqr-archivos.b-cdn.net/barberos/%C2%BFEl%20setup%20se%20repite%20si%20cambio%20de%20plan.mp4",
   },
@@ -147,6 +154,8 @@ const faqSchema = {
   })),
 };
 
+const setupText = `Setup: USD $${PRICING_CONFIG.setupPromoPrice} (Promo)`;
+
 const planesPro = [
   {
     tipo: "Prueba 15 días",
@@ -162,7 +171,7 @@ const planesPro = [
       "Sistema de premios",
       "Integración Google Reviews",
     ],
-    nota: "Setup USD 50 al activar",
+    nota: "Setup regular USD 100 → Oferta USD 50 al activar",
     destacado: false,
     whatsapp: false,
   },
@@ -180,7 +189,7 @@ const planesPro = [
       "Sistema de premios",
       "Integración Google Reviews",
     ],
-    nota: "Setup USD 50 al activar",
+    nota: "Setup regular USD 100 → Oferta USD 50 al activar",
     destacado: false,
     whatsapp: false,
   },
@@ -198,7 +207,7 @@ const planesPro = [
       "Sistema de premios",
       "Integración Google Reviews",
     ],
-    nota: "Equivale a $8.25/mes + Setup USD 50",
+    nota: "Equivale a $8.25/mes + Setup regular USD 100 (Oferta $50)",
     destacado: false,
     whatsapp: false,
   },
@@ -206,14 +215,14 @@ const planesPro = [
     tipo: "Lifetime",
     precio: "$500",
     periodo: "pago único",
-    descripcion: "Acceso permanente sin mensalidades.",
+    descripcion: "Acceso permanente sin mensualidades.",
     incluye: [
       "Todo lo del plan Anual",
       "Actualizaciones gratis de por vida",
       "Sin costos mensuales",
       "Soporte por WhatsApp",
     ],
-    nota: "Setup USD 50 incluido. O hasta 12 cuotas sin intereses",
+    nota: "Setup USD 50 en oferta incluido. O hasta 12 cuotas sin intereses",
     destacado: true,
     whatsapp: true,
   },
@@ -233,7 +242,7 @@ const planesPremium = [
       "Alertas inteligentes",
       "Consultor IA 24/7",
     ],
-    nota: "+ USD 5/mes tokens IA. Setup USD 50 al activar",
+    nota: "+ USD 5/mes tokens IA. Setup regular USD 100 → Oferta USD 50",
     destacado: false,
     whatsapp: false,
   },
@@ -250,7 +259,7 @@ const planesPremium = [
       "Alertas inteligentes",
       "Consultor IA 24/7",
     ],
-    nota: "Equivale a $16.58/mes + tokens. Setup USD 50",
+    nota: "Equivale a $16.58/mes + tokens. Setup regular USD 100 (Oferta $50)",
     destacado: false,
     whatsapp: false,
   },
@@ -258,14 +267,14 @@ const planesPremium = [
     tipo: "Lifetime",
     precio: "$1000",
     periodo: "pago único",
-    descripcion: "Acceso permanente sin mensalidades.",
+    descripcion: "Acceso permanente sin mensualidades.",
     incluye: [
       "Todo lo del plan Anual",
       "Actualizaciones gratis de por vida",
       "Sin costos mensuales",
       "Soporte prioritario por WhatsApp",
     ],
-    nota: "Setup USD 50 incluido. Tokens IA 2 años. Hasta 12 cuotas",
+    nota: "Setup USD 50 en oferta incluido. Tokens IA 2 años. Hasta 12 cuotas",
     destacado: true,
     whatsapp: true,
   },
@@ -290,7 +299,8 @@ export default function PreciosPage() {
               <em className="not-italic text-[#d97644]">qué obtienes exactamente</em>.
             </h1>
             <p className="font-display italic text-xl text-[#a89e90] font-light max-w-xl leading-relaxed mb-8">
-              Setup de USD 50. Mensualidades bajas. Prueba 15 días gratis.
+              Setup: <span className="line-through text-[#5c554c]">USD 100</span>{" "}
+              <strong className="text-[#d97644] not-italic">USD 50 (Promoción activa)</strong>. Mensualidades bajas. Prueba 15 días gratis.
               Sin letra pequeña, sin cargos escondidos, sin permanencia.
             </p>
           </div>
@@ -492,7 +502,7 @@ export default function PreciosPage() {
 
           {/* Nota aclaratoria */}
           <p className="mt-12 font-mono text-xs text-[#5c554c] text-center tracking-wide">
-            Prueba 15 días gratis. Sin tarjeta, sin compromiso. El setup de USD 50 se paga solo cuando decides continuar.
+            Prueba 15 días gratis. Sin tarjeta, sin compromiso. El setup de activación promocional de USD 50 (precio regular <span className="line-through">USD 100</span>) se paga solo cuando decides continuar.
           </p>
         </div>
       </section>

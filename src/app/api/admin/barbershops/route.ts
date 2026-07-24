@@ -20,6 +20,7 @@ const CreateBarbershopSchema = z.object({
   whatsappNumber: z.string().min(1),
   requiredCuts: z.number().default(5),
   googleMapsUrl: z.string().optional(),
+  salesAgent: z.string().optional(),
 });
 
 // GET /api/admin/barbershops - Listar todas las barberías
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
         evolutionApiKey: "", // Se usará la global por defecto
         requiredCuts: data.requiredCuts,
         googleMapsUrl: data.googleMapsUrl || null,
+        salesAgent: data.salesAgent?.trim() || null,
         planStatus: "TRIAL",
         trialEndsAt,
         connectionStatus: "DISCONNECTED",
@@ -115,6 +117,7 @@ const UpdateBarbershopSchema = z.object({
   whatsappNumber: z.string().min(1).optional(),
   requiredCuts: z.number().optional(),
   googleMapsUrl: z.string().nullable().optional(),
+  salesAgent: z.string().nullable().optional(),
 });
 
 // PATCH /api/admin/barbershops - Cambiar planStatus manualmente o editar datos de la barbería
@@ -131,7 +134,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Datos inválidos", details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { barbershopId, planStatus, name, whatsappNumber, requiredCuts, googleMapsUrl } = parsed.data;
+    const { barbershopId, planStatus, name, whatsappNumber, requiredCuts, googleMapsUrl, salesAgent } = parsed.data;
 
     // Construir data de actualización de forma dinámica
     const updateData: any = {};
@@ -139,6 +142,7 @@ export async function PATCH(request: NextRequest) {
     if (name !== undefined) updateData.name = name;
     if (requiredCuts !== undefined) updateData.requiredCuts = requiredCuts;
     if (googleMapsUrl !== undefined) updateData.googleMapsUrl = googleMapsUrl;
+    if (salesAgent !== undefined) updateData.salesAgent = salesAgent;
     
     if (whatsappNumber !== undefined) {
       updateData.whatsappNumber = normalizeWhatsapp(whatsappNumber);

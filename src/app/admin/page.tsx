@@ -13,6 +13,7 @@ interface Barbershop {
   loginPin: string;
   googleMapsUrl: string | null;
   requiredCuts: number;
+  salesAgent: string | null;
 }
 
 export default function AdminDashboard() {
@@ -27,6 +28,7 @@ export default function AdminDashboard() {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [requiredCuts, setRequiredCuts] = useState(5);
   const [googleMapsUrl, setGoogleMapsUrl] = useState("");
+  const [salesAgent, setSalesAgent] = useState("");
 
   // Estado para la barbería en edición
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -34,6 +36,7 @@ export default function AdminDashboard() {
   const [editWhatsappNumber, setEditWhatsappNumber] = useState("");
   const [editRequiredCuts, setEditRequiredCuts] = useState(5);
   const [editGoogleMapsUrl, setEditGoogleMapsUrl] = useState("");
+  const [editSalesAgent, setEditSalesAgent] = useState("");
 
   // Éxito de creación reciente
   const [createdPin, setCreatedPin] = useState("");
@@ -94,6 +97,7 @@ export default function AdminDashboard() {
           whatsappNumber,
           requiredCuts: Number(requiredCuts),
           googleMapsUrl,
+          salesAgent: salesAgent.trim() || undefined,
         }),
       });
 
@@ -106,6 +110,7 @@ export default function AdminDashboard() {
         setName("");
         setWhatsappNumber("");
         setGoogleMapsUrl("");
+        setSalesAgent("");
         fetchBarbershops(adminSecret);
       } else {
         const errData = await response.json();
@@ -169,6 +174,7 @@ export default function AdminDashboard() {
     setEditWhatsappNumber(shop.whatsappNumber);
     setEditRequiredCuts(shop.requiredCuts);
     setEditGoogleMapsUrl(shop.googleMapsUrl || "");
+    setEditSalesAgent(shop.salesAgent || "");
   };
 
   const handleSaveEdit = async (barbershopId: string) => {
@@ -190,6 +196,7 @@ export default function AdminDashboard() {
           whatsappNumber: editWhatsappNumber,
           requiredCuts: Number(editRequiredCuts),
           googleMapsUrl: editGoogleMapsUrl.trim() || null,
+          salesAgent: editSalesAgent.trim() || null,
         }),
       });
 
@@ -335,6 +342,19 @@ export default function AdminDashboard() {
                 />
               </div>
 
+              <div>
+                <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">
+                  Vendedor / Referido por (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={salesAgent}
+                  onChange={(e) => setSalesAgent(e.target.value)}
+                  placeholder="Ej. Juan Pérez / Código Vendedor"
+                  className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                />
+              </div>
+
               <button
                 type="submit"
                 className="w-full py-3 font-mono text-xs tracking-[0.2em] uppercase text-[#0a0807] bg-[#d97644] hover:bg-[#e8854f] transition-colors pt-2"
@@ -359,6 +379,7 @@ export default function AdminDashboard() {
                       <th className="py-3">Barbería</th>
                       <th className="py-3">WhatsApp</th>
                       <th className="py-3">Código PIN</th>
+                      <th className="py-3">Vendedor</th>
                       <th className="py-3">Plan</th>
                       <th className="py-3">Vence</th>
                       <th className="py-3 text-right">Acciones</th>
@@ -370,7 +391,7 @@ export default function AdminDashboard() {
                         {editingId === shop.id ? (
                           <>
                             {/* Formulario Inline de Edición */}
-                            <td className="py-4" colSpan={5}>
+                            <td className="py-4" colSpan={6}>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[#0a0807] border border-[#2a2520]">
                                 <div>
                                   <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">Nombre</label>
@@ -400,6 +421,16 @@ export default function AdminDashboard() {
                                   />
                                 </div>
                                 <div>
+                                  <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">Vendedor / Referido</label>
+                                  <input
+                                    type="text"
+                                    value={editSalesAgent}
+                                    onChange={(e) => setEditSalesAgent(e.target.value)}
+                                    placeholder="Nombre del vendedor"
+                                    className="w-full px-2 py-1 font-mono text-xs bg-[#131110] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                                  />
+                                </div>
+                                <div className="sm:col-span-2">
                                   <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">Link Reseña Google</label>
                                   <input
                                     type="text"
@@ -446,6 +477,15 @@ export default function AdminDashboard() {
                             </td>
                             <td className="py-4">+{shop.whatsappNumber}</td>
                             <td className="py-4 font-mono font-bold text-amber-500">{shop.loginPin || "---"}</td>
+                            <td className="py-4 text-xs font-mono text-[#a89e90]">
+                              {shop.salesAgent ? (
+                                <span className="px-2 py-0.5 bg-[#2a2520] border border-[#3a3530] rounded text-[10px] text-[#d97644]">
+                                  👤 {shop.salesAgent}
+                                </span>
+                              ) : (
+                                <span className="text-[#5c554c] text-[10px]">Directo</span>
+                              )}
+                            </td>
                             <td className="py-4">
                               <span
                                 className={`px-2 py-0.5 rounded-full text-[10px] ${
