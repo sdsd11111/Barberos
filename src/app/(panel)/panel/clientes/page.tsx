@@ -23,6 +23,13 @@ export default async function ClientesPage({
 
   const customerIds = customers.map((c) => c.id);
 
+  // Obtener el equipo de la barbería para mapear los nombres de los profesionales
+  const staffList = await prisma.barberStaff.findMany({
+    where: { barbershopId },
+    select: { id: true, name: true },
+  });
+  const staffMap = new Map(staffList.map((s) => [s.id, s.name]));
+
   // Obtener todas las visitas aprobadas para calcular ratings y estadísticas
   const allVisits = await prisma.barberVisit.findMany({
     where: {
@@ -34,7 +41,7 @@ export default async function ClientesPage({
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // Enriquecer cada cliente con sus estadísticas
+  // Enriquecer cada cliente con sus estadísticas e historial detallado de visitas
   const enrichedCustomers = customers.map((customer) => {
     const visits = allVisits.filter((v) => v.customerId === customer.id);
     const approvedVisits = visits.filter((v) => v.status === "APPROVED");
@@ -49,6 +56,15 @@ export default async function ClientesPage({
       customer.lastVisitAt !== null && customer.lastVisitAt >= startOfMonth;
     const isRecurrent = customer.cutsCount >= 2;
 
+    const history = visits.map((v) => ({
+      id: v.id,
+      createdAt: v.createdAt.toISOString(),
+      status: v.status,
+      rating: v.rating,
+      comment: v.comment,
+      staffName: v.staffId ? staffMap.get(v.staffId) || "Profesional no encontrado" : null,
+    }));
+
     return {
       ...customer,
       avgRating,
@@ -56,6 +72,7 @@ export default async function ClientesPage({
       isNewThisMonth,
       isRecurrent,
       totalVisits: approvedVisits.length,
+      history,
     };
   });
 

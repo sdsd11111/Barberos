@@ -1,6 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+interface VisitHistoryItem {
+  id: string;
+  createdAt: string;
+  status: string;
+  rating: number | null;
+  comment: string | null;
+  staffName: string | null;
+}
 
 interface EnrichedCustomer {
   id: string;
@@ -8,12 +17,13 @@ interface EnrichedCustomer {
   name: string | null;
   cutsCount: number;
   sessionState: string;
-  lastVisitAt: Date | null;
-  lastReactivationSentAt: Date | null;
+  lastVisitAt: Date | string | null;
+  lastReactivationSentAt: Date | string | null;
   avgRating: number | null;
   isNewThisMonth: boolean;
   isRecurrent: boolean;
   totalVisits: number;
+  history: VisitHistoryItem[];
 }
 
 interface ClientesTabsProps {
@@ -73,12 +83,206 @@ function LoyaltyBar({
   );
 }
 
-function CustomerCard({
+function CustomerDetailModal({
   customer,
   requiredCuts,
+  onClose,
 }: {
   customer: EnrichedCustomer;
   requiredCuts: number;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  const cleanWhatsapp = customer.whatsapp.replace(/\D/g, "");
+  const waUrl = `https://wa.me/${cleanWhatsapp}`;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div
+        className="bg-[#131110] border border-[#2a2520] w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden rounded-sm relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header del Modal */}
+        <div className="p-6 border-b border-[#2a2520] flex items-start justify-between bg-[#0a0807]">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-display text-2xl font-light text-[#f3ece1]">
+                {customer.name || "Cliente Anónimo"}
+              </h3>
+              {customer.isNewThisMonth && (
+                <span className="px-2 py-0.5 bg-green-950/40 border border-green-800 text-green-400 font-mono text-[9px] uppercase tracking-wider">
+                  Nuevo
+                </span>
+              )}
+              {customer.isRecurrent && (
+                <span className="px-2 py-0.5 bg-[#d97644]/10 border border-[#d97644]/40 text-[#d97644] font-mono text-[9px] uppercase tracking-wider">
+                  Recurrente
+                </span>
+              )}
+            </div>
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-mono text-xs text-[#d97644] hover:underline"
+            >
+              <span>📱 +{customer.whatsapp}</span>
+              <span className="text-[10px] opacity-70">↗ WhatsApp</span>
+            </a>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="text-[#5c554c] hover:text-[#f3ece1] p-1 font-mono text-lg transition-colors"
+            title="Cerrar (Esc)"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Resumen rápido de estadísticas */}
+        <div className="grid grid-cols-3 gap-px bg-[#2a2520] border-b border-[#2a2520] text-center">
+          <div className="bg-[#0a0807] p-3">
+            <p className="font-display text-2xl font-light text-[#f3ece1]">
+              {customer.cutsCount}
+            </p>
+            <p className="font-mono text-[9px] uppercase text-[#5c554c] tracking-wider">
+              Cortes Totales
+            </p>
+          </div>
+          <div className="bg-[#0a0807] p-3">
+            <div className="flex items-center justify-center pt-0.5">
+              <StarRating rating={customer.avgRating} />
+            </div>
+            <p className="font-mono text-[9px] uppercase text-[#5c554c] tracking-wider mt-1">
+              Promedio Stars
+            </p>
+          </div>
+          <div className="bg-[#0a0807] p-3">
+            <p className="font-display text-2xl font-light text-[#f3ece1]">
+              {customer.totalVisits}
+            </p>
+            <p className="font-mono text-[9px] uppercase text-[#5c554c] tracking-wider">
+              Visitas Aprobadas
+            </p>
+          </div>
+        </div>
+
+        {/* Barra de Fidelidad */}
+        <div className="p-4 bg-[#0a0807]/50 border-b border-[#2a2520]">
+          <LoyaltyBar cutsCount={customer.cutsCount} requiredCuts={requiredCuts} />
+        </div>
+
+        {/* Contenido: Historial Cronológico de Visitas */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <p className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#5c554c]">
+            Historial de Visitas ({customer.history.length})
+          </p>
+
+          {customer.history.length === 0 ? (
+            <div className="text-center py-8 border border-[#2a2520] bg-[#0a0807]">
+              <p className="font-mono text-xs text-[#5c554c] italic">
+                No hay visitas registradas para este cliente aún.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {customer.history.map((v, index) => {
+                const dateFormatted = new Date(v.createdAt).toLocaleDateString("es-EC", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "America/Guayaquil",
+                });
+
+                return (
+                  <div
+                    key={v.id}
+                    className="bg-[#0a0807] border border-[#2a2520] p-4 space-y-2 hover:border-[#3a3530] transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 font-mono text-xs">
+                        <span className="text-[#d97644] font-bold">#{customer.history.length - index}</span>
+                        <span className="text-[#a89e90]">{dateFormatted}</span>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider rounded-full ${
+                          v.status === "APPROVED"
+                            ? "bg-green-950/40 text-green-400 border border-green-800"
+                            : v.status === "PENDING"
+                            ? "bg-amber-950/40 text-amber-400 border border-amber-800"
+                            : "bg-red-950/40 text-red-400 border border-red-800"
+                        }`}
+                      >
+                        {v.status}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[#1c1917]">
+                      {/* Barbero */}
+                      <div className="flex items-center gap-1.5 font-mono text-xs">
+                        <span className="text-[#5c554c]">✂️ Atendido por:</span>
+                        <span className="text-[#f3ece1] font-medium">
+                          {v.staffName || "Sin asignar"}
+                        </span>
+                      </div>
+
+                      {/* Calificación */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[10px] text-[#5c554c]">Calificación:</span>
+                        <StarRating rating={v.rating} />
+                      </div>
+                    </div>
+
+                    {/* Comentario si dejó feedback */}
+                    {v.comment && (
+                      <div className="mt-2 bg-[#131110] border border-[#2a2520] p-3 rounded-sm">
+                        <p className="font-mono text-[10px] text-[#5c554c] uppercase tracking-wider mb-1">
+                          💬 Comentario del cliente:
+                        </p>
+                        <p className="font-sans text-xs text-[#a89e90] italic">
+                          &quot;{v.comment}&quot;
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer del Modal */}
+        <div className="p-4 border-t border-[#2a2520] bg-[#0a0807] flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 font-mono text-xs tracking-widest uppercase bg-[#2a2520] text-[#f3ece1] hover:bg-[#3a3530] transition-colors rounded-sm"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CustomerCard({
+  customer,
+  requiredCuts,
+  onClick,
+}: {
+  customer: EnrichedCustomer;
+  requiredCuts: number;
+  onClick: () => void;
 }) {
   const lastVisitStr = customer.lastVisitAt
     ? new Date(customer.lastVisitAt).toLocaleDateString("es-EC", {
@@ -97,7 +301,10 @@ function CustomerCard({
     : null;
 
   return (
-    <div className="bg-[#131110] border border-[#2a2520] p-5 hover:border-[#d97644]/40 transition-colors group">
+    <div
+      onClick={onClick}
+      className="bg-[#131110] border border-[#2a2520] p-5 hover:border-[#d97644] transition-all cursor-pointer group hover:bg-[#181513] relative"
+    >
       {/* Header del cliente */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1 min-w-0">
@@ -169,6 +376,12 @@ function CustomerCard({
 
       {/* Barra de fidelidad */}
       <LoyaltyBar cutsCount={customer.cutsCount} requiredCuts={requiredCuts} />
+
+      {/* Indicador de ver historial */}
+      <div className="mt-3 pt-2 border-t border-[#2a2520]/50 flex justify-between items-center font-mono text-[9px] text-[#5c554c] group-hover:text-[#d97644] transition-colors">
+        <span>Ver historial completo</span>
+        <span>🔍 Ver detalle →</span>
+      </div>
     </div>
   );
 }
@@ -210,6 +423,7 @@ export default function ClientesTabs({
       ? initialTab
       : "todos") as "todos" | "nuevos" | "recurrentes"
   );
+  const [selectedCustomer, setSelectedCustomer] = useState<EnrichedCustomer | null>(null);
 
   const tabs = [
     {
@@ -267,7 +481,7 @@ export default function ClientesTabs({
       {filtered.length > 0 && (
         <div className="font-mono text-[10px] text-[#5c554c]">
           Mostrando <span className="text-[#f3ece1]">{filtered.length}</span>{" "}
-          {activeTab === "todos" ? "clientes" : activeTab === "nuevos" ? "clientes nuevos este mes" : "clientes recurrentes"}
+          {activeTab === "todos" ? "clientes" : activeTab === "nuevos" ? "clientes nuevos este mes" : "clientes recurrentes"} (haz clic en cualquiera para ver su historial)
         </div>
       )}
 
@@ -281,9 +495,19 @@ export default function ClientesTabs({
               key={customer.id}
               customer={customer}
               requiredCuts={requiredCuts}
+              onClick={() => setSelectedCustomer(customer)}
             />
           ))}
         </div>
+      )}
+
+      {/* Modal Desplegable de Historial */}
+      {selectedCustomer && (
+        <CustomerDetailModal
+          customer={selectedCustomer}
+          requiredCuts={requiredCuts}
+          onClose={() => setSelectedCustomer(null)}
+        />
       )}
     </div>
   );
