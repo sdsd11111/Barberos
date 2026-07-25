@@ -8,6 +8,7 @@ interface Barbershop {
   whatsappNumber: string;
   evolutionInstance: string;
   planStatus: string;
+  planType: string;
   trialEndsAt: string | null;
   createdAt: string;
   loginPin: string;
@@ -29,6 +30,7 @@ export default function AdminDashboard() {
   const [requiredCuts, setRequiredCuts] = useState(5);
   const [googleMapsUrl, setGoogleMapsUrl] = useState("");
   const [salesAgent, setSalesAgent] = useState("");
+  const [planType, setPlanType] = useState<"PRO" | "PREMIUM">("PRO");
 
   // Estado para la barbería en edición
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -98,6 +100,7 @@ export default function AdminDashboard() {
           requiredCuts: Number(requiredCuts),
           googleMapsUrl,
           salesAgent: salesAgent.trim() || undefined,
+          planType,
         }),
       });
 
@@ -139,6 +142,30 @@ export default function AdminDashboard() {
         fetchBarbershops(adminSecret);
       } else {
         alert("Error al cambiar estado.");
+      }
+    } catch {
+      alert("Error de conexión.");
+    }
+  };
+
+  const handleChangePlanType = async (barbershopId: string, newPlanType: "PRO" | "PREMIUM") => {
+    try {
+      const response = await fetch("/api/admin/barbershops", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminSecret}`,
+        },
+        body: JSON.stringify({
+          barbershopId,
+          planType: newPlanType,
+        }),
+      });
+
+      if (response.ok) {
+        fetchBarbershops(adminSecret);
+      } else {
+        alert("Error al cambiar el tipo de plan.");
       }
     } catch {
       alert("Error de conexión.");
@@ -344,6 +371,20 @@ export default function AdminDashboard() {
 
               <div>
                 <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">
+                  Tipo de Plan
+                </label>
+                <select
+                  value={planType}
+                  onChange={(e) => setPlanType(e.target.value as "PRO" | "PREMIUM")}
+                  className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                >
+                  <option value="PRO">⚡ BarberOS PRO (Estándar)</option>
+                  <option value="PREMIUM">👑 BarberOS PREMIUM (IA Avanzada)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">
                   Vendedor / Referido por (Opcional)
                 </label>
                 <input
@@ -486,18 +527,31 @@ export default function AdminDashboard() {
                                 <span className="text-[#5c554c] text-[10px]">Directo</span>
                               )}
                             </td>
-                            <td className="py-4">
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] ${
-                                  shop.planStatus === "ACTIVE"
-                                    ? "bg-green-950/40 text-green-400 border border-green-800"
-                                    : shop.planStatus === "TRIAL"
-                                    ? "bg-blue-950/40 text-blue-400 border border-blue-800"
-                                    : "bg-red-950/40 text-red-400 border border-red-800"
-                                }`}
-                              >
-                                {shop.planStatus}
-                              </span>
+                            <td className="py-4 space-y-1">
+                              <div className="flex items-center gap-1">
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] ${
+                                    shop.planStatus === "ACTIVE"
+                                      ? "bg-green-950/40 text-green-400 border border-green-800"
+                                      : shop.planStatus === "TRIAL"
+                                      ? "bg-blue-950/40 text-blue-400 border border-blue-800"
+                                      : "bg-red-950/40 text-red-400 border border-red-800"
+                                  }`}
+                                >
+                                  {shop.planStatus}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 mt-1">
+                                <span
+                                  className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono tracking-wider ${
+                                    shop.planType === "PREMIUM"
+                                      ? "bg-amber-500/20 text-amber-400 border border-amber-500/50"
+                                      : "bg-[#2a2520] text-[#a89e90] border border-[#3a3530]"
+                                  }`}
+                                >
+                                  {shop.planType === "PREMIUM" ? "👑 PREMIUM" : "⚡ PRO"}
+                                </span>
+                              </div>
                             </td>
                             <td className="py-4">
                               {shop.trialEndsAt
@@ -511,6 +565,23 @@ export default function AdminDashboard() {
                               >
                                 Editar
                               </button>
+                              {shop.planType === "PRO" ? (
+                                <button
+                                  onClick={() => handleChangePlanType(shop.id, "PREMIUM")}
+                                  className="px-2 py-1 bg-amber-950/40 text-amber-400 hover:bg-amber-800/50 border border-amber-700/60 rounded font-bold"
+                                  title="Pasar a Plan Premium"
+                                >
+                                  Hacer Premium
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleChangePlanType(shop.id, "PRO")}
+                                  className="px-2 py-1 bg-gray-900/60 text-gray-400 hover:bg-gray-800 border border-gray-700 rounded"
+                                  title="Pasar a Plan Pro"
+                                >
+                                  Bajar a Pro
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleChangeStatus(shop.id, "ACTIVE")}
                                 className="px-2 py-1 bg-green-900/20 text-green-500 hover:bg-green-900/40 border border-green-900/60 rounded"

@@ -21,6 +21,7 @@ const CreateBarbershopSchema = z.object({
   requiredCuts: z.number().default(5),
   googleMapsUrl: z.string().optional(),
   salesAgent: z.string().optional(),
+  planType: z.enum(["PRO", "PREMIUM"]).default("PRO"),
 });
 
 // GET /api/admin/barbershops - Listar todas las barberías
@@ -94,6 +95,7 @@ export async function POST(request: NextRequest) {
         googleMapsUrl: data.googleMapsUrl || null,
         salesAgent: data.salesAgent?.trim() || null,
         planStatus: "TRIAL",
+        planType: data.planType || "PRO",
         trialEndsAt,
         connectionStatus: "DISCONNECTED",
         loginPin,
@@ -113,6 +115,7 @@ export async function POST(request: NextRequest) {
 const UpdateBarbershopSchema = z.object({
   barbershopId: z.string().min(1),
   planStatus: z.enum(["TRIAL", "ACTIVE", "SUSPENDED"]).optional(),
+  planType: z.enum(["PRO", "PREMIUM"]).optional(),
   name: z.string().min(1).optional(),
   whatsappNumber: z.string().min(1).optional(),
   requiredCuts: z.number().optional(),
@@ -120,7 +123,7 @@ const UpdateBarbershopSchema = z.object({
   salesAgent: z.string().nullable().optional(),
 });
 
-// PATCH /api/admin/barbershops - Cambiar planStatus manualmente o editar datos de la barbería
+// PATCH /api/admin/barbershops - Cambiar planStatus/planType manualmente o editar datos de la barbería
 export async function PATCH(request: NextRequest) {
   if (!validateAdmin(request)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -134,11 +137,12 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Datos inválidos", details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { barbershopId, planStatus, name, whatsappNumber, requiredCuts, googleMapsUrl, salesAgent } = parsed.data;
+    const { barbershopId, planStatus, planType, name, whatsappNumber, requiredCuts, googleMapsUrl, salesAgent } = parsed.data;
 
     // Construir data de actualización de forma dinámica
     const updateData: any = {};
     if (planStatus !== undefined) updateData.planStatus = planStatus;
+    if (planType !== undefined) updateData.planType = planType;
     if (name !== undefined) updateData.name = name;
     if (requiredCuts !== undefined) updateData.requiredCuts = requiredCuts;
     if (googleMapsUrl !== undefined) updateData.googleMapsUrl = googleMapsUrl;

@@ -1,6 +1,7 @@
 import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import ClientesTabs from "@/components/panel/ClientesTabs";
+import ExportDataButton from "@/components/panel/ExportDataButton";
 
 export default async function ClientesPage({
   searchParams,
@@ -87,8 +88,11 @@ export default async function ClientesPage({
           </p>
           <h2 className="font-display text-4xl sm:text-5xl font-light">Clientes</h2>
         </div>
-        <div className="font-mono text-xs text-[#5c554c]">
-          {enrichedCustomers.length} clientes registrados
+        <div className="flex items-center gap-3">
+          <ExportDataButton variant="compact" />
+          <div className="font-mono text-xs text-[#5c554c]">
+            {enrichedCustomers.length} clientes registrados
+          </div>
         </div>
       </header>
 

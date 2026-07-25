@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import ApprovalQueue from "@/components/ApprovalQueue";
 import RegisterVisitButton from "@/components/RegisterVisitButton";
 import DownloadQRButton from "@/components/DownloadQRButton";
+import ExportDataButton from "@/components/panel/ExportDataButton";
 
 export default async function DashboardPage() {
   const session = await verifySession();
@@ -79,11 +80,14 @@ export default async function DashboardPage() {
             {barbershop.name}
           </h2>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 bg-[#d97644] rounded-full animate-pulse" />
-          <span className="font-mono text-xs text-[#d97644]">
-            {barbershop.connectionStatus === "CONNECTED" ? "Activo" : "Desconectado"}
-          </span>
+        <div className="flex items-center gap-3">
+          <ExportDataButton variant="compact" />
+          <div className="flex items-center gap-2 border-l border-[#2a2520] pl-3">
+            <span className="w-2 h-2 bg-[#d97644] rounded-full animate-pulse" />
+            <span className="font-mono text-xs text-[#d97644]">
+              {barbershop.connectionStatus === "CONNECTED" ? "Activo" : "Desconectado"}
+            </span>
+          </div>
         </div>
       </header>
 

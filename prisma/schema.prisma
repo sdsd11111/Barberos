@@ -15,6 +15,7 @@ model Barbershop {
   requiredCuts     Int            @default(5)
   googleMapsUrl    String?        @db.Text
   planStatus       String         @default("TRIAL")
+  planType         String         @default("PRO") // PRO o PREMIUM
   trialEndsAt      DateTime?
   connectionStatus String         @default("DISCONNECTED") // DISCONNECTED, CONNECTED, WAITING_QR
   whatsappConnected String?       // El número que realmente escaneó el código
