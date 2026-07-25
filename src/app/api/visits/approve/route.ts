@@ -70,12 +70,12 @@ export async function POST(request: NextRequest) {
 
     const { barbershop } = customer;
 
-    // Actualizar visita
+    // Actualizar visita (preservar staffId pre-asignado desde QR individual del barbero)
     await prisma.barberVisit.update({
       where: { id: visitId },
       data: {
         status: "APPROVED",
-        staffId: staffId ?? null,
+        staffId: staffId ?? visit.staffId ?? null,
       },
     });
 
@@ -85,7 +85,9 @@ export async function POST(request: NextRequest) {
       orderBy: { name: "asc" },
     });
 
-    const hasStaffOptions = staffMembers.length > 0 && !staffId;
+    // Si la visita ya tiene staffId (del QR individual del barbero), saltar pregunta de selección
+    const alreadyHasStaff = !!(staffId || visit.staffId);
+    const hasStaffOptions = staffMembers.length > 0 && !alreadyHasStaff;
     const nextState = hasStaffOptions ? "AWAITING_STAFF" : "AWAITING_RATING";
 
     // Actualizar cliente (incrementar cortes y pedir profesional o rating)
@@ -115,7 +117,14 @@ export async function POST(request: NextRequest) {
         .join("\n");
       message += `\n\nAntes de finalizar, ¿quién te atendió hoy?\n\n${optionsText}\n\nResponde con el nombre o número.`;
     } else {
-      message += `\n\nPor favor, responde del 1 al 5 para calificar la atención de hoy.`;
+      // Personalizar con el nombre del barbero si ya fue pre-asignado (QR individual)
+      const effectiveStaffId = staffId || visit.staffId;
+      const assignedStaff = effectiveStaffId
+        ? staffMembers.find((s) => s.id === effectiveStaffId)
+        : null;
+      message += assignedStaff
+        ? `\n\nPor último, del 1 al 5, ¿cómo calificas tu servicio con ${assignedStaff.name} hoy? ⭐`
+        : `\n\nPor favor, responde del 1 al 5 para calificar la atención de hoy.`;
     }
 
     await sendWhatsAppMessage({

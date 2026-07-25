@@ -132,7 +132,24 @@ async function processMessage(payload: WebhookPayload) {
       customer.sessionState = "IDLE";
     }
 
-    // Crear visita + regenerar código EN PARALELO (no dependen entre sí)
+    // Detectar si el mensaje incluye el nombre del barbero (QR individual)
+    // Formato esperado: "...Me atendió Carlos" o "...atendió Carlos"
+    let preAssignedStaffId: string | null = null;
+    const staffMatch = messageText.match(/atendi[oó]\s+(.+)/i);
+    if (staffMatch) {
+      const staffNameFromMsg = staffMatch[1].trim().replace(/[.,!?]+$/, "");
+      const staffMembers = await prisma.barberStaff.findMany({
+        where: { barbershopId: barbershop.id },
+      });
+      const matched = staffMembers.find((s) =>
+        staffNameFromMsg.toLowerCase().includes(s.name.toLowerCase())
+      );
+      if (matched) {
+        preAssignedStaffId = matched.id;
+      }
+    }
+
+    // Crear visita (con staffId pre-asignado si vino del QR del barbero) + regenerar código EN PARALELO
     const newCode = generateBoxCode();
     await Promise.all([
       prisma.barberVisit.create({
@@ -140,6 +157,7 @@ async function processMessage(payload: WebhookPayload) {
           customerId: customer.id,
           status: "PENDING",
           rating: null,
+          staffId: preAssignedStaffId,
         },
       }),
       prisma.barbershop.update({

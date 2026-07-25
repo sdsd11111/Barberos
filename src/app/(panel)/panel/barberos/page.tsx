@@ -6,21 +6,27 @@ export default async function BarberosPage() {
   const session = await verifySession();
   const barbershopId = session.barbershopId;
 
-  // Obtener staff y clientes simultáneamente en PARALELO
-  const [staff, customers] = await Promise.all([
-    prisma.barberStaff.findMany({
-      where: { barbershopId },
-      orderBy: { name: "asc" },
-    }),
-    prisma.barberCustomer.findMany({
-      where: { barbershopId },
-      select: { id: true, name: true, whatsapp: true },
-    }),
-  ]);
+  // Obtener datos de la barbería para generar QR individuales
+  const barbershop = await prisma.barbershop.findUnique({
+    where: { id: barbershopId },
+    select: { whatsappNumber: true, currentBoxCode: true },
+  });
 
+  // Obtener staff de la barbería
+  const staff = await prisma.barberStaff.findMany({
+    where: { barbershopId },
+    orderBy: { name: "asc" },
+  });
+
+  // Obtener todos los clientes de esta barbería
+  const customers = await prisma.barberCustomer.findMany({
+    where: { barbershopId },
+    select: { id: true, name: true, whatsapp: true },
+  });
   const customerMap = new Map(customers.map((c) => [c.id, c]));
   const customerIds = customers.map((c) => c.id);
 
+  // Obtener todas las visitas aprobadas con calificación
   const visits = await prisma.barberVisit.findMany({
     where: {
       customerId: { in: customerIds },
@@ -108,6 +114,8 @@ export default async function BarberosPage() {
         generalDistribution={generalDistribution}
         staffStats={staffStats}
         unassignedCount={unassignedCount}
+        whatsappNumber={barbershop?.whatsappNumber || ""}
+        currentBoxCode={barbershop?.currentBoxCode || ""}
       />
     </div>
   );

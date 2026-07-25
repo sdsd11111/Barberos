@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import DownloadQRButton from "@/components/DownloadQRButton";
 
 interface ReviewItem {
   id: string;
@@ -27,6 +28,15 @@ interface BarberosViewProps {
   generalDistribution: number[];
   staffStats: StaffStat[];
   unassignedCount: number;
+  whatsappNumber: string;
+  currentBoxCode: string;
+}
+
+function buildStaffQrUrl(whatsappNumber: string, boxCode: string, staffName: string) {
+  const message = `Hola, mi código de caja es ${boxCode}. Me atendió ${staffName}`;
+  return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
+    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
+  )}`;
 }
 
 function StarDisplay({ rating }: { rating: number }) {
@@ -55,7 +65,17 @@ function RatingBar({ stars, count, total }: { stars: number; count: number; tota
   );
 }
 
-function StaffCard({ staff, isSelected, onClick }: { staff: StaffStat; isSelected: boolean; onClick: () => void }) {
+function StaffCard({
+  staff,
+  isSelected,
+  onClick,
+  qrUrl,
+}: {
+  staff: StaffStat;
+  isSelected: boolean;
+  onClick: () => void;
+  qrUrl: string;
+}) {
   return (
     <button
       onClick={onClick}
@@ -65,30 +85,46 @@ function StaffCard({ staff, isSelected, onClick }: { staff: StaffStat; isSelecte
           : "bg-[#0a0807] border-[#2a2520] hover:border-[#3a3530]"
       }`}
     >
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-display text-lg font-light text-[#f3ece1]">{staff.name}</h4>
-        {staff.totalRatings > 0 && (
-          <span className="font-display text-2xl font-light text-[#d97644]">
-            {staff.avgRating.toFixed(1)}
-          </span>
-        )}
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] text-[#5c554c] uppercase tracking-wider">
-          {staff.role === "OWNER" ? "Dueño" : "Barbero"}
-        </span>
-        {staff.totalRatings > 0 ? (
-          <div className="flex items-center gap-2">
-            <StarDisplay rating={staff.avgRating} />
-            <span className="font-mono text-[10px] text-[#5c554c]">
-              ({staff.totalRatings})
-            </span>
+      <div className="flex items-start justify-between gap-3">
+        {/* Info del barbero */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-display text-lg font-light text-[#f3ece1]">{staff.name}</h4>
+            {staff.totalRatings > 0 && (
+              <span className="font-display text-2xl font-light text-[#d97644]">
+                {staff.avgRating.toFixed(1)}
+              </span>
+            )}
           </div>
-        ) : (
-          <span className="font-mono text-[10px] text-[#5c554c] italic">
-            Sin calificaciones aún
-          </span>
-        )}
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] text-[#5c554c] uppercase tracking-wider">
+              {staff.role === "OWNER" ? "Dueño" : "Barbero"}
+            </span>
+            {staff.totalRatings > 0 ? (
+              <div className="flex items-center gap-2">
+                <StarDisplay rating={staff.avgRating} />
+                <span className="font-mono text-[10px] text-[#5c554c]">
+                  ({staff.totalRatings})
+                </span>
+              </div>
+            ) : (
+              <span className="font-mono text-[10px] text-[#5c554c] italic">
+                Sin calificaciones aún
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* QR mini */}
+        <div className="shrink-0 bg-[#f3ece1] p-1 w-14 h-14 sm:w-16 sm:h-16">
+          <div
+            className="w-full h-full"
+            style={{
+              backgroundImage: `url('${qrUrl}')`,
+              backgroundSize: "cover",
+            }}
+          />
+        </div>
       </div>
     </button>
   );
@@ -100,6 +136,8 @@ export default function BarberosView({
   generalDistribution,
   staffStats,
   unassignedCount,
+  whatsappNumber,
+  currentBoxCode,
 }: BarberosViewProps) {
   const [selectedView, setSelectedView] = useState<"general" | string>("general");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState<number>(10);
@@ -148,6 +186,48 @@ export default function BarberosView({
           </button>
         ))}
       </div>
+
+      {/* QR individual del barbero seleccionado */}
+      {selectedStaff && whatsappNumber && (
+        <div className="bg-[#131110] border border-[#2a2520] p-6 flex flex-col sm:flex-row items-center gap-6">
+          <div className="flex flex-col items-center gap-3">
+            <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#5c554c]">
+              QR de {selectedStaff.name}
+            </p>
+            {(() => {
+              const qrUrl = buildStaffQrUrl(whatsappNumber, currentBoxCode, selectedStaff.name);
+              return (
+                <>
+                  <div className="bg-[#f3ece1] p-3 w-36 h-36 sm:w-44 sm:h-44">
+                    <div
+                      className="w-full h-full"
+                      style={{
+                        backgroundImage: `url('${qrUrl}')`,
+                        backgroundSize: "cover",
+                      }}
+                    />
+                  </div>
+                  <DownloadQRButton qrUrl={qrUrl} barbershopName={selectedStaff.name} />
+                </>
+              );
+            })()}
+          </div>
+          <div className="flex-1 space-y-2 text-center sm:text-left">
+            <p className="font-display text-lg text-[#f3ece1] font-light">
+              Código QR exclusivo de {selectedStaff.name}
+            </p>
+            <p className="font-mono text-xs text-[#a89e90] leading-relaxed">
+              El cliente escanea este QR y el sistema{" "}
+              <span className="text-[#d97644]">automáticamente sabe</span> que fue atendido por{" "}
+              <span className="text-[#f3ece1]">{selectedStaff.name}</span>, sin necesidad de
+              preguntarle por WhatsApp.
+            </p>
+            <p className="font-mono text-[10px] text-[#5c554c] mt-2">
+              Código de caja activo: <span className="text-[#d97644] font-bold">{currentBoxCode}</span> — se actualiza con cada check-in
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Panel principal de calificación */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -224,7 +304,7 @@ export default function BarberosView({
                       </div>
                       {rev.comment && (
                         <p className="font-sans text-xs text-[#a89e90] bg-[#0a0807] border border-[#2a2520] p-2.5 rounded-sm italic max-w-xl">
-                          "{rev.comment}"
+                          &quot;{rev.comment}&quot;
                         </p>
                       )}
                     </div>
@@ -273,6 +353,11 @@ export default function BarberosView({
                   staff={staff}
                   isSelected={false}
                   onClick={() => handleSelectTab(staff.id)}
+                  qrUrl={
+                    whatsappNumber
+                      ? buildStaffQrUrl(whatsappNumber, currentBoxCode, staff.name)
+                      : ""
+                  }
                 />
               ))}
           </div>

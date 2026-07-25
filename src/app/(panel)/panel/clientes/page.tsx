@@ -11,18 +11,19 @@ export default async function ClientesPage({
   const barbershopId = session.barbershopId;
   const { tab } = await searchParams;
 
-  const [barbershop, customers] = await Promise.all([
-    prisma.barbershop.findUnique({
-      where: { id: barbershopId },
-    }),
-    prisma.barberCustomer.findMany({
-      where: { barbershopId },
-      orderBy: { lastVisitAt: { sort: "desc", nulls: "last" } },
-    }),
-  ]);
+  const barbershop = await prisma.barbershop.findUnique({
+    where: { id: barbershopId },
+  });
+
+  // Obtener todos los clientes con datos completos
+  const customers = await prisma.barberCustomer.findMany({
+    where: { barbershopId },
+    orderBy: { lastVisitAt: { sort: "desc", nulls: "last" } },
+  });
 
   const customerIds = customers.map((c) => c.id);
 
+  // Obtener todas las visitas aprobadas para calcular ratings y estadísticas
   const allVisits = await prisma.barberVisit.findMany({
     where: {
       customerId: { in: customerIds },
