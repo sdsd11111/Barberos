@@ -53,14 +53,18 @@ Inventariar los componentes ya construidos y los pendientes, para que el desarro
 
 ## Sistema automático de reseñas post-calificación
 
-- **Nuevo (2026-07-23):** La solicitud de reseña de Google **es automática según el rating que el propio cliente dio**.
-- **Rating = 5** → se dispara automáticamente el link de Google My Business vía `DelayedTask` tipo `SEND_GOOGLE_REVIEW`.
-- Guardia anti-duplicado: campo `firstReviewSent` en `BarberCustomer` (ya existe en schema).
-- **Rating < 5** → NO se envía link de Google. Se envía un mensaje solicitando comentario o recomendación (copy pendiente de redacción).
-- **Máquina de estados nueva:** `IDLE → AWAITING_RATING → AWAITING_FEEDBACK → IDLE` (solo cuando rating < 5).
-- **Timeout de `AWAITING_FEEDBACK`:** recordatorio a las 4-5 horas dentro de horario aceptable Ecuador (hasta 8:00 pm). Si la ventana cae después de 8pm, posponer a la mañana siguiente. Tras el recordatorio sin respuesta, vuelve a `IDLE`.
-- **Nueva tabla `CustomerFeedback`:** `id`, `barbershopId`, `customerId`, `visitId` (opcional), `rating`, `message`, `createdAt`. Se consulta como parte del expediente del cliente — no es módulo ni pantalla nueva.
-- **Exclusividad del número telefónico:** el check-in ya corre sobre el WhatsApp Business de la barbería (`whatsappConnected`, vía Evolution API), no sobre el número personal del barbero. Ya está en producción.
+> ✅ **RE-CORRECCIÓN 2026-07-25 (segunda vuelta):** La corrección anterior de esta misma sesión fue excesiva. El estado `AWAITING_FEEDBACK` **SÍ está implementado** en el webhook (`route.ts` líneas 280-307 y 366-379). Confirmado por captura de WhatsApp real: un cliente calificó con 3, el sistema preguntó "qué podemos mejorar?", el cliente respondió y el sistema agradeció. Lo que **no existe** es la tabla `CustomerFeedback` y el recordatorio a las 4-5h.
+
+**Máquina de estados real — cotejo 2026-07-25:**
+- `IDLE → AWAITING_RATING → AWAITING_FEEDBACK → IDLE` — **implementada en el webhook.**
+- **Rating = 5** → envía link Google My Business inmediatamente + `firstReviewSent: true`. **Implementado.**
+- **Rating 1-4** → establece `sessionState: "AWAITING_FEEDBACK"`, solicita comentario escrito. El comentario se guarda en `BarberVisit.comment`. **Implementado.**
+- **Exclusividad del número telefónico:** el check-in ya corre sobre el WhatsApp Business de la barbería (`whatsappConnected`, vía Evolution API). Ya está en producción.
+
+**Lo que está PENDIENTE DE CONSTRUIR:**
+- **Tabla `CustomerFeedback`:** no existe en BD (confirmado por `information_schema` 2026-07-25). El feedback va a `BarberVisit.comment`. Se decide construir cuando haya necesidad de historial separado.
+- **Recordatorio/timeout a las 4-5h:** no implementado. El cliente que no responde simplemente queda en `AWAITING_FEEDBACK` hasta que envíe cualquier mensaje o haga un nuevo check-in.
+- **Cron separado `/api/cron/delayed-tasks`:** no existe. `DelayedTask` lo procesa el cron `reactivation` (10am diario).
 
 ## Sidebar del panel
 
@@ -119,7 +123,8 @@ Inventariar los componentes ya construidos y los pendientes, para que el desarro
 
 - No es un componente visual, es un job.
 - Envía el mensaje "Te extrañamos" a clientes con más de 30 días sin `lastVisitAt` actualizado.
-- Cron `/api/cron/reactivation` integrado con base de datos real en producción y Vercel Crons.
+- Cron `/api/cron/reactivation` integrado con BD real en producción y Vercel Crons (10am diario).
+- **Nota importante (cotejo 2026-07-25):** este mismo cron procesa también los `DelayedTask` pendientes (ej: envío de reseña Google). No existe un cron separado `/api/cron/delayed-tasks` ni un schedule de 5 minutos — todo lo hace el job de reactivación. El `vercel.json` tiene un único cron registrado.
 
 ## `MetricsDashboard` (Sprint 7) — **completado**
 

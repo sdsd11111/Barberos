@@ -26,6 +26,22 @@ export async function POST(request: NextRequest) {
 
     console.log(`[request-link] raw="${rawWhatsapp}" → normalizado="${whatsapp}"`);
 
+    // Rate limiter en MySQL: Max 3 solicitudes de enlace por número en 15 minutos
+    const { checkDbRateLimit } = await import("@/lib/rate-limit");
+    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const rateLimit = await checkDbRateLimit({
+      key: `auth:link:${whatsapp}:${ip}`,
+      maxAttempts: 3,
+      windowMs: 15 * 60 * 1000,
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: "Has solicitado demasiados enlaces de acceso. Por favor, espera 15 minutos." },
+        { status: 429 }
+      );
+    }
+
     // Buscar la barbería por el número de WhatsApp asociado
     const barbershop = await prisma.barbershop.findUnique({
       where: { whatsappNumber: whatsapp },

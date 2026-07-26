@@ -50,6 +50,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Las visitas anónimas (CF) no tienen customerId y no pueden rechazarse
+    if (!visit.customerId) {
+      return NextResponse.json(
+        { success: false, error: "Las visitas anónimas no pueden rechazarse" },
+        { status: 400 }
+      );
+    }
+
     // Obtener cliente y barbería
     const customer = await prisma.barberCustomer.findFirst({
       where: { 

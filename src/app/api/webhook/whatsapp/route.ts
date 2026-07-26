@@ -80,6 +80,7 @@ async function processMessage(payload: WebhookPayload) {
     },
     include: {
       barbershop: true,
+      profiles: true,
     },
   });
 
@@ -100,9 +101,17 @@ async function processMessage(payload: WebhookPayload) {
           name: pushName,
           cutsCount: 0,
           sessionState: "IDLE",
+          profiles: {
+            create: {
+              barbershopId: barbershop.id,
+              name: pushName || "Sin Nombre",
+              cutsCount: 0,
+            }
+          }
         },
         include: {
           barbershop: true,
+          profiles: true,
         },
       });
     } else if (!customer.name && pushName) {
@@ -110,8 +119,16 @@ async function processMessage(payload: WebhookPayload) {
       customer = await prisma.barberCustomer.update({
         where: { id: customer.id },
         data: { name: pushName },
-        include: { barbershop: true },
+        include: {
+          barbershop: true,
+          profiles: true,
+        },
       });
+    }
+
+    if (!customer) {
+      // Failsafe for TS
+      return NextResponse.json({ success: true });
     }
 
     // Si el cliente envía el código de caja, el check-in TIENE PRIORIDAD ABSOLUTA.
@@ -149,15 +166,30 @@ async function processMessage(payload: WebhookPayload) {
       }
     }
 
+    // Buscar perfil a usar
+    let profileIdToUse = customer.activeProfileId;
+    if (!profileIdToUse && customer.profiles && customer.profiles.length > 0) {
+      profileIdToUse = customer.profiles[0].id;
+      // Auto-reparar activeProfileId si estaba nulo
+      await prisma.barberCustomer.update({
+        where: { id: customer.id },
+        data: { activeProfileId: profileIdToUse }
+      });
+    }
+
     // Crear visita (con staffId pre-asignado si vino del QR del barbero) + regenerar código EN PARALELO
     const newCode = generateBoxCode();
     await Promise.all([
       prisma.barberVisit.create({
         data: {
           customerId: customer.id,
+          barbershopId: barbershop.id,   // Scoping multi-tenant explícito
+          profileId: profileIdToUse,     // <- INYECTADO AHORA
           status: "PENDING",
           rating: null,
           staffId: preAssignedStaffId,
+          checkinMethod: "SELF",           // El cliente se auto-identificó por su propio WhatsApp
+          visitHour: new Date().getHours(), // Franja horaria para análisis de capacidad
         },
       }),
       prisma.barbershop.update({
@@ -381,6 +413,20 @@ async function processMessage(payload: WebhookPayload) {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for") || "unknown";
+  
+  // Rate limit para Webhook: Max 120 llamadas por minuto por IP (protección contra inundaciones)
+  const { checkDbRateLimit } = await import("@/lib/rate-limit");
+  const rateLimit = await checkDbRateLimit({
+    key: `webhook:wa:${ip}`,
+    maxAttempts: 120,
+    windowMs: 60 * 1000,
+  });
+
+  if (!rateLimit.success) {
+    return NextResponse.json({ success: false, error: "Rate limit exceeded" }, { status: 429 });
+  }
+
   // Parsear el payload lo más rápido posible
   let payload: any;
   try {

@@ -27,7 +27,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const customerIds = pendingVisits.map((v) => v.customerId);
+    const customerIds = pendingVisits
+      .map((v) => v.customerId)
+      .filter((id): id is string => id !== null);
 
     // Obtener información de los clientes filtrados por barbería (seguridad multi-tenant)
     const customers = await prisma.barberCustomer.findMany({
@@ -42,7 +44,7 @@ export async function GET(request: NextRequest) {
     // Mapear resultados finales filtrando visitas que no pertenecen a esta barbería
     const results = pendingVisits
       .map((v) => {
-        const customer = customersMap.get(v.customerId);
+        const customer = v.customerId ? customersMap.get(v.customerId) : undefined;
         if (!customer) return null;
         return {
           id: v.id,

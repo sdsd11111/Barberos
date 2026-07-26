@@ -8,35 +8,32 @@ Este documento actúa como la **memoria de ejecución actual** del proyecto Barb
 ## 📌 Estado de Sprints & Fases
 
 ### Fase 0 — Validación (Completada)
-- **Next.js + Prisma + PostgreSQL**: Operando y configurado con Supabase (Transaction Pooler + Session Pooler).
+- **Next.js + Prisma + MySQL (cPanel/StackCP)**: Operando. *(Nota 2026-07-25: La BD de producción es MySQL via cPanel/StackCP, no Postgres/Supabase. La documentación previa mencionaba Supabase — el proyecto migró de Supabase a MySQL/cPanel en alguna etapa anterior; el driver actual es `@prisma/adapter-mariadb`. Prisma abstrae el motor, el código funciona igual.)*
 - **Check-in vía WhatsApp**: Totalmente funcional (`src/app/api/webhook/whatsapp/route.ts`).
   - Límite estricto de 24 horas por cliente.
   - Generación de visitas en estado `PENDING`.
   - Cola de aprobación en tiempo real (`ApprovalQueue`) mediante polling.
-  - Calificación post-servicio (1 a 5) y máquina de estados `IDLE → AWAITING_RATING → [AWAITING_FEEDBACK →] IDLE`. Si rating = 5 → envío automático de link Google. Si rating < 5 → estado `AWAITING_FEEDBACK` con recordatorio a las 4-5h (dentro de horario Ecuador hasta 8pm) y tabla `CustomerFeedback`.
+  - **Máquina de estados real (cotejo 2026-07-25):** `IDLE → AWAITING_RATING → AWAITING_FEEDBACK → IDLE`.
+    - Rating = 5 → envío inmediato de link Google My Business + `firstReviewSent: true`. **Implementado.**
+    - Rating < 5 → estado `AWAITING_FEEDBACK`, solicita comentario escrito. El comentario se guarda en `BarberVisit.comment`. **Implementado en el webhook.** Confirmado por captura de WhatsApp real (2026-07-25).
+    - **Lo que NO existe:** tabla `CustomerFeedback` separada (feedback va a `BarberVisit.comment`), recordatorio/timeout a las 4-5h, cron separado `delayed-tasks`. Estas piezas están pendientes.
 - **Magic Link de Acceso**: Backend y UI listos. Genera `MagicToken` de 15 minutos y se envía vía Evolution API.
 - **Seguridad y Aislamiento Multi-tenant (Sprint 5)**: 
   - ✅ **Completado**. Firma/lectura de JWT mediante la cookie `session` en `src/proxy.ts` y DAL (`src/lib/dal.ts`) para Server Components.
   - ✅ **Completado**. Integrado logout con Server Actions en el Layout del Panel.
 
 ### Fase 1 — Piloto (10 Barberías Fundadoras)
-- **Sprint 6 — Automatizaciones (Te extrañamos)**: ✅ **Completado**. Cron `/api/cron/reactivation` integrado con base de datos real en producción y Vercel Crons.
-- **Sprint 7 — Métricas Reales**: ✅ **Completado**. Dashboard consume métricas reales en vivo de la BD PostgreSQL filtradas estrictamente por `barbershopId` de la sesión.
+- **Sprint 6 — Automatizaciones (Te extrañamos)**: ✅ **Completado**. Cron `/api/cron/reactivation` integrado con BD real en producción y Vercel Crons (10am diario). Este mismo cron procesa `DelayedTask` pendientes.
+- **Sprint 7 — Métricas Reales**: ✅ **Completado**. Dashboard consume métricas reales en vivo de la BD MySQL filtradas estrictamente por `barbershopId` de la sesión.
 - **Sprint 8 — PWA Push Notifications**: ✅ **Completado** (2026-07-21). El panel es ahora una Progressive Web App instalable. Cuando un cliente hace check-in por WhatsApp, el servidor envía una notificación push nativa al celular del barbero aunque el panel esté cerrado.
   - Nuevo modelo `PushSubscription` en BD (barbershopId, endpoint, p256dh, auth).
   - Service Worker en `public/sw.js` con `requireInteraction: true`.
   - `PushNotificationManager.tsx` gestiona opt-in, registro de SW y sincronización de suscripción.
   - `src/lib/push.ts` centraliza el envío con auto-limpieza de endpoints 410 Gone.
   - `ApprovalQueue.tsx` se mantiene como fallback para cuando el panel está abierto.
-  - Nombre de WhatsApp (`pushName`) ahora se guarda al crear/actualizar clientes desde el webhook.
-- **Arquitectura de Avatares & Nueva Web**: 🔄 **En Progreso**. Sitemap de 7 páginas estructurado con SEO y JSON-LD. Pendiente de implementar la Dirección Cinematográfica de la Home (10 escenas) basada en el Avatar 1.
-- **Sistema automático de reseñas (2026-07-24)**: ✅ **Implementado**. Basado en rating del cliente:
-  - Rating = 5 → envío automático de link Google My Business (vía `DelayedTask` tipo `SEND_GOOGLE_REVIEW`).
-  - Rating < 5 → estado `AWAITING_FEEDBACK` con recordatorio a las 4-5h (ventana Ecuador hasta 8pm).
-  - Guardia anti-duplicado: campo `firstReviewSent` en `BarberCustomer`.
-  - Nueva tabla `CustomerFeedback` para historial (no sobrescribe).
-  - Nueva tabla `DelayedTask` para scheduling de tareas.
-  - Copy placeholders: `[PLACEHOLDER_FEEDBACK_REQUEST]` y `[PLACEHOLDER_FEEDBACK_REMINDER]` (pendiente César).
+- **Sistema de reseñas y feedback (cotejo 2026-07-25):**
+  - Rating = 5 → link Google My Business enviado de inmediato. **Implementado.**
+  - Rating < 5 → `AWAITING_FEEDBACK` + solicita comentario escrito → guarda en `BarberVisit.comment`. **Implementado.** (Sin recordatorio a las 4-5h todavía.)
 
 ### Fase 2 — BarberOS Premium
 - **Motor de Conocimiento (07)**: ❄️ **CONGELADO**. Cero código.

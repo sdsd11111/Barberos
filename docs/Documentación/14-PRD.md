@@ -127,3 +127,7 @@ Fuera de alcance de este PRD. Ver `15-PROYECTOS-Y-PROYECCIONES.md`.
 # Relación con el resto de la documentación
 
 Este PRD es el resumen ejecutable de los documentos 00 a 13. Cualquier cambio a las emociones, el alcance por versión o los criterios de éxito debe reflejarse también en `00-CONSTITUCION-BARBEROS.md` para mantener coherencia total del sistema documental.
+
+---
+
+**Aclaración de alcance (2026-07-25):** El desarrollo de Motor de Conocimiento + Director IA no se limita a resolver la deuda con los 2 clientes Premium actuales. BarberOS sigue en venta activa en paralelo a esta construcción — las decisiones de arquitectura (umbrales, modelo de cuentas/perfiles, checkinMethod) deben diseñarse pensando en escalar a múltiples barberías, no ajustarse manualmente por cliente.

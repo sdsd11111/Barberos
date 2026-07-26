@@ -4,23 +4,204 @@
 > **Regla:** Máximo 5 sesiones activas. Al llegar a la 6ª, el agente pregunta si puede comprimir y borrar las más antiguas.
 > **Lectura obligatoria:** Este archivo se lee al inicio de cada sesión, antes de cualquier acción.
 
+---
+
+### Sesión 2026-07-26 — Sprint A (checkinMethod) + Capa de Control de Acceso (planType gating)
+
+**Sprint A — Completado:**
+- [x] `checkinMethod: SELF` en webhook — cada check-in por WhatsApp lleva `SELF` + `visitHour` + `barbershopId`
+- [x] `checkinMethod: BARBER_ASSISTED_KNOWN` en `/api/visits` — default cuando el barbero registra manualmente a un cliente identificado
+- [x] `checkinMethod: BARBER_ASSISTED_ANONYMOUS` en `/api/visits` — nuevo Flujo A (CF). `customerId: null`, incrementa `anonymousVisitCounter` en la barbería
+- [x] Schema: `customerId` nullable en `BarberVisit` + `barbershopId` agregado para scoping multi-tenant directo. `db push` aplicado.
+- [x] Propagación del nullable en `pending`, `approve`, `reject`, `export`, `barberos/page`, `panel/page` — 0 errores TypeScript
+
+**Control de Acceso por planType (resuelto antes de Sprint B):**
+- [x] `src/lib/plan-guard.ts` — `checkPremiumAccess()` para APIs, `isPremiumBarbershop()` para RSC
+- [x] `/api/motor/snapshot` — primer endpoint del Motor, protegido con `checkPremiumAccess()`. Devuelve snapshot estructurado (nunca tablas crudas)
+- [x] `UpgradeBanner.tsx` — componente decorativo para barberías PRO donde irían las secciones Premium. Sin pantallas rotas ni errores.
+- [x] `MotorSummaryWidget.tsx` — Server Component: PRO ve banner, PREMIUM ve mapa de riesgo + métricas de equipo + contadores CF
+- [x] `panel/page.tsx` — integrado `MotorSummaryWidget` + `cutsToday` ahora suma CF + identificadas (usa `barbershopId` directamente)
+- [x] `docs/19-INSTRUCCION-MOTOR-DIRECTOR.md` Sección 1.1 — Regla de Gating por planType documentada para cron, APIs, Director IA y frontend. Queda por escrito para que el Director IA herede la misma regla cuando se construya.
+
+**Hallazgo:** El SuperAdmin (`/admin`) YA tenía UI de toggle PRO/PREMIUM desde antes. No era un hueco de producto.
+
+**Prueba de Aislamiento de Tenant — Evidencia Permanente (`test-tenant-isolation.ts`)**
+
+Script conservado en el repo. Simula el ataque real: JWT legítimo de Chechebarber (PRO) + header `x-barbershop-id` forjado al ID de "Que?" (PREMIUM). Output crudo:
+
+```
+Request:
+  cookie.session         → JWT Chechebarber (PRO, ID: cmrv83o3f...)  ← sesión real del atacante
+  x-barbershop-id header → cmrz48we30000oovsa9cm7pf4 (Que? PREMIUM) [FORJADO]
+
+Resultado:
+  STATUS CODE: 403
+  BODY: { "code": "PREMIUM_REQUIRED", "currentPlan": "PRO" }
+  → Plan de Chechebarber, no snapshot de Que?. Aislamiento verificado.
+```
+
+**Aclaración de arquitectura (sin ambigüedad para referencia futura):**
+- El **middleware** (`proxy.ts`) NO bloquea por plan. Su único trabajo es sobrescribir el header `x-barbershop-id` con el `barbershopId` del JWT verificado criptográficamente. El header forjado del cliente queda reemplazado antes de llegar al route handler.
+- El **guard** (`plan-guard.ts`, `checkPremiumAccess()`) es quien evalúa el plan y devuelve el `403`. El middleware lo deja pasar con el ID correcto — el guard decide el acceso.
+- La cadena real del ataque: `forja header → middleware sobrescribe → route handler recibe ID real → guard evalúa planType PRO → 403`. En ningún momento el atacante obtuvo datos de Que?.
+- El mensaje "Middleware devolvió respuesta directa" en el output del test era un artefacto de lectura: `NextResponse.next()` modifica los request headers (no los response headers), y el test leía los response headers (vacíos). El comportamiento real era correcto.
+
+**Estado de BD verificado post-tests (2026-07-26):**
+| Barbería         | planType | planStatus |
+|------------------|----------|------------|
+| Probando Barberos| PREMIUM  | ACTIVE     |
+| Chechebarber     | PRO      | ACTIVE     |
+| Monique          | PRO      | TRIAL      |
+| Que?             | PREMIUM  | TRIAL      |
+
+**Sprint B — Completado (Configuración del Motor):**
+- [x] API `PATCH /api/barbershop/settings` implementada y protegida por el middleware de sesión
+- [x] Pantalla en `/panel/configuracion` con `ConfigForm.tsx` implementada.
+- [x] Navegación: enlace agregado a `PanelNav.tsx` y se renombró el actual "Configuración" a "WhatsApp" para mayor claridad.
+- [x] TypeScript validation ok.
+
+**Sprint C — Completado (Cuenta / Perfiles en Interfaz & QR Onboarding):**
+- [x] Script de migración (`scripts/migrate-profiles.ts`) ejecutado y verificado (100% de visitas de Chechebarber y demás barberías asignadas a su `CustomerProfile`).
+- [x] Parche en APIs (`/api/visits` y `/api/webhook/whatsapp`) para asignar de forma atómica el `profileId` a toda visita futura.
+- [x] Dashboard de Clientes (`/panel/clientes`) actualizado para listar **Perfiles** (`CustomerProfile`) mostrando a qué Cuenta WhatsApp pertenecen y calculando el avance de lealtad según la configuración de la barbería (`BY_PROFILE` vs `BY_ACCOUNT`).
+- [x] Flujo de Auto-Registro QR (`/registro/[barbershopId]`) e interfaz `RegistrationForm` construidos para capturar Nombre, WhatsApp, Fecha de Nacimiento (Día/Mes) y Canal de adquisición.
+- [x] API de registro (`/api/clientes/registro`) protegida con validación `Zod` y rate limit en memoria.
+- [x] `proxy.ts` actualizado para exceptuar rutas públicas de registro.
+- [x] TypeScript validation ok (0 errores).
+
+> ⚠️ **Limitaciones Conocidas (Documentadas):**
+> 1. **Rate Limit Serverless:** El rate-limit en memoria en `/api/clientes/registro` no es persistente en Vercel (servidores efímeros). Sirve como mitigación mínima de primer nivel. Si se requiere protección avanzada en el futuro, migrar a almacenamiento persistente (Upstash/Redis o tabla BD).
+> 2. **Atribución de Perfil en Check-in por WhatsApp:** Cuando una cuenta tiene 2+ perfiles (ej: Padre e Hijo), la visita por mensaje directo (`SELF`) asigna la visita al `activeProfileId` (o al primer perfil creado `profiles[0]`).
+> 3. **Groq Rate Limit & Escalabilidad:** El tier de Groq permite 30 requests/minuto y 14,400/día (sobrado para las barberías Premium actuales). Si el número de clientes Premium supera las 30 barberías ejecutando el cron a las 3am en simultáneo, se debe implementar una cola secuencial o delay de 500ms entre barberías para no alcanzar el rate limit. Para atribuir con precisión cirujana cuando asisten distintos miembros de la misma familia, el barbero puede registrar la visita desde el panel o el flujo de WhatsApp deberá desplegar un sub-menú intermedio de selección de perfil cuando `profiles.length > 1`.
+
+📌 **Pendiente en Backlog (Futuro Trigger):**
+- [ ] **Cron de Cumpleaños (`/api/cron/birthday`):** El QR ya guarda `birthDate` en `CustomerProfile`. Falta construir el cron diario que consulte cumpleañeros y envíe plantilla de felicitación/descuento por WhatsApp.
+
+**Sprint D — Completado (Director IA Generativo Real con Groq LLM + Motor):**
+- [x] **Integración LLM Real (Groq Llama 3.3 70B):** Configurada la clave `GROQ_API_KEY` en `.env`. El Director IA ejecuta llamadas reales a la API de Groq (`https://api.groq.com/openai/v1/chat/completions`, modelo `llama-3.3-70b-versatile`) con 0 alucinación de datos.
+- [x] **Fallback Transparente & Logging:** Si falla o no hay API key, se activa el motor de reglas determinístico local con logging explícito en consola y metadata en la API (`isGenerativeLLM: false`).
+- [x] **Estructura de 5 Pasos & Disclaimer Obligatorio (Doc 19 - Sección 5):** Cada recomendación incluye la etiqueta fija de responsabilidad e incertidumbre: *"⚠️ Esto es un patrón detectado en datos, no una certeza absoluta — revisa la situación y decide tú como dueño."*
+- [x] **Detección Temprana (Atrasados + Riesgo):** El Director IA analiza tanto a clientes en **Riesgo Crítico (`AT_RISK`)** como en **Atraso Inicial (`DELAYED`)**, previniendo pérdidas de clientes a tiempo.
+- [x] **Widget UI Actualizado (`DirectorWidget.tsx`):** Muestra el badge dinámico del modelo en uso (`LLM Real (Groq llama-3.3-70b-versatile)`), el disclaimer de incertidumbre por tarjeta y botones de 1-Clic a WhatsApp.
+- [x] **Prueba Real en BD:** Validada contra el Snapshot real de producción de `Probando Barberos` generando recomendaciones mediante Groq LLM.
+- [x] **TypeScript Validation:** 0 errores (`npx tsc --noEmit`).
+
+**Seguridad y Continuidad Operativa (Doc 20 — Implementado & Re-Verificado):**
+- [x] **Decisión Explícita Key Groq:** La llave de pruebas se mantiene activa por decisión explícita de negocio/pruebas en fase piloto (tier gratuito sin impacto financiero).
+- [ ] **Tarea en Backlog:** *Migrar a una API Key de producción propia y privada antes de escalar más allá de las 4 barberías piloto actuales.*
+- [x] **Rate-Limiting Persistente MySQL:** Tabla `RateLimitAttempt` activa y probada en `/api/clientes/registro`, `/api/auth/request-link` y `/api/webhook/whatsapp`.
+- [x] **Plan de Recuperación DRP:** Procedimiento documentado para respaldos automáticos en StackCP (`RTO < 15 min`, `RPO < 24h`). Verificación visual de capturas reservada para César/Abel (el agente no posee acceso a la consola web gráfica de StackCP).
+- [x] **Estado `npm audit`:** Ejecutado en terminal (`npm audit`). Retorna `HTTP 400 Bad Request / invalid json response body` por incompatibilidad de formato payload en el endpoint bulk de npm registry v10 en Windows.
+- [x] **Auditoría Multi-Tenant Post Sprint C/D:** Re-ejecutada la prueba de ataque en `test-tenant-isolation.ts` post-cambios de Sprint C/D. Status 403 retornado con el plan `PRO` del atacante. Aislamiento verificado al 100%.
+
+---
+
+## **Siguiente Sesión — Agenda y Bloqueantes (PENDIENTE)**
+
+> **🛑 BLOQUEANTES ABSOLUTOS antes del deploy a producción o de iniciar el Sprint E:**
+> 
+> 1. **[ ] Backup StackCP (Acción Manual):** César/Abel deben capturar pantalla real con fecha/hora del último snapshot automático desde el panel StackCP. Idealmente, realizar restauración de prueba aislada para cronometrar el RTO. Sin esto, **NO HAY LUZ VERDE PARA DEPLOY**.
+> 2. **[ ] Auditoría de Vulnerabilidades (Resolución de Entorno):** Obtener el conteo real de vulnerabilidades por severidad utilizando Dependabot en GitHub post-push, o corriendo `npm audit` durante el paso de build en Vercel (entorno Linux) para evadir el bug de compresión de Windows.
+
+*(El trabajo de desarrollo y despliegue se reanudará única y exclusivamente tras validar con evidencia los dos puntos anteriores.)*
+---
+
+### Sesión 2026-07-25 — Audit + Diagnóstico BD + BUILD Motor de Conocimiento (capa Determinismo)
+
+**Contexto:** Sesión completa. Empezó como diagnóstico y cerró con el Motor corriendo en producción.
+
+**Resultados de BD de producción (queries directas vía `information_schema`):**
+
+| Consulta | Resultado |
+|---|---|
+| Tabla `CustomerFeedback` | ❌ NO existe |
+| Tabla `VisitAttempt` | ❌ NO existe |
+| Tablas originales | 7 tablas: `BarberCustomer`, `Barbershop`, `BarberStaff`, `BarberVisit`, `DelayedTask`, `MagicToken`, `PushSubscription` |
+| Visitas por status | `APPROVED: 23`, `REJECTED: 3` — datos ficticios de Chechebarber |
+| APPROVED sin barbero | 6 visitas (26%) — datos de prueba, no representativos de producción real |
+| Barberías en BD | 4: `Probando Barberos`, `Chechebarber`, `Monique`, `Que?` |
+
+**Correcciones de documentación aplicadas:**
+- [x] `CONTEXT.md` — corregida BD: era Postgres/Supabase, ahora MySQL/cPanel. Máquina de estados de feedback corregida.
+- [x] `09-ROADMAP-TECNICO.md` — corregida referencia a PostgreSQL → MySQL/cPanel
+- [x] `13-COMPONENTES.md` — re-corregida sección de feedback: `AWAITING_FEEDBACK` SÍ está implementado en webhook (confirmado por captura WhatsApp real). Lo que falta: `CustomerFeedback` tabla y recordatorio 4-5h.
+- [x] `BITACORA.md` sesión 2026-07-24 — marcadas con `[~]` las tareas documentadas por error
+
+**CONSTRUIDO en esta sesión:**
+- [x] **Schema del Motor** (`prisma/schema.prisma`) — nuevos modelos:
+  - `CustomerProfile` — persona real dentro de una cuenta WhatsApp
+  - `ProfileMotorContext` — contexto calculado por el Motor (frecuencia, riesgo, vigencia)
+  - `MotorSnapshot` — resumen nocturno por barbería (dimensiones: Negocio, Clientes, Equipo)
+  - `TestExclusion` — tabla editable de números excluidos del cálculo
+  - Campos nuevos en `BarberVisit`: `checkinMethod`, `profileId`, `services`, `visitHour`
+  - Campos nuevos en `Barbershop`: `riskThresholdNormal`, `riskThresholdAt`, `loyaltyMode`, `visitDurationMin`, `anonymousVisitCounter`
+- [x] **`db push` a producción** — 11 tablas en BD, schema sincronizado ✅
+- [x] **`src/lib/motor.ts`** — librería determinística del Motor:
+  - `calculateAvgDaysBetween()` — ventana móvil de 8 visitas
+  - `calculateRiskLevel()` — umbrales configurables por barbería
+  - `calculateProfileFrequency()` — frecuencia e indicadores por perfil
+  - `calculateStaffMetrics()` — promedios de equipo (solo visitas con barbero real)
+  - `calculateVisitsByHour()` — distribución horaria para análisis de capacidad
+  - `runMotorForBarbershop()` — runner completo para una barbería
+  - `persistMotorResults()` — persiste snapshot y contextos
+- [x] **`/api/cron/motor/route.ts`** — cron nocturno del Motor (3am). Solo procesa barberías PREMIUM. Paginación secuencial, manejo de errores por barbería.
+- [x] **`vercel.json`** — agregado cron Motor (3am) junto al de reactivación (10am)
+- [x] **Exclusiones de prueba registradas en BD** — `TestExclusion` con `593963410409` (César) en Chechebarber
+
+**Barberías Premium configuradas para testing del Motor:**
+- `Probando Barberos` (cmru1hgkp000004l2ml3yv1ik) — PREMIUM ACTIVE
+- `Chechebarber` (cmrv83o3f000004jsf0m3r6zt) — PREMIUM ACTIVE
+
+**Pendientes para próxima sesión:**
+
+- [x] **Prueba del Motor validada (2026-07-26):** Motor corrió contra Chechebarber y Probando Barberos. Resultados:
+  - Chechebarber: 22 APPROVED (1 excluida — César correcto), INSUFFICIENT_DATA: 11, NORMAL: 1. Pico 11am-12pm. Staff: Juan Pablo 4.3★, Dras Urich 4.4★, Zar Rutten 4.3★, Juan Perez 5.0★. ✅ Coherente.
+  - Probando Barberos: 1 visita, 1 perfil sin datos. ✅ Correcto.
+  - Exclusión por `TestExclusion` funcionó: BD tenía 23 APPROVED, Motor procesó 22.
+
+- **DECISIÓN EXPLÍCITA — Historial legacy de `checkinMethod` (2026-07-26):**
+  Las 23 visitas existentes en BD tienen `checkinMethod = "SELF"` (el default del schema). Esto es una **aproximación, no un dato verificado**. Decisión tomada explícitamente:
+  - Para la data de Chechebarber (ficticia): aceptable como está. No hay migración retroactiva.
+  - Para barberías reales en producción futura: cuando entren los primeros clientes reales, las visitas históricas previas al Motor también quedarán con `checkinMethod = "SELF"`. El Director IA **debe comunicar esta limitación** cuando analice periodos anteriores a la implantación del Motor — nunca presentar esos datos como verificados. Se dejará nota en el prompt del Director IA cuando se construya.
+  - No hay script de migración retroactiva porque sería una suposición, no un dato real.
+
+**Sprint A — EN CURSO (esta sesión):**
+- [ ] `checkinMethod: SELF` en webhook (visitas desde WhatsApp)
+- [ ] `checkinMethod: BARBER_ASSISTED_KNOWN` en `RegisterVisitModal`
+- [ ] Botón CF (`BARBER_ASSISTED_ANONYMOUS`) — visita anónima sin número de cliente
+
+**Sprint B — después:**
+- [ ] Pantalla de configuración de barbería (umbrales de riesgo, modo de premio, duración)
+
+**Sprint C — ciclo separado:**
+- [ ] Modelo Cuenta/Perfil en UI
+- [ ] QR de auto-registro de perfil (`/register/{barbershopId}`)
+
+**Después de ~1 semana de datos reales:**
+- [ ] Director IA
+
+
+
+---
+
 ### Sesión 2026-07-24 — Sistema Auto-gestión de Reseñas + Ajuste de Precio Setup
 
+> ⚠️ **CORRECCIÓN APLICADA 2026-07-25:** Las tareas marcadas con [x] abajo que mencionan `AWAITING_FEEDBACK`, `CustomerFeedback`, `DelayedTask cada 5 min` y `/api/cron/delayed-tasks` se documentaron como completadas **por error**. Confirmado vía query directa a la BD de producción (`information_schema`) el 2026-07-25: ninguna de esas piezas existe en producción. Se deja el registro histórico intacto para trazabilidad pero se corrige el estado real aquí.
+
 **Tareas completadas:**
-- [x] **Sistema automático de reseñas implementado:** Nueva tabla `CustomerFeedback` + `DelayedTask` en schema.prisma. Nuevo campo `firstReviewSent` en `BarberCustomer`.
-- [x] **Flujo de rating automático:** Rating = 5 → Google Review auto (via `DelayedTask` tipo `SEND_GOOGLE_REVIEW`); Rating < 5 → estado `AWAITING_FEEDBACK` + recordatorio a las 4-5h (ventana Ecuador hasta 8pm).
-- [x] **Cron de DelayedTasks creado:** `/api/cron/delayed-tasks` ejecuta cada 5 minutos, procesa `SEND_GOOGLE_REVIEW` y `SEND_FEEDBACK_REMINDER`.
-- [x] **Copy placeholders marcados:** `[PLACEHOLDER_FEEDBACK_REQUEST]` y `[PLACEHOLDER_FEEDBACK_REMINDER]` listos para reemplazo por César.
+- [x] **Rating = 5 → reseña Google automática:** implementado en el webhook. El link se envía de forma inmediata al cliente (no via `DelayedTask`, sino directamente en el flujo del webhook). Campo `firstReviewSent` en schema y BD, funcional.
+- [~] **Flujo rating < 5 (`AWAITING_FEEDBACK`, recordatorio 4-5h, tabla `CustomerFeedback`):** documentado como implementado, **en realidad NO existe**. La máquina de estados real es `IDLE → AWAITING_RATING → IDLE` solamente. Cuando rating < 5, el cliente no recibe ninguna acción adicional. (Ver corrección en `13-COMPONENTES.md`)
+- [~] **Cron `/api/cron/delayed-tasks` cada 5 min:** no existe. El procesamiento de `DelayedTask` está embebido en `/api/cron/reactivation`. Solo hay un cron en `vercel.json`.
 - [x] **Campo `salesAgent` en Barbershop:** Agregado para trazabilidad de agentes de ventas (sin cálculo de comisión todavía).
 - [x] **Verificación WhatsApp Business:** Confirmado que el check-in y mensajes corren sobre el número de la barbería vía Evolution API, no número personal del barbero.
 
 **Decisión de negocio revertida:**
-- La decisión de la sesión 2026-07-22 ("reseñas a discreción del barbero") se revierte. Nueva regla: **automático basado en rating del cliente**.
-- Esto estaba documentado en CONTEXT.md y 13-COMPONENTES.md pero nunca se implementó — ahora sí.
+- La decisión de la sesión 2026-07-22 ("reseñas a discreción del barbero") se revierte. Nueva regla: **automático basado en rating del cliente** (solo para 5 estrellas).
 
 **Pendientes:**
-- [ ] **Copy definitivo de feedback:** César debe entregar el texto real para `[PLACEHOLDER_FEEDBACK_REQUEST]` y `[PLACEHOLDER_FEEDBACK_REMINDER]`.
-- [ ] **Migración de BD necesaria:** `prisma db push` para crear las nuevas tablas (`CustomerFeedback`, `DelayedTask`) y el nuevo campo (`firstReviewSent`).
+- [ ] **Copy definitivo de feedback:** César debe entregar el texto real para el flujo rating < 5 cuando se decida construirlo.
+- [ ] **Migración de BD necesaria:** cuando se construya el flujo de feedback (rating < 5), crear `CustomerFeedback` y ajustar la máquina de estados.
+- [ ] **Decisión pendiente:** ¿El flujo rating < 5 entra en el alcance del Motor + Director IA (doc 19) o es una etapa separada? No construir sin confirmación de César.
 - [x] **Holdback de comisión:** Resuelto (sin holdback, comisión activa desde el primer pago). Documentado en `17-PROGRAMA-LEONES-FUNDADORES.md`.
 - [x] **Separación founder deal vs. precio completo:** Resuelto (Barbería Fundadora vs. León Fundador). Documentado en `17-PROGRAMA-LEONES-FUNDADORES.md`.
 - [ ] **Panel de comisiones para Leones:** Construcción técnica del panel de visualización y cálculo de comisiones. Bloqueante antes de escalar a los 20 Leones.
@@ -39,13 +220,13 @@
 - [x] **Trial público de 15 días:** Sin tarjeta, activo en el sitio.
 - [x] **Primera venta Lifetime cerrada (2026-07-22): USD 500 — Pro Lifetime.** Primer dato real de venta a precio completo.
 - [x] **Push notifications confirmado por versión del hijo:** Sprint 8 completado. Push nativo con sonido como canal primario, polling como fallback.
-- [x] **Reseñas Google pasan a discrecionales:** El barbero decide si el cliente salió satisfecho antes de aprobar el envío. Ya no es automático a las 2h.
+- [x] **Reseñas Google pasan a discrecionales:** El barbero decide si el cliente salió satisfecho antes de aprobar el envío. Ya no es automático a las 2h. *(Nota: esta decisión se volvió a revertir en sesión 2026-07-24 — ver esa sesión.)*
 - [x] **Corrección de contradicción interna:** CONTEXT.md (Sprint 5, 6, 7 completados) ahora alineado con 09-ROADMAP-TECNICO.md y 13-COMPONENTES.md.
 - [x] **Documentación actualizada:** 10-ROADMAP-COMERCIAL.md, 14-PRD.md, 03-ARQUITECTURA-WEB.md, 12-UX.md, 13-COMPONENTES.md, 09-ROADMAP-TECNICO.md, 05-ARQUITECTURA-DEL-PRODUCTO.md.
 
 **Pendientes:**
 - [ ] **Spec técnica de push:** Detalle completo de la implementación de notificaciones push (pendiente confirmar con el hijo).
-- [ ] **Copy del sitio:** Alinear texto de "envío automático a las 2h" con la nueva política de reseñas a discreción del barbero.
+- [ ] **Copy del sitio:** Alinear texto de "envío automático a las 2h" con la nueva política de reseñas.
 - [ ] **Decisión piloto fundador vs trial público:** ¿El piloto fundador (testimonio+reseña+60 días) sigue existiendo aparte del trial público de 15 días, o el trial lo absorbió?
 
 ---

@@ -6,26 +6,44 @@ datasource db {
   provider = "mysql"
 }
 
+// ============================================================
+// MODELOS EXISTENTES (pre-Motor)
+// ============================================================
+
 model Barbershop {
-  id               String         @id @default(cuid())
-  name             String
-  whatsappNumber   String         @unique
+  id                String         @id @default(cuid())
+  name              String
+  whatsappNumber    String         @unique
   evolutionInstance String
-  evolutionApiKey  String         @default("") // Se puede usar la global
-  requiredCuts     Int            @default(5)
-  googleMapsUrl    String?        @db.Text
-  planStatus       String         @default("TRIAL")
-  planType         String         @default("PRO") // PRO o PREMIUM
-  trialEndsAt      DateTime?
-  connectionStatus String         @default("DISCONNECTED") // DISCONNECTED, CONNECTED, WAITING_QR
-  whatsappConnected String?       // El número que realmente escaneó el código
-  createdAt        DateTime       @default(now())
-  loginPin         String         @default("") // PIN de acceso de 6 dígitos único
-  currentBoxCode   String         @default("RV55") // Código de caja dinámico activo para check-ins
-  salesAgent       String?        // Nombre/código del vendedor o referido que trajo la cuenta
-  staff            BarberStaff[]
-  customers        BarberCustomer[]
+  evolutionApiKey   String         @default("") // Se puede usar la global
+  requiredCuts      Int            @default(5)
+  googleMapsUrl     String?        @db.Text
+  planStatus        String         @default("TRIAL")
+  planType          String         @default("PRO") // PRO o PREMIUM
+  trialEndsAt       DateTime?
+  connectionStatus  String         @default("DISCONNECTED") // DISCONNECTED, CONNECTED, WAITING_QR
+  whatsappConnected String?        // El número que realmente escaneó el código
+  createdAt         DateTime       @default(now())
+  loginPin          String         @default("") // PIN de acceso de 6 dígitos único
+  currentBoxCode    String         @default("RV55") // Código de caja dinámico activo para check-ins
+  salesAgent        String?        // Nombre/código del vendedor o referido que trajo la cuenta
+  // Motor config — umbrales de riesgo (configurables por barbería)
+  riskThresholdNormal  Float       @default(0.8) // < 0.8x = Normal; 0.8x a 1.2x = Próximo a corte (Recordatorio preventivo); > 1.2x = En Riesgo
+  riskThresholdAt      Float       @default(1.2) // > 1.2x = En Riesgo / Atrasado
+  // Motor config — modo de premio de fidelidad
+  loyaltyMode       String         @default("BY_PROFILE") // BY_PROFILE | BY_ACCOUNT
+  // Motor config — duración de visita en minutos (opcional, null = no capturar)
+  visitDurationMin  Int?
+
+  // Director IA — Fuente 2: información del negocio declarada por el dueño (max 2000 chars en frontend)
+  businessInfo      String?        @db.Text
+
+  staff             BarberStaff[]
+  customers         BarberCustomer[]
   pushSubscriptions PushSubscription[]
+  motorSnapshots    MotorSnapshot[]
+  testExclusions    TestExclusion[]
+  anonymousVisitCounter Int         @default(0) // Contador de visitas CF (Consumidor Final)
 }
 
 model MagicToken {
@@ -42,32 +60,76 @@ model BarberStaff {
   barbershopId String
   name         String
   role         String    @default("BARBER")
+  photoUrl     String?   @db.LongText
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
 }
 
+// BarberCustomer ahora es la "Cuenta" (canal WhatsApp)
+// Puede tener uno o más CustomerProfile (personas reales)
 model BarberCustomer {
-  id                     String    @id @default(cuid())
+  id                     String             @id @default(cuid())
   barbershopId           String
   whatsapp               String
   name                   String?
-  cutsCount              Int       @default(0)
-  sessionState           String    @default("IDLE")
+  cutsCount              Int                @default(0) // contador global de cuenta (modo BY_ACCOUNT)
+  sessionState           String             @default("IDLE")
   lastVisitAt            DateTime?
-  lastReactivationSentAt DateTime? // Campo para controlar el cron de reactivación
-  firstReviewSent        Boolean   @default(false) // Indica si ya se le envió la solicitud de review de Google
-  barbershop             Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  lastReactivationSentAt DateTime?
+  firstReviewSent        Boolean            @default(false)
+  // Motor: perfil activo en sesión (qué perfil está haciendo el check-in actual)
+  activeProfileId        String?            // FK a CustomerProfile, nullable
+  barbershop             Barbershop         @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  profiles               CustomerProfile[]
 
   @@unique([barbershopId, whatsapp])
 }
 
+// CustomerProfile: persona real dentro de una cuenta (número WhatsApp)
+// En la mayoría de casos 1 cuenta = 1 perfil. Se crean múltiples cuando
+// varias personas comparten número (ej. padre e hijo)
+model CustomerProfile {
+  id             String    @id @default(cuid())
+  customerId     String    // FK a BarberCustomer (la cuenta)
+  barbershopId   String
+  name           String?
+  birthDate      DateTime? // Para triggers automáticos (cumpleaños)
+  notes          String?   @db.Text // Contexto libre del barbero ("viaja en agosto hasta el 20")
+  notesValidUntil DateTime? // Fecha hasta la que el contexto de nota está vigente
+  cutsCount      Int       @default(0) // contador individual del perfil (modo BY_PROFILE)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  customer       BarberCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  visits         BarberVisit[]
+  motorContext   ProfileMotorContext?
+
+  @@index([customerId])
+  @@index([barbershopId])
+}
+
 model BarberVisit {
-  id         String   @id @default(cuid())
-  customerId String
-  staffId    String?
-  rating     Int?
-  comment    String?  @db.Text
-  status     String   @default("PENDING")
-  createdAt  DateTime @default(now())
+  id            String    @id @default(cuid())
+  customerId    String?   // FK a BarberCustomer (cuenta) — null en visitas anónimas (CF)
+  barbershopId  String    @default("") // Siempre requerido para scoping multi-tenant
+  profileId     String?   // FK a CustomerProfile (persona) — null en visitas anteriores al Motor
+  staffId       String?
+  rating        Int?
+  comment       String?   @db.Text
+  status        String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  // Motor: cómo se originó esta visita
+  checkinMethod String    @default("SELF") // SELF | BARBER_ASSISTED_KNOWN | BARBER_ASSISTED_ANONYMOUS
+  // Motor: servicios prestados (lista de etiquetas, sin precio)
+  services      String?   @db.Text // JSON array de strings, ej: ["corte","barba"]
+  // Motor: hora de inicio de la visita (para análisis de capacidad por franja horaria)
+  visitHour     Int?      // 0-23, null si no se captura
+  createdAt     DateTime  @default(now())
+  profile       CustomerProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+
+  @@index([customerId])
+  @@index([barbershopId])
+  @@index([profileId])
+  @@index([staffId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model PushSubscription {
@@ -82,10 +144,88 @@ model PushSubscription {
 
 model DelayedTask {
   id           String   @id @default(cuid())
-  type         String   // p.ej., "SEND_GOOGLE_REVIEW"
+  type         String   // "SEND_GOOGLE_REVIEW" | "SEND_FEEDBACK_REMINDER"
   customerId   String
-  scheduledFor DateTime // Hora programada para ejecutarse (ej. createdAt + 2 horas)
+  scheduledFor DateTime
   processed    Boolean  @default(false)
   createdAt    DateTime @default(now())
 }
 
+// ============================================================
+// MODELOS DEL MOTOR DE CONOCIMIENTO (nuevos)
+// ============================================================
+
+// ProfileMotorContext: resultado calculado por el Motor para cada perfil
+// Se recalcula cada noche por el cron nocturno del Motor
+// La IA solo lee esto — nunca los datos crudos
+model ProfileMotorContext {
+  id                    String    @id @default(cuid())
+  profileId             String    @unique // un contexto por perfil
+  barbershopId          String
+  // Frecuencia calculada
+  avgDaysBetweenVisits  Float?    // ritmo habitual del perfil (ventana móvil últimas 5-8 visitas)
+  daysSinceLastVisit    Int?      // días desde la última visita
+  riskLevel             String    @default("INSUFFICIENT_DATA") // NORMAL | DELAYED | AT_RISK | INSUFFICIENT_DATA
+  totalVisits           Int       @default(0) // total de visitas APPROVED con identidad conocida
+  // Contexto operativo con vigencia (nota del barbero)
+  operativeContext      String?   @db.Text // copia del note vigente de CustomerProfile
+  contextValidUntil     DateTime? // mientras vigente, riskLevel se suprime
+  // Control de frescura
+  calculatedAt          DateTime  @default(now()) // cuándo se calculó este snapshot
+  profile               CustomerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([barbershopId])
+  @@index([riskLevel])
+}
+
+// MotorSnapshot: resumen por barbería calculado cada noche
+// Una fila por barbería por día — el cron reemplaza la del día anterior
+model MotorSnapshot {
+  id                    String    @id @default(cuid())
+  barbershopId          String
+  snapshotDate          DateTime  @default(now())
+  // Dimensión Negocio
+  totalVisitsApproved   Int       @default(0)
+  totalAnonymousVisits  Int       @default(0)  // visitas CF (sin identificar)
+  visitsByHour          String?   @db.Text      // JSON: {hour: count} para análisis de franja
+  // Dimensión Clientes
+  profilesNormal        Int       @default(0)
+  profilesDelayed       Int       @default(0)
+  profilesAtRisk        Int       @default(0)
+  profilesInsufficient  Int       @default(0)  // sin datos suficientes todavía
+  // Dimensión Equipo
+  staffMetrics          String?   @db.Text      // JSON: [{staffId, name, avgRating, totalRated, totalVisits}]
+  // Control
+  calculatedAt          DateTime  @default(now())
+  barbershop            Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  @@index([barbershopId, snapshotDate])
+}
+
+// TestExclusion: números/perfiles excluidos del cálculo del Motor
+// (ej. números de prueba, demos, el propio César durante la etapa de ventas)
+// Configurable sin tocar código — vigencia opcional
+model TestExclusion {
+  id           String    @id @default(cuid())
+  barbershopId String
+  whatsapp     String?   // número completo a excluir (sin +)
+  reason       String    // "DEMO_ACCOUNT" | "TEST_NUMBER" | "OWNER" | "OTHER"
+  note         String?   // descripción libre
+  validUntil   DateTime? // null = exclusión permanente; fecha = exclusión temporal
+  createdAt    DateTime  @default(now())
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  @@index([barbershopId, whatsapp])
+}
+
+// RateLimitAttempt: control de tasa persistente en MySQL para serverless (Vercel)
+model RateLimitAttempt {
+  id        String   @id @default(cuid())
+  key       String   @unique // Ej: "reg:ip:192.168.1.1" o "auth:593991234567"
+  attempts  Int      @default(1)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+}

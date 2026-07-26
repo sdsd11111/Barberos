@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/reactivation",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/motor",
+      "schedule": "0 12 * * *"
     }
   ]
 }

@@ -24,6 +24,7 @@ Este es el punto de acceso central a la base de conocimiento de BarberOS. Para o
 - [[13-COMPONENTES]] — **Biblioteca de Componentes**: Registro de componentes implementados (Fase 0) y pendientes (Sprints 5, 6, 7).
 - [[14-PRD]] — **Product Requirement Document (PRD)**: Requerimientos funcionales mínimos para el MVP comercial.
 - [[15-BRAND-KIT-BRIEFING]] — **Brand Kit Briefing**: Especificaciones y consolidación de la esencia visual de BarberOS para el diseñador gráfico (Manus).
+- [[20-SEGURIDAD-Y-CONTINUIDAD]] — **Seguridad y Continuidad**: Políticas de secretos, Rate-Limiting persistente en MySQL, aislamiento multi-tenant y Plan de Recuperación de BD (DRP).
 
 ## 🤖 Inteligencia y Futuro (Congelado hasta Fase 2)
 - [[07-MOTOR-DE-CONOCIMIENTO]] — **Motor de Conocimiento**: Lógica de almacenamiento semántico y procesamiento de eventos históricos.

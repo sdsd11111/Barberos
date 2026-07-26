@@ -4,6 +4,13 @@ import { z } from "zod";
 
 const CreateStaffSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
+  photoUrl: z.string().optional().nullable(),
+});
+
+const UpdateStaffSchema = z.object({
+  id: z.string().min(1, "ID es requerido"),
+  name: z.string().optional(),
+  photoUrl: z.string().optional().nullable(),
 });
 
 export async function GET(request: NextRequest) {
@@ -43,12 +50,42 @@ export async function POST(request: NextRequest) {
       data: {
         barbershopId,
         name: parsed.data.name,
+        photoUrl: parsed.data.photoUrl ?? null,
       },
     });
 
     return NextResponse.json(newStaff);
   } catch (error) {
     console.error("[POST /api/barbershop/staff] Error:", error);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const barbershopId = request.headers.get("x-barbershop-id");
+    if (!barbershopId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const parsed = UpdateStaffSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+    }
+
+    await prisma.barberStaff.updateMany({
+      where: { id: parsed.data.id, barbershopId },
+      data: {
+        ...(parsed.data.name ? { name: parsed.data.name } : {}),
+        ...(parsed.data.photoUrl !== undefined ? { photoUrl: parsed.data.photoUrl } : {}),
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[PUT /api/barbershop/staff] Error:", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

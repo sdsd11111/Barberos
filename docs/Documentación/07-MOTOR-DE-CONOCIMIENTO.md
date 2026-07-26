@@ -241,6 +241,10 @@ El contexto determina el significado.
 
 ---
 
+**Contexto operativo del barbero:** el contexto de un cliente no solo lo determina el negocio (ej. "30 días es normal o no"). También puede venir de una nota operativa vigente escrita por el barbero (ej. "está de vacaciones hasta tal fecha"), que modifica temporalmente cómo se interpreta su inactividad. Este contexto tiene fecha de vencimiento y se descarta automáticamente al expirar. Este dato es determinista y estructurado — no requiere interpretación de IA — y alimenta la supresión de alertas de abandono durante la ventana vigente.
+
+---
+
 # Tercera capa
 
 ## Patrones

@@ -52,13 +52,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Las visitas anónimas (CF) no tienen customerId y no pasan por aprobación
+    if (!visit.customerId) {
+      return NextResponse.json(
+        { success: false, error: "Las visitas anónimas se aprueban automáticamente" },
+        { status: 400 }
+      );
+    }
+
     // Obtener cliente y barbería (validando estrictamente que el cliente pertenezca a la barbería autenticada)
     const customer = await prisma.barberCustomer.findFirst({
       where: { 
         id: visit.customerId,
         barbershopId
       },
-      include: { barbershop: true },
     });
 
     if (!customer) {
@@ -68,7 +75,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { barbershop } = customer;
+    const barbershop = await prisma.barbershop.findUnique({
+      where: { id: customer.barbershopId },
+      include: { staff: true },
+    });
+
+    if (!barbershop) {
+      return NextResponse.json({ success: false, error: "Barbería no encontrada" }, { status: 404 });
+    }
 
     // Actualizar visita (preservar staffId pre-asignado desde QR individual del barbero)
     await prisma.barberVisit.update({

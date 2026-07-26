@@ -63,7 +63,7 @@ El roadmap técnico existe para evitar la tentación de construir el Motor de Co
 
 Ya completado:
 
-- Next.js + Prisma + PostgreSQL funcionando.
+- Next.js + Prisma + MySQL (cPanel/StackCP) funcionando. *(La BD de producción es MySQL via cPanel, no PostgreSQL/Supabase como indicaba documentación anterior. Migró en etapa previa. Driver actual: `@prisma/adapter-mariadb`. Prisma abstrae el motor.)*
 - Registro de corte vía panel.
 - Envío de WhatsApp automático vía Evolution API.
 - Barra de progreso Unicode.
@@ -118,3 +118,7 @@ Esta deuda se paga en el orden de las fases, nunca antes.
 # Relación con el resto de la documentación
 
 Este roadmap no autoriza nada por sí mismo. La autorización para avanzar de fase la da evidencia real de barberías usando el sistema, según el principio de la Constitución (documento 00).
+
+---
+
+**Aclaración de alcance (2026-07-25):** El desarrollo de Motor de Conocimiento + Director IA no se limita a resolver la deuda con los 2 clientes Premium actuales. BarberOS sigue en venta activa en paralelo a esta construcción — las decisiones de arquitectura (umbrales, modelo de cuentas/perfiles, checkinMethod) deben diseñarse pensando en escalar a múltiples barberías, no ajustarse manualmente por cliente.

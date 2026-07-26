@@ -20,6 +20,8 @@ export async function proxy(request: NextRequest) {
     pathname.includes("favicon") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/api/admin") ||
+    pathname.startsWith("/api/clientes/registro") ||
+    pathname.startsWith("/registro/") ||
     pathname.startsWith("/r/")
   ) {
     return NextResponse.next();

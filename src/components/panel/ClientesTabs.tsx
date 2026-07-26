@@ -15,10 +15,10 @@ interface EnrichedCustomer {
   id: string;
   whatsapp: string;
   name: string | null;
+  customerName: string | null;
   cutsCount: number;
   sessionState: string;
   lastVisitAt: Date | string | null;
-  lastReactivationSentAt: Date | string | null;
   avgRating: number | null;
   isNewThisMonth: boolean;
   isRecurrent: boolean;
@@ -30,6 +30,7 @@ interface ClientesTabsProps {
   customers: EnrichedCustomer[];
   initialTab: string;
   requiredCuts: number;
+  loyaltyMode: string;
 }
 
 function StarRating({ rating }: { rating: number | null }) {
@@ -114,7 +115,7 @@ function CustomerDetailModal({
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-display text-2xl font-light text-[#f3ece1]">
-                {customer.name || "Cliente Anónimo"}
+                {customer.name || "Perfil Sin Nombre"}
               </h3>
               {customer.isNewThisMonth && (
                 <span className="px-2 py-0.5 bg-green-950/40 border border-green-800 text-green-400 font-mono text-[9px] uppercase tracking-wider">
@@ -127,15 +128,26 @@ function CustomerDetailModal({
                 </span>
               )}
             </div>
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 font-mono text-xs text-[#d97644] hover:underline"
-            >
-              <span>📱 +{customer.whatsapp}</span>
-              <span className="text-[10px] opacity-70">↗ WhatsApp</span>
-            </a>
+            <div className="flex flex-col">
+              {customer.whatsapp && customer.whatsapp !== "CF" && customer.whatsapp !== "N/A" ? (
+                <a
+                  href={`https://wa.me/${customer.whatsapp.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-mono text-xs text-[#d97644] hover:underline"
+                >
+                  <span>📱 +{customer.whatsapp}</span>
+                  <span className="text-[10px] opacity-70">↗ WhatsApp</span>
+                </a>
+              ) : (
+                <span className="font-mono text-xs text-[#5c554c]">
+                  🛒 Consumidor Final (Sin WhatsApp)
+                </span>
+              )}
+              <span className="font-mono text-[10px] text-[#5c554c] mt-1">
+                Cuenta: {customer.customerName || "Sin Nombre"}
+              </span>
+            </div>
           </div>
 
           <button
@@ -309,13 +321,25 @@ function CustomerCard({
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1 min-w-0">
           <p className="font-display text-lg font-light text-[#f3ece1] truncate group-hover:text-[#d97644] transition-colors">
-            {customer.name || "Cliente Anónimo"}
+            {customer.name || "Perfil Sin Nombre"}
           </p>
-          <p className="font-mono text-xs text-[#5c554c] mt-0.5">
-            +{customer.whatsapp}
-          </p>
+          <div className="flex flex-col mt-0.5">
+            <p className="font-mono text-xs text-[#5c554c]">
+              {customer.whatsapp === "CF" || customer.whatsapp === "N/A"
+                ? "Consumidor Final (Sin WhatsApp)"
+                : `+${customer.whatsapp}`}
+            </p>
+            <p className="font-mono text-[9px] text-[#5c554c]/70 truncate uppercase">
+              {customer.customerName || "Cuenta sin nombre"}
+            </p>
+          </div>
         </div>
         <div className="flex flex-col items-end gap-1 ml-3 shrink-0">
+          {customer.cutsCount >= 8 && (
+            <span className="px-2 py-0.5 bg-amber-950/40 border border-amber-800 text-amber-400 font-mono text-[9px] uppercase tracking-wider font-bold">
+              ⭐⭐⭐⭐⭐ VIP
+            </span>
+          )}
           {customer.isNewThisMonth && (
             <span className="px-2 py-0.5 bg-green-950/40 border border-green-800 text-green-400 font-mono text-[9px] uppercase tracking-wider">
               Nuevo
@@ -324,6 +348,30 @@ function CustomerCard({
           {customer.isRecurrent && (
             <span className="px-2 py-0.5 bg-[#d97644]/10 border border-[#d97644]/40 text-[#d97644] font-mono text-[9px] uppercase tracking-wider">
               Recurrente
+            </span>
+          )}
+
+          {/* Semáforo de Actividad */}
+          {daysSinceVisit !== null ? (
+            daysSinceVisit < 30 ? (
+              <span className="px-2 py-0.5 bg-emerald-950/40 border border-emerald-800 text-emerald-400 font-mono text-[9px] uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                🟢 Activo
+              </span>
+            ) : daysSinceVisit <= 60 ? (
+              <span className="px-2 py-0.5 bg-amber-950/40 border border-amber-800 text-amber-400 font-mono text-[9px] uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
+                🟡 Hace {daysSinceVisit}d
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 bg-red-950/40 border border-red-800 text-red-400 font-mono text-[9px] uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse" />
+                🔴 +60d sin venir
+              </span>
+            )
+          ) : (
+            <span className="px-2 py-0.5 bg-[#1c1917] border border-[#2a2520] text-[#5c554c] font-mono text-[9px] uppercase tracking-wider">
+              Sin Visita
             </span>
           )}
         </div>
@@ -417,6 +465,7 @@ export default function ClientesTabs({
   customers,
   initialTab,
   requiredCuts,
+  loyaltyMode,
 }: ClientesTabsProps) {
   const [activeTab, setActiveTab] = useState<"todos" | "nuevos" | "recurrentes">(
     (["todos", "nuevos", "recurrentes"].includes(initialTab)

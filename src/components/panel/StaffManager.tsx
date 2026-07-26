@@ -1,18 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface StaffMember {
   id: string;
   name: string;
   role: string;
+  photoUrl?: string | null;
 }
 
 export default function StaffManager() {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [newName, setNewName] = useState("");
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchStaff = async () => {
     try {
@@ -32,6 +35,22 @@ export default function StaffManager() {
     fetchStaff();
   }, []);
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("La imagen es demasiado grande. Selecciona una imagen menor a 5MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
@@ -41,10 +60,15 @@ export default function StaffManager() {
       const res = await fetch("/api/barbershop/staff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim() }),
+        body: JSON.stringify({
+          name: newName.trim(),
+          photoUrl: photoPreview,
+        }),
       });
       if (res.ok) {
         setNewName("");
+        setPhotoPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
         await fetchStaff();
       }
     } catch (e) {
@@ -54,7 +78,28 @@ export default function StaffManager() {
     }
   };
 
+  const handleUpdatePhoto = async (id: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      try {
+        const res = await fetch("/api/barbershop/staff", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, photoUrl: base64 }),
+        });
+        if (res.ok) {
+          fetchStaff();
+        }
+      } catch (e) {
+        console.error("Error actualizando foto:", e);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleDeleteStaff = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar a este barbero?")) return;
     try {
       const res = await fetch(`/api/barbershop/staff?id=${id}`, {
         method: "DELETE",
@@ -74,26 +119,58 @@ export default function StaffManager() {
           Equipo de Trabajo / Profesionales
         </span>
         <p className="font-mono text-xs text-[#a89e90] mt-1">
-          Agrega a las personas que atienden en tu establecimiento para que tus clientes puedan seleccionarlos al calificar por WhatsApp.
+          Agrega a las personas que atienden en tu establecimiento y sube su fotografía. Tus clientes los seleccionarán al calificar o agendar.
         </p>
       </div>
 
       {/* Formulario para agregar */}
-      <form onSubmit={handleAddStaff} className="flex gap-3">
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="Nombre del profesional (ej: Carlos, Juan)"
-          className="flex-1 bg-[#0a0807] border border-[#2a2520] px-4 py-2.5 font-mono text-xs text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
-        />
-        <button
-          type="submit"
-          disabled={submitting || !newName.trim()}
-          className="px-5 py-2.5 font-mono text-xs tracking-widest uppercase bg-[#d97644] text-[#0a0807] hover:bg-[#e8854f] transition-all disabled:opacity-50 font-bold"
-        >
-          {submitting ? "Agregando..." : "+ Agregar"}
-        </button>
+      <form onSubmit={handleAddStaff} className="space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          {/* Avatar selector preview */}
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 bg-[#0a0807] border border-[#2a2520] rounded-full overflow-hidden flex items-center justify-center relative shrink-0">
+              {photoPreview ? (
+                <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-2xl text-[#5c554c]">💈</span>
+              )}
+            </div>
+            <div>
+              <label
+                htmlFor="staff-photo-input"
+                className="cursor-pointer font-mono text-[10px] tracking-wider uppercase bg-[#2a2520] text-[#f3ece1] hover:bg-[#3a3530] px-3 py-1.5 transition-colors inline-block"
+              >
+                {photoPreview ? "Cambiar Foto" : "Subir Foto"}
+              </label>
+              <input
+                id="staff-photo-input"
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              <p className="font-mono text-[9px] text-[#5c554c] mt-1">PNG, JPG (Máx. 5MB)</p>
+            </div>
+          </div>
+
+          <div className="flex-1 flex gap-3 w-full">
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Nombre del profesional (ej: Carlos, Juan)"
+              className="flex-1 bg-[#0a0807] border border-[#2a2520] px-4 py-2.5 font-mono text-xs text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+            />
+            <button
+              type="submit"
+              disabled={submitting || !newName.trim()}
+              className="px-5 py-2.5 font-mono text-xs tracking-widest uppercase bg-[#d97644] text-[#0a0807] hover:bg-[#e8854f] transition-all disabled:opacity-50 font-bold shrink-0"
+            >
+              {submitting ? "Agregando..." : "+ Agregar"}
+            </button>
+          </div>
+        </div>
       </form>
 
       {/* Lista de miembros */}
@@ -104,26 +181,58 @@ export default function StaffManager() {
           No has registrado miembros aún. Si no agregas ninguno, la pregunta por WhatsApp se omitirá automáticamente.
         </p>
       ) : (
-        <ul className="space-y-2 pt-2">
+        <ul className="space-y-3 pt-2">
           {staff.map((s, idx) => (
             <li
               key={s.id}
-              className="flex justify-between items-center bg-[#0a0807] border border-[#2a2520] px-4 py-3"
+              className="flex flex-col sm:flex-row sm:items-center justify-between bg-[#0a0807] border border-[#2a2520] p-4 gap-3"
             >
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-xs text-[#d97644] font-bold">
-                  {idx + 1}.
-                </span>
-                <span className="font-display text-base text-[#f3ece1]">
-                  {s.name}
-                </span>
+              <div className="flex items-center gap-4">
+                {/* Foto / Avatar del Barbero */}
+                <div className="w-12 h-12 bg-[#131110] border border-[#2a2520] rounded-full overflow-hidden flex items-center justify-center shrink-0 relative group">
+                  {s.photoUrl ? (
+                    <img src={s.photoUrl} alt={s.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xl">💈</span>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs text-[#d97644] font-bold">
+                      {idx + 1}.
+                    </span>
+                    <span className="font-display text-lg text-[#f3ece1]">
+                      {s.name}
+                    </span>
+                  </div>
+                  <p className="font-mono text-[10px] text-[#5c554c]">
+                    {s.role === "OWNER" ? "Dueño / Barbero Principal" : "Barbero del equipo"}
+                  </p>
+                </div>
               </div>
-              <button
-                onClick={() => handleDeleteStaff(s.id)}
-                className="font-mono text-[10px] tracking-widest uppercase text-red-400 hover:text-red-300 transition-colors"
-              >
-                Eliminar ✕
-              </button>
+
+              <div className="flex items-center gap-3 self-end sm:self-center">
+                <label className="cursor-pointer font-mono text-[10px] tracking-wider uppercase text-[#d97644] hover:underline">
+                  Cambiar Foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleUpdatePhoto(s.id, file);
+                    }}
+                  />
+                </label>
+
+                <button
+                  onClick={() => handleDeleteStaff(s.id)}
+                  className="font-mono text-[10px] tracking-widest uppercase text-red-400 hover:text-red-300 transition-colors border border-red-900/40 bg-red-950/20 px-3 py-1"
+                >
+                  Eliminar ✕
+                </button>
+              </div>
             </li>
           ))}
         </ul>

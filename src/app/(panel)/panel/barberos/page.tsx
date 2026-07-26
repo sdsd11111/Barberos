@@ -68,7 +68,7 @@ export default async function BarberosPage() {
     });
 
     const reviews = staffVisits.map((v) => {
-      const cust = customerMap.get(v.customerId);
+      const cust = v.customerId ? customerMap.get(v.customerId) : undefined;
       return {
         id: v.id,
         rating: v.rating!,
@@ -83,6 +83,7 @@ export default async function BarberosPage() {
       id: member.id,
       name: member.name,
       role: member.role,
+      photoUrl: member.photoUrl || null,
       avgRating: avg,
       totalRatings: staffVisits.length,
       distribution,

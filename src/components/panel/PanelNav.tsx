@@ -4,20 +4,29 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-const navLinks = [
-  { href: "/panel", label: "Dashboard", exact: true },
-  { href: "/panel/clientes", label: "Clientes" },
-  { href: "/panel/barberos", label: "Barberos" },
-  { href: "/panel/whatsapp", label: "Configuración" },
-];
-
 export default function PanelNav({
   logoutAction,
+  isPremium = false,
 }: {
   logoutAction: () => Promise<void>;
+  isPremium?: boolean;
 }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const navLinks = isPremium
+    ? [
+        { href: "/panel", label: "Dashboard", exact: true },
+        { href: "/panel/clientes", label: "Clientes" },
+        { href: "/panel/barberos", label: "Barberos" },
+        { href: "/panel/whatsapp", label: "Configuración" },
+      ]
+    : [
+        { href: "/panel", label: "Dashboard", exact: true },
+        { href: "/panel/clientes", label: "Clientes" },
+        { href: "/panel/barberos", label: "Barberos" },
+        { href: "/panel/whatsapp", label: "Configuración" },
+      ];
 
   return (
     <>

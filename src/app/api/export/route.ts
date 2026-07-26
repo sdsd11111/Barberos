@@ -122,11 +122,11 @@ export async function GET(request: NextRequest) {
         primeraResenaEnviada: c.firstReviewSent,
       })),
       visitasYResenas: visits.map((v) => {
-        const cust = customerMap.get(v.customerId);
+        const cust = v.customerId ? customerMap.get(v.customerId) : undefined;
         return {
           id: v.id,
-          clienteId: v.customerId,
-          clienteNombre: cust?.name || "Desconocido",
+          clienteId: v.customerId ?? "CF",
+          clienteNombre: cust?.name || (v.customerId ? "Desconocido" : "Consumidor Final"),
           clienteWhatsapp: cust?.whatsapp || "",
           barberoId: v.staffId,
           barberoNombre: v.staffId ? staffMap.get(v.staffId) || "No asignado" : "No asignado",
@@ -201,10 +201,10 @@ export async function GET(request: NextRequest) {
 
       // 1. Pestaña: Visitas y Reseñas
       const visitsData = visits.map((v) => {
-        const cust = customerMap.get(v.customerId);
+        const cust = v.customerId ? customerMap.get(v.customerId) : undefined;
         return {
           "Fecha y Hora": new Date(v.createdAt).toLocaleString("es-EC"),
-          "Cliente": cust?.name || "Sin Nombre",
+          "Cliente": cust?.name || (v.customerId ? "Sin Nombre" : "Consumidor Final"),
           "WhatsApp Cliente": cust?.whatsapp || "",
           "Barbero Asignado": v.staffId ? staffMap.get(v.staffId) || "No asignado" : "No asignado",
           "Estado de Visita": v.status === "APPROVED" ? "Aprobado" : v.status,

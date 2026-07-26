@@ -16,6 +16,7 @@ interface StaffStat {
   id: string;
   name: string;
   role: string;
+  photoUrl?: string | null;
   avgRating: number;
   totalRatings: number;
   distribution: number[]; // [1★, 2★, 3★, 4★, 5★]
@@ -85,13 +86,24 @@ function StaffCard({
           : "bg-[#0a0807] border-[#2a2520] hover:border-[#3a3530]"
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-4">
+        {/* Foto rectangular del barbero */}
+        <div className="w-16 h-20 bg-[#131110] border border-[#2a2520] shrink-0 overflow-hidden relative">
+          {staff.photoUrl ? (
+            <img src={staff.photoUrl} alt={staff.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-xl bg-[#131110]">
+              💈
+            </div>
+          )}
+        </div>
+
         {/* Info del barbero */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-display text-lg font-light text-[#f3ece1]">{staff.name}</h4>
+          <div className="flex items-center justify-between mb-1">
+            <h4 className="font-display text-lg font-light text-[#f3ece1] truncate">{staff.name}</h4>
             {staff.totalRatings > 0 && (
-              <span className="font-display text-2xl font-light text-[#d97644]">
+              <span className="font-display text-2xl font-light text-[#d97644] ml-2">
                 {staff.avgRating.toFixed(1)}
               </span>
             )}
@@ -101,7 +113,7 @@ function StaffCard({
               {staff.role === "OWNER" ? "Dueño" : "Barbero"}
             </span>
             {staff.totalRatings > 0 ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <StarDisplay rating={staff.avgRating} />
                 <span className="font-mono text-[10px] text-[#5c554c]">
                   ({staff.totalRatings})
@@ -109,14 +121,14 @@ function StaffCard({
               </div>
             ) : (
               <span className="font-mono text-[10px] text-[#5c554c] italic">
-                Sin calificaciones aún
+                Sin calificaciones
               </span>
             )}
           </div>
         </div>
 
         {/* QR mini */}
-        <div className="shrink-0 bg-[#f3ece1] p-1 w-14 h-14 sm:w-16 sm:h-16">
+        <div className="shrink-0 bg-[#f3ece1] p-1 w-12 h-12 sm:w-14 sm:h-14">
           <div
             className="w-full h-full"
             style={{
@@ -158,28 +170,72 @@ export default function BarberosView({
   const reviewsList = selectedStaff ? selectedStaff.reviews : [];
   const visibleReviews = reviewsList.slice(0, visibleReviewsCount);
 
+  // QR General de Caja
+  const generalQrUrl = whatsappNumber
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
+        `https://wa.me/${whatsappNumber}?text=Hola,%20mi%20código%20de%20caja%20es%20${currentBoxCode}`
+      )}`
+    : "";
+
+  // Ordenar staff para Ranking
+  const rankedStaff = [...staffStats].sort((a, b) => {
+    if (b.avgRating !== a.avgRating) return b.avgRating - a.avgRating;
+    return b.totalRatings - a.totalRatings;
+  });
+
   return (
     <div className="space-y-6">
-      {/* Tabs: General vs por barbero */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      {/* QR General de la Barbería (Reubicado del Dashboard) */}
+      {selectedView === "general" && whatsappNumber && (
+        <div className="bg-[#131110] border border-[#2a2520] p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center sm:text-left">
+            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#d97644]">
+              QR PRINCIPAL DE CAJA
+            </span>
+            <h3 className="font-display text-2xl font-light text-[#f3ece1]">
+              QR General para Clientes
+            </h3>
+            <p className="font-mono text-xs text-[#5c554c] max-w-md">
+              Escanea para registrar corte con el código de caja en vivo:{" "}
+              <strong className="text-[#d97644] font-normal">{currentBoxCode}</strong>
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
+            <div className="bg-[#f3ece1] p-2 w-28 h-28 sm:w-32 sm:h-32">
+              <div
+                className="w-full h-full"
+                style={{
+                  backgroundImage: `url('${generalQrUrl}')`,
+                  backgroundSize: "cover",
+                }}
+              />
+            </div>
+            <DownloadQRButton qrUrl={generalQrUrl} barbershopName="Barbería General" />
+          </div>
+        </div>
+      )}
+
+      {/* Tabs superiores idénticos al diseño */}
+      <div className="flex gap-2 overflow-x-auto pb-1 items-center">
         <button
           onClick={() => handleSelectTab("general")}
-          className={`px-4 py-2 font-mono text-xs tracking-[0.15em] uppercase whitespace-nowrap border transition-colors ${
+          className={`px-5 py-2 font-mono text-xs tracking-[0.2em] uppercase whitespace-nowrap border transition-colors ${
             selectedView === "general"
-              ? "bg-[#d97644] text-[#0a0807] border-[#d97644]"
+              ? "bg-[#d97644] text-[#0a0807] border-[#d97644] font-bold"
               : "bg-transparent text-[#5c554c] border-[#2a2520] hover:text-[#a89e90] hover:border-[#3a3530]"
           }`}
         >
-          Todos
+          TODOS
         </button>
         {staffStats.map((staff) => (
           <button
             key={staff.id}
             onClick={() => handleSelectTab(staff.id)}
-            className={`px-4 py-2 font-mono text-xs tracking-[0.15em] uppercase whitespace-nowrap border transition-colors ${
+            className={`px-5 py-2 font-mono text-xs tracking-[0.2em] uppercase whitespace-nowrap border transition-colors ${
               selectedView === staff.id
-                ? "bg-[#d97644] text-[#0a0807] border-[#d97644]"
-                : "bg-transparent text-[#5c554c] border-[#2a2520] hover:text-[#a89e90] hover:border-[#3a3530]"
+                ? "bg-[#d97644] text-[#0a0807] border-[#d97644] font-bold shadow-sm"
+                : "bg-[#0a0807] text-[#5c554c] border-[#2a2520] hover:text-[#a89e90] hover:border-[#3a3530]"
             }`}
           >
             {staff.name}
@@ -187,44 +243,144 @@ export default function BarberosView({
         ))}
       </div>
 
-      {/* QR individual del barbero seleccionado */}
-      {selectedStaff && whatsappNumber && (
-        <div className="bg-[#131110] border border-[#2a2520] p-6 flex flex-col sm:flex-row items-center gap-6">
-          <div className="flex flex-col items-center gap-3">
-            <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#5c554c]">
-              QR de {selectedStaff.name}
-            </p>
-            {(() => {
-              const qrUrl = buildStaffQrUrl(whatsappNumber, currentBoxCode, selectedStaff.name);
-              return (
-                <>
-                  <div className="bg-[#f3ece1] p-3 w-36 h-36 sm:w-44 sm:h-44">
-                    <div
-                      className="w-full h-full"
-                      style={{
-                        backgroundImage: `url('${qrUrl}')`,
-                        backgroundSize: "cover",
-                      }}
-                    />
-                  </div>
-                  <DownloadQRButton qrUrl={qrUrl} barbershopName={selectedStaff.name} />
-                </>
-              );
-            })()}
+      {/* 🏆 RANKING DEL MES (Solo en vista General) */}
+      {selectedView === "general" && rankedStaff.length > 0 && (
+        <div className="bg-[#131110] border border-[#2a2520] p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-[#2a2520] pb-3">
+            <div>
+              <span className="font-mono text-[10px] tracking-[0.25em] uppercase text-[#d97644]">
+                COMPETENCIA SANA
+              </span>
+              <h3 className="font-display text-xl font-light text-[#f3ece1]">
+                🏆 Ranking del Mes
+              </h3>
+            </div>
+            <span className="font-mono text-[10px] text-[#5c554c] uppercase">Por Calificación</span>
           </div>
-          <div className="flex-1 space-y-2 text-center sm:text-left">
-            <p className="font-display text-lg text-[#f3ece1] font-light">
-              Código QR exclusivo de {selectedStaff.name}
-            </p>
-            <p className="font-mono text-xs text-[#a89e90] leading-relaxed">
-              El cliente escanea este QR y el sistema{" "}
-              <span className="text-[#d97644]">automáticamente sabe</span> que fue atendido por{" "}
-              <span className="text-[#f3ece1]">{selectedStaff.name}</span>, sin necesidad de
-              preguntarle por WhatsApp.
-            </p>
-            <p className="font-mono text-[10px] text-[#5c554c] mt-2">
-              Código de caja activo: <span className="text-[#d97644] font-bold">{currentBoxCode}</span> — se actualiza con cada check-in
-            </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {rankedStaff.slice(0, 3).map((staff, idx) => {
+              const medals = ["🥇 1º Lugar", "🥈 2º Lugar", "🥉 3º Lugar"];
+              const borderColors = [
+                "border-amber-500/60 bg-amber-950/20",
+                "border-slate-400/60 bg-slate-900/20",
+                "border-amber-700/60 bg-amber-950/10",
+              ];
+
+              return (
+                <div
+                  key={staff.id}
+                  onClick={() => handleSelectTab(staff.id)}
+                  className={`p-4 border ${borderColors[idx]} space-y-2 cursor-pointer hover:opacity-90 transition-opacity`}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-mono text-xs font-bold text-[#f3ece1]">
+                      {medals[idx]}
+                    </span>
+                    <span className="font-display text-xl font-light text-amber-400">
+                      {staff.avgRating.toFixed(1)} ★
+                    </span>
+                  </div>
+                  <p className="font-display text-lg font-light text-[#f3ece1] truncate">
+                    {staff.name}
+                  </p>
+                  <p className="font-mono text-[10px] text-[#5c554c]">
+                    {staff.totalRatings} reseñas recibidas
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+
+      {/* Banner Principal del Barbero */}
+      {selectedStaff && whatsappNumber && (
+        <div className="bg-[#131110] border border-[#2a2520] relative overflow-hidden flex flex-col md:flex-row items-stretch">
+          {/* Lado Izquierdo + Centro: QR y Texto */}
+          <div className="p-5 sm:p-8 flex-1 flex flex-col justify-between space-y-4 md:space-y-6 z-10">
+            {/* Header Móvil: QR a la izquierda + Foto al lado a la derecha (en Celular) */}
+            <div className="flex flex-row items-start justify-between md:justify-start gap-4 sm:gap-6">
+              {/* QR + Botón Descargar */}
+              <div className="flex flex-col items-center gap-2 shrink-0">
+                <p className="font-mono text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-[#5c554c]">
+                  QR DE {selectedStaff.name.toUpperCase()}
+                </p>
+                {(() => {
+                  const qrUrl = buildStaffQrUrl(whatsappNumber, currentBoxCode, selectedStaff.name);
+                  return (
+                    <>
+                      <div className="bg-[#f3ece1] p-2 sm:p-3 w-28 h-28 sm:w-36 sm:h-36">
+                        <div
+                          className="w-full h-full"
+                          style={{
+                            backgroundImage: `url('${qrUrl}')`,
+                            backgroundSize: "cover",
+                          }}
+                        />
+                      </div>
+                      <DownloadQRButton qrUrl={qrUrl} barbershopName={selectedStaff.name} />
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Foto del Barbero AL LADO del QR (Visible únicamente en celulares/pantallas móviles) */}
+              <div className="md:hidden w-28 h-36 sm:w-32 sm:h-44 shrink-0 border border-[#2a2520] bg-[#0a0807] overflow-hidden relative shadow-md">
+                {selectedStaff.photoUrl ? (
+                  <img
+                    src={selectedStaff.photoUrl}
+                    alt={selectedStaff.name}
+                    className="w-full h-full object-cover object-top"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-center p-2">
+                    <span className="text-3xl opacity-40 mb-1">💈</span>
+                    <span className="font-mono text-[9px] text-[#5c554c]">Sin Foto</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Explicación y Código de caja */}
+            <div className="space-y-2 pt-2 md:pt-0">
+              <h3 className="font-display text-2xl sm:text-3xl font-light text-[#f3ece1]">
+                Código QR exclusivo de {selectedStaff.name}
+              </h3>
+              <p className="font-mono text-xs text-[#5c554c] leading-relaxed max-w-xl">
+                El cliente escanea este QR y el sistema <strong className="text-[#d97644] font-normal">automáticamente sabe</strong> que fue atendido por <span className="text-[#a89e90]">{selectedStaff.name}</span>, sin necesidad de preguntarle por WhatsApp.
+              </p>
+              <p className="font-mono text-xs text-[#5c554c]">
+                Código de caja activo: <span className="text-[#d97644] font-bold">{currentBoxCode}</span> — se actualiza con cada check-in
+              </p>
+            </div>
+          </div>
+
+          {/* Lado Derecho: Foto Rectangular de Cuerpo/Retrato (Visible en Escritorio md+) */}
+          <div className="hidden md:flex w-80 lg:w-96 shrink-0 relative min-h-full overflow-hidden items-center justify-center bg-[#0a0807]">
+            {selectedStaff.photoUrl ? (
+              <>
+                <img
+                  src={selectedStaff.photoUrl}
+                  alt={selectedStaff.name}
+                  className="w-full h-full object-cover object-center"
+                />
+                {/* Overlay con degradado suave */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#131110] via-transparent to-transparent opacity-80" />
+              </>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-[#0a0807] border-l border-[#2a2520]">
+                <span className="text-5xl opacity-40 mb-2">💈</span>
+                <p className="font-mono text-xs text-[#5c554c]">Sin foto configurada</p>
+                <a
+                  href="/panel/whatsapp"
+                  className="font-mono text-[10px] text-[#d97644] uppercase tracking-wider mt-2 hover:underline"
+                >
+                  Configurar Foto ↗
+                </a>
+              </div>
+            )}
           </div>
         </div>
       )}
