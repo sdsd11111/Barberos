@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendWhatsAppMessage } from "@/lib/evolution";
 import { generateBoxCode } from "@/lib/boxcode";
 import webpush from "web-push";
+import { getEcuadorHour } from "@/lib/time-ec";
 
 // Configurar credenciales VAPID globales para el envío de notificaciones push
 if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -189,7 +190,7 @@ async function processMessage(payload: WebhookPayload) {
           rating: null,
           staffId: preAssignedStaffId,
           checkinMethod: "SELF",           // El cliente se auto-identificó por su propio WhatsApp
-          visitHour: new Date().getHours(), // Franja horaria para análisis de capacidad
+          visitHour: getEcuadorHour(new Date()), // Franja horaria para análisis de capacidad (hora Ecuador, no UTC del servidor)
         },
       }),
       prisma.barbershop.update({

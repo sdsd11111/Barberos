@@ -104,25 +104,74 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Enviar webhook a barberosplus.com (no bloquea la respuesta)
+    // Enviar webhook a barberosplus.com (SÍNCRONO - esperamos respuesta)
+    let commissionData: {
+      hasCommission: boolean;
+      commissionStatus: string;
+      referredByName: string | null;
+      referredByCode: string | null;
+    } = {
+      hasCommission: false,
+      commissionStatus: "PENDING",
+      referredByName: null,
+      referredByCode: null,
+    };
+
     if (data.name && data.whatsappNumber) {
-      fetch(process.env.BARBEROSPLUS_WEBHOOK_URL || "https://barberosplus.com/api/webhook/new-barbershop", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": process.env.REFERRAL_WEBHOOK_KEY || "" },
-        body: JSON.stringify({
-          event: "barbershop_created",
-          barbershop: {
-            name: data.name,
-            phoneBusiness: data.whatsappNumber,
-            phonePersonal: data.ownerPhone || null,
-            plan: data.planType || "PRO",
-          },
-          timestamp: new Date().toISOString(),
-        }),
-      }).catch(() => {}); // No bloquear por errores del webhook
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+
+        const webhookResponse = await fetch(
+          process.env.BARBEROSPLUS_WEBHOOK_URL || "https://barberosplus.com/api/webhook/new-barbershop",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": process.env.REFERRAL_WEBHOOK_KEY || "",
+            },
+            body: JSON.stringify({
+              event: "barbershop_created",
+              barbershop: {
+                name: data.name,
+                phoneBusiness: data.whatsappNumber,
+                phonePersonal: data.ownerPhone || null,
+                plan: data.planType || "PRO",
+              },
+              timestamp: new Date().toISOString(),
+            }),
+            signal: controller.signal,
+          }
+        );
+        clearTimeout(timeout);
+
+        if (webhookResponse.ok) {
+          const result = await webhookResponse.json();
+          commissionData = {
+            hasCommission: result.hasCommission === true,
+            commissionStatus: result.hasCommission ? "CONFIRMED" : "NO_COMMISSION",
+            referredByName: result.referredBy?.name || null,
+            referredByCode: result.referredBy?.code || null,
+          };
+        }
+      } catch (error) {
+        console.error("[Webhook barberosplus] Error o timeout:", error);
+        // commissionData queda en PENDING
+      }
     }
 
-    return NextResponse.json(barbershop, { status: 201 });
+    // Actualizar barbería con datos de comisión
+    const updatedBarbershop = await prisma.barbershop.update({
+      where: { id: barbershop.id },
+      data: {
+        hasCommission: commissionData.hasCommission,
+        commissionStatus: commissionData.commissionStatus,
+        referredByName: commissionData.referredByName,
+        referredByCode: commissionData.referredByCode,
+      },
+    });
+
+    return NextResponse.json(updatedBarbershop, { status: 201 });
   } catch (error) {
     console.error("[Admin POST API] Error:", error);
     if (typeof error === "object" && error !== null && "code" in error && (error as { code: string }).code === "P2002") {

@@ -15,6 +15,10 @@ interface Barbershop {
   googleMapsUrl: string | null;
   requiredCuts: number;
   salesAgent: string | null;
+  hasCommission: boolean;
+  commissionStatus: string;
+  referredByName: string | null;
+  referredByCode: string | null;
 }
 
 export default function AdminDashboard() {
@@ -538,7 +542,7 @@ export default function AdminDashboard() {
                       <th className="py-3">Barbería</th>
                       <th className="py-3">WhatsApp</th>
                       <th className="py-3">Código PIN</th>
-                      <th className="py-3">Vendedor</th>
+                    <th className="py-3">Comisión</th>
                       <th className="py-3">Plan</th>
                       <th className="py-3">Vence</th>
                       <th className="py-3 text-right">Acciones</th>
@@ -636,6 +640,28 @@ export default function AdminDashboard() {
                             </td>
                             <td className="py-4">+{shop.whatsappNumber}</td>
                             <td className="py-4 font-mono font-bold text-amber-500">{shop.loginPin || "---"}</td>
+                            <td className="py-4 text-xs font-mono">
+                              {shop.hasCommission ? (
+                                <div className="space-y-1">
+                                  <span className="px-2 py-0.5 bg-green-950/40 text-green-400 border border-green-800 rounded text-[10px] block w-fit">
+                                    💰 SÍ
+                                  </span>
+                                  {shop.referredByName && (
+                                    <span className="text-[10px] text-[#a89e90] block">
+                                      {shop.referredByName}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : shop.commissionStatus === "PENDING" ? (
+                                <span className="px-2 py-0.5 bg-amber-950/40 text-amber-400 border border-amber-800 rounded text-[10px]">
+                                  ⏳ Pendiente
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 bg-red-950/40 text-red-400 border border-red-800 rounded text-[10px]">
+                                  ❌ No
+                                </span>
+                              )}
+                            </td>
                             <td className="py-4 text-xs font-mono text-[#a89e90]">
                               {shop.salesAgent ? (
                                 <span className="px-2 py-0.5 bg-[#2a2520] border border-[#3a3530] rounded text-[10px] text-[#d97644]">

@@ -28,6 +28,11 @@ model Barbershop {
   currentBoxCode    String         @default("RV55") // Código de caja dinámico activo para check-ins
   salesAgent        String?        // Nombre/código del vendedor o referido que trajo la cuenta
   ownerPhone        String?        // Teléfono personal del dueño/representante para referidos
+  // Comisión determinada por barberosplus.com al crear la barbería
+  hasCommission     Boolean        @default(false) // Si tiene comisión asignada
+  commissionStatus  String         @default("PENDING") // PENDING | CONFIRMED | REJECTED | NO_COMMISSION
+  referredByName    String?        // Nombre del vendedor (si tiene comisión)
+  referredByCode    String?        // Código QR del vendedor (si tiene comisión)
   // Motor config — umbrales de riesgo (configurables por barbería)
   riskThresholdNormal  Float       @default(0.8) // < 0.8x = Normal; 0.8x a 1.2x = Próximo a corte (Recordatorio preventivo); > 1.2x = En Riesgo
   riskThresholdAt      Float       @default(1.2) // > 1.2x = En Riesgo / Atrasado

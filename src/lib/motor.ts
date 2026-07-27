@@ -8,6 +8,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { getEcuadorHour, getEcuadorDateOnly, getEcuadorDayKey } from "@/lib/time-ec";
 
 // ===== TIPOS =====
 
@@ -193,7 +194,9 @@ export function calculateVisitsByHour(
   visits
     .filter((v) => v.status === "APPROVED" && v.checkinMethod !== "BARBER_ASSISTED_ANONYMOUS")
     .forEach((v) => {
-      const hour = v.createdAt.getHours();
+      // Usar hora de Ecuador (UTC-5), no la hora local del servidor
+      // (Vercel corre en UTC, lo que desplazaría las franjas 5 horas).
+      const hour = getEcuadorHour(v.createdAt);
       byHour[hour] = (byHour[hour] ?? 0) + 1;
     });
 
@@ -225,8 +228,8 @@ export function calculateScheduleGaps(
 
   // Solo visitas aprobadas con identidad en los últimos 14 días
   const recentVisits = visits
-    .filter(v => 
-      v.status === "APPROVED" && 
+    .filter(v =>
+      v.status === "APPROVED" &&
       v.checkinMethod !== "BARBER_ASSISTED_ANONYMOUS" &&
       v.createdAt >= fourteenDaysAgo
     )
@@ -234,10 +237,11 @@ export function calculateScheduleGaps(
 
   if (recentVisits.length < 5) return []; // Necesitamos mínimo 5 visitas para patrones confiables
 
-  // Agrupar por día
+  // Agrupar por día en zona horaria de Ecuador (clave YYYY-MM-DD local)
+  // (antes se usaba toISOString().slice(0,10) que es UTC — corregido)
   const visitsByDay = new Map<string, Date[]>();
   for (const v of recentVisits) {
-    const dayKey = v.createdAt.toISOString().slice(0, 10);
+    const dayKey = getEcuadorDayKey(v.createdAt);
     if (!visitsByDay.has(dayKey)) visitsByDay.set(dayKey, []);
     visitsByDay.get(dayKey)!.push(v.createdAt);
   }
@@ -279,8 +283,8 @@ export function calculateScheduleGaps(
       // Solo contar gaps significativos (>= duración de 1 corte)
       // y dividir entre barberos (si hay 3 barberos, un gap de 40 min podría ser normal)
       if (gapMinutes >= visitDurationMin * effectiveStaff) {
-        // Clasificar por franja según la hora del gap
-        const gapHour = new Date(prevEnd).getHours();
+        // Clasificar por franja según la hora del gap (hora Ecuador, no UTC)
+        const gapHour = getEcuadorHour(new Date(prevEnd));
         for (const franja of franjas) {
           if (gapHour >= franja.inicio && gapHour < franja.fin) {
             gapsByFranja[franja.nombre].push(gapMinutes);
@@ -485,8 +489,10 @@ export async function persistMotorResults(
 ): Promise<void> {
   const now = new Date();
 
-  // Upsert del snapshot de barbería (un registro por día)
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Upsert del snapshot de barbería (un registro por día en zona horaria Ecuador)
+  // Antes usaba getFullYear/getMonth/getDate que son LOCALES del servidor (UTC en Vercel),
+  // lo que desplazaba la "fecha del snapshot" 5 horas.
+  const today = getEcuadorDateOnly(now);
 
   await prisma.motorSnapshot.upsert({
     where: {

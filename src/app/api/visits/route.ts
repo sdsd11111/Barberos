@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsAppMessage } from "@/lib/evolution";
 import { getProgressBar } from "@/lib/progress";
+import { getEcuadorHour } from "@/lib/time-ec";
 
 const VisitSchema = z.object({
   barbershopId: z.string().min(1, "barbershopId es requerido"),
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
           rating: null,
           status: "APPROVED",
           checkinMethod: "BARBER_ASSISTED_ANONYMOUS",
-          visitHour: new Date().getHours(),
+          visitHour: getEcuadorHour(new Date()),
           services: services ? JSON.stringify(services) : null,
         },
       });
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
         rating: null,
         status: "APPROVED",
         checkinMethod: checkinMethod ?? "BARBER_ASSISTED_KNOWN",
-        visitHour: new Date().getHours(),
+        visitHour: getEcuadorHour(new Date()),
         services: services ? JSON.stringify(services) : null,
       },
     });
