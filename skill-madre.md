@@ -114,6 +114,11 @@ Esos tres archivos son la **memoria de arranque**. Todo lo demás se carga bajo 
 ### Regla operativa
 Cualquier decisión, aprendizaje o corrección que deba sobrevivir al cierre de esta sesión **debe ser escrita en disco**. Si no está en un archivo, no existe en la próxima sesión.
 
+### 📌 Regla del Grafo de Obsidian
+> **Al mencionar cualquier documento de `Documentación/`, usar siempre formato `[[nombre-del-documento]]`** en lugar de comillas invertidas o texto plano.
+> 
+> Esto genera los nodos y conexiones del Grafo de Obsidian. Si no usas `[[ ]]`, no queda registrado en el Grafo.
+
 ---
 
 ## 📋 Nota sobre auto-mejora

@@ -23,10 +23,10 @@ relacionado:
 >
 > Depende de:
 >
-> - 00-CONSTITUCION-BARBEROS.md
-> - 01-MANIFIESTO.md
-> - 02-ARQUITECTURA-ESTRATEGICA.md
-> - 03-ARQUITECTURA-WEB.md
+> - [[00-Constitución]]
+> - [[01-MANIFIESTO]]
+> - [[02-ARQUITECTURA-ESTRATEGICA]]
+> - [[03-ARQUITECTURA-WEB]]
 
 ---
 
@@ -621,7 +621,7 @@ El presente documento define la voz oficial de BarberOS.
 
 El siguiente documento:
 
-**05-ARQUITECTURA-DEL-PRODUCTO.md**
+[[05-ARQUITECTURA-DEL-PRODUCTO]]
 
 convertirá toda esta filosofía en módulos funcionales del sistema.
 

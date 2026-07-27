@@ -4,17 +4,16 @@
 > fecha: 2026-07-25
 > audiencia: Antigravity / Claude 4.6 (constructor)
 > relacionado:
-> - 07-MOTOR-DE-CONOCIMIENTO.md
-> - 08-ARQUITECTURA-IA.md
-> - 09-ROADMAP-TECNICO.md
-> - Preguntas-Criticas-Antes-De-Construir.md
-> - 13-COMPONENTES.md (fuente de verdad — pendiente de confirmación de Antigravity)
+> - [[07-MOTOR-DE-CONOCIMIENTO]]
+> - [[08-ARQUITECTURA-IA]]
+> - [[09-ROADMAP-TECNICO]]
+> - [[13-COMPONENTES]] (fuente de verdad — pendiente de confirmación de Antigravity)
 
 ---
 
 ## 0. Por qué existe este documento y por qué es urgente
 
-BarberOS ya tiene 2 clientes pagando el plan Premium ($19.99/mes), y ese plan promete públicamente en `/precios`: Motor de Conocimiento, IA especializada, Recomendaciones automáticas, Alertas inteligentes, Consultor IA 24/7. Hoy, ninguna de esas piezas existe en código — el Motor de Conocimiento es únicamente un documento (`07-MOTOR-DE-CONOCIMIENTO.md`), sin ninguna línea programada. Esto no es un desarrollo a futuro dentro del roadmap normal: es una deuda de producto activa con dinero real ya cobrado. Se construye ahora, con prioridad alta.
+BarberOS ya tiene 2 clientes pagando el plan Premium ($19.99/mes), y ese plan promete públicamente en `/precios`: Motor de Conocimiento, IA especializada, Recomendaciones automáticas, Alertas inteligentes, Consultor IA 24/7. Hoy, ninguna de esas piezas existe en código — el Motor de Conocimiento es únicamente un documento ([[07-MOTOR-DE-CONOCIMIENTO]]), sin ninguna línea programada. Esto no es un desarrollo a futuro dentro del roadmap normal: es una deuda de producto activa con dinero real ya cobrado. Se construye ahora, con prioridad alta.
 
 Este documento no dice cómo programarlo (qué tablas crear, qué funciones escribir, qué arquitectura de código usar). Dice qué necesitamos que el sistema logre y por qué. Las decisiones de implementación quedan en manos de quien construye.
 
@@ -36,7 +35,7 @@ El producto BarberOS está segmentado comercialmente en dos niveles:
 
 ## 1. Principio arquitectónico no negociable: separación entre Motor (determinístico) y Director IA (generativo)
 
-El documento `08-ARQUITECTURA-IA.md` ya establece esta regla y no se puede romper: la IA nunca analiza datos crudos directamente. Siempre consume conocimiento que otro proceso (el Motor) ya calculó de forma determinística (matemática, reglas fijas, sin modelo de lenguaje).
+El documento [[08-ARQUITECTURA-IA]] ya establece esta regla y no se puede romper: la IA nunca analiza datos crudos directamente. Siempre consume conocimiento que otro proceso (el Motor) ya calculó de forma determinística (matemática, reglas fijas, sin modelo de lenguaje).
 
 Razón de negocio, no solo técnica: si le entregamos a un modelo de lenguaje una lista larga de fechas y le pedimos que calcule promedios o compare cifras, el modelo puede inventar un número con total confianza (alucinación). El dueño de la barbería va a confiar ciegamente en lo que le diga la IA. No podemos permitir que un cálculo mal hecho por el modelo se presente como un hecho.
 
@@ -134,7 +133,7 @@ Esta regla es prioritaria porque afecta directamente la confiabilidad de las tre
 
 **Duración de visita: no se captura por defecto en V1.** Se agrega como opción configurable en ajustes de la barbería, para el dueño que quiera activarla. El cálculo de capacidad en V1 es por conteo de visitas en franja horaria, sin duración — el Director debe comunicar esto siempre en términos aproximados, nunca como cifra exacta de ocupación.
 
-**Servicios por visita (múltiples):** una visita puede incluir varios servicios. Se registran como una **lista simple de etiquetas** (ej. `["corte", "barba"]`), exclusivamente para que el Motor sepa qué tipo de servicios se prestaron. **Confirmado: cero precio, cero cobro, cero total, cero funcionalidad de caja registradora.** Esto es una herramienta de fidelización y conocimiento, no de contabilidad ni punto de venta — coherente con `14-PRD.md`, que excluye integraciones POS de forma explícita. No construir ningún campo de precio ni total asociado a esta lista de etiquetas.
+**Servicios por visita (múltiples):** una visita puede incluir varios servicios. Se registran como una **lista simple de etiquetas** (ej. `["corte", "barba"]`), exclusivamente para que el Motor sepa qué tipo de servicios se prestaron. **Confirmado: cero precio, cero cobro, cero total, cero funcionalidad de caja registradora.** Esto es una herramienta de fidelización y conocimiento, no de contabilidad ni punto de venta — coherente con [[14-PRD]], que excluye integraciones POS de forma explícita. No construir ningún campo de precio ni total asociado a esta lista de etiquetas.
 
 Con esta reducción de alcance (sin cobro), el registro de servicios múltiples lo puede hacer el mismo rol `BARBER` ya existente, sin necesidad de crear un rol adicional de "caja".
 
@@ -206,7 +205,7 @@ BarberOS no se convierte en herramienta de precios, comisiones ni contabilidad. 
 
 ---
 
-## 8. Orden de construcción (obligatorio según `09-ROADMAP-TECNICO.md`, no negociable)
+## 8. Orden de construcción (obligatorio según [[09-ROADMAP-TECNICO]], no negociable)
 
 1. Motor de Conocimiento — capa de Eventos (ya existe como datos crudos) más la capa de Contexto descrita en este documento (frecuencia individual, capacidad configurable por el dueño, promedios de equipo, con las reglas de calidad estadística de la sección 4 y la regla de identidad de la sección 2).
 2. Director IA — responde las preguntas descritas en la sección 3, siguiendo la estructura obligatoria de la sección 5, sin poder ejecutar nada por sí solo (sección 6).

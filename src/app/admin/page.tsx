@@ -40,6 +40,13 @@ export default function AdminDashboard() {
   const [editGoogleMapsUrl, setEditGoogleMapsUrl] = useState("");
   const [editSalesAgent, setEditSalesAgent] = useState("");
 
+  // Estado para tab de vendedores
+  const [activeTab, setActiveTab] = useState<"barbershops" | "vendedores">("barbershops");
+  const [vendedores, setVendedores] = useState<any[]>([]);
+  const [showVendedorModal, setShowVendedorModal] = useState(false);
+  const [editingVendedor, setEditingVendedor] = useState<any>(null);
+  const [vendedorForm, setVendedorForm] = useState({ nombre: "", celular: "", negocio: "", direccion: "" });
+
   // Éxito de creación reciente
   const [createdPin, setCreatedPin] = useState("");
   const [createdShopName, setCreatedShopName] = useState("");
@@ -68,6 +75,66 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchVendedores = async () => {
+    try {
+      const response = await fetch("/api/referidos", {
+        headers: { Authorization: `Bearer ${adminSecret}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setVendedores(data);
+      }
+    } catch {
+      console.error("Error fetching vendedores");
+    }
+  };
+
+  const handleCreateVendedor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("/api/referidos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
+        body: JSON.stringify(vendedorForm),
+      });
+      if (response.ok) {
+        setVendedorForm({ nombre: "", celular: "", negocio: "", direccion: "" });
+        setShowVendedorModal(false);
+        fetchVendedores();
+      } else {
+        alert("Error al crear vendedor");
+      }
+    } catch {
+      alert("Error de conexión");
+    }
+  };
+
+  const handleDeleteVendedor = async (id: string, nombre: string) => {
+    if (!confirm(`¿Eliminar vendedor "${nombre}"?`)) return;
+    try {
+      const response = await fetch(`/api/referidos/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${adminSecret}` },
+      });
+      if (response.ok) fetchVendedores();
+    } catch {
+      alert("Error de conexión");
+    }
+  };
+
+  const handleToggleVendedorActivo = async (vendedor: any) => {
+    try {
+      const response = await fetch(`/api/referidos/${vendedor.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
+        body: JSON.stringify({ activo: !vendedor.activo }),
+      });
+      if (response.ok) fetchVendedores();
+    } catch {
+      alert("Error de conexión");
+    }
+  };
+
   // Auto-login al cargar la página si hay sesión guardada
   useEffect(() => {
     const saved = localStorage.getItem("admin_secret");
@@ -79,6 +146,13 @@ export default function AdminDashboard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Cargar vendedores cuando se cambia al tab
+  useEffect(() => {
+    if (isAuthenticated && activeTab === "vendedores") {
+      fetchVendedores();
+    }
+  }, [isAuthenticated, activeTab]);
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -282,7 +356,31 @@ export default function AdminDashboard() {
             </span>
             <h1 className="font-display text-5xl font-light">SuperAdmin</h1>
           </div>
-          <button
+          <div className="flex items-center gap-4">
+            {/* Tabs */}
+            <div className="flex border border-[#2a2520]">
+              <button
+                onClick={() => setActiveTab("barbershops")}
+                className={`px-4 py-2 font-mono text-xs tracking-wider uppercase transition-colors ${
+                  activeTab === "barbershops"
+                    ? "bg-[#d97644] text-[#0a0807]"
+                    : "text-[#5c554c] hover:text-[#f3ece1]"
+                }`}
+              >
+                Barberías
+              </button>
+              <button
+                onClick={() => setActiveTab("vendedores")}
+                className={`px-4 py-2 font-mono text-xs tracking-wider uppercase transition-colors border-l border-[#2a2520] ${
+                  activeTab === "vendedores"
+                    ? "bg-[#d97644] text-[#0a0807]"
+                    : "text-[#5c554c] hover:text-[#f3ece1]"
+                }`}
+              >
+                Vendedores
+              </button>
+            </div>
+            <button
             onClick={() => {
               try { localStorage.removeItem("admin_secret"); } catch {}
               setIsAuthenticated(false);
@@ -292,7 +390,11 @@ export default function AdminDashboard() {
           >
             Cerrar Sesión
           </button>
+          </div>
         </header>
+
+        {/* Contenido según tab */}
+        {activeTab === "barbershops" ? (
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Formulario de Onboarding */}
@@ -611,6 +713,167 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
+        ) : (
+        /* Sección Vendedores */
+        <div className="space-y-8">
+          <div className="flex justify-between items-center">
+            <h2 className="font-display text-3xl font-light">
+              Vendedores ({vendedores.length})
+            </h2>
+            <button
+              onClick={() => {
+                setEditingVendedor(null);
+                setVendedorForm({ nombre: "", celular: "", negocio: "", direccion: "" });
+                setShowVendedorModal(true);
+              }}
+              className="px-4 py-2 font-mono text-xs tracking-wider uppercase bg-[#d97644] text-[#0a0807] hover:bg-[#e8854f] transition-colors"
+            >
+              + Nuevo Vendedor
+            </button>
+          </div>
+
+          {vendedores.length === 0 ? (
+            <p className="font-mono text-xs text-[#5c554c] text-center py-12">
+              No hay vendedores registrados.
+            </p>
+          ) : (
+            <div className="bg-[#131110] border border-[#2a2520] overflow-hidden">
+              <table className="w-full text-left font-mono text-xs text-[#a89e90]">
+                <thead>
+                  <tr className="border-b border-[#2a2520] text-[#5c554c] uppercase">
+                    <th className="py-3 px-4">Nombre</th>
+                    <th className="py-3 px-4">Celular</th>
+                    <th className="py-3 px-4">Negocio</th>
+                    <th className="py-3 px-4">Dirección</th>
+                    <th className="py-3 px-4">Código</th>
+                    <th className="py-3 px-4">Scans</th>
+                    <th className="py-3 px-4">Estado</th>
+                    <th className="py-3 px-4 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {vendedores.map((v) => (
+                    <tr key={v.id} className="border-b border-[#1c1917] hover:bg-[#0a0807]">
+                      <td className="py-3 px-4 text-[#f3ece1]">{v.nombre}</td>
+                      <td className="py-3 px-4">+{v.celular}</td>
+                      <td className="py-3 px-4">{v.negocio}</td>
+                      <td className="py-3 px-4 text-[10px]">{v.direccion}</td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 bg-[#2a2520] border border-[#3a3530] rounded text-[#d97644] font-bold tracking-wider">
+                          {v.codigoUnico}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">{v.scansCount}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                          v.activo
+                            ? "bg-green-950/40 text-green-400 border border-green-800"
+                            : "bg-red-950/40 text-red-400 border border-red-800"
+                        }`}>
+                          {v.activo ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right space-x-1">
+                        <button
+                          onClick={() => window.open(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`https://wa.me/593963425323?text=Hola,%20me%20interesa%20el%20sistema,%20vengo%20de%20parte%20de%20${v.codigoUnico}`)}`, "_blank")}
+                          className="px-2 py-1 bg-[#2a2520] text-[#a89e90] hover:text-[#f3ece1] border border-[#2a2520] rounded"
+                          title="Ver QR"
+                        >
+                          QR
+                        </button>
+                        <button
+                          onClick={() => handleToggleVendedorActivo(v)}
+                          className={`px-2 py-1 border rounded ${
+                            v.activo
+                              ? "bg-red-950/40 text-red-400 hover:bg-red-800/60 border-red-700"
+                              : "bg-green-900/20 text-green-500 hover:bg-green-900/40 border-green-900/60"
+                          }`}
+                        >
+                          {v.activo ? "Desact." : "Activar"}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteVendedor(v.id, v.nombre)}
+                          className="px-2 py-1 bg-red-950/40 text-red-400 hover:bg-red-800/60 border border-red-700 rounded"
+                        >
+                          X
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        )}
+
+        {/* Modal Crear Vendedor */}
+        {showVendedorModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
+            <div className="w-full max-w-md bg-[#131110] border border-[#2a2520] p-8">
+              <h3 className="font-display text-2xl font-light text-[#d97644] mb-6">
+                Nuevo Vendedor
+              </h3>
+              <form onSubmit={handleCreateVendedor} className="space-y-4">
+                <div>
+                  <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">Nombre</label>
+                  <input
+                    type="text"
+                    required
+                    value={vendedorForm.nombre}
+                    onChange={(e) => setVendedorForm({ ...vendedorForm, nombre: e.target.value })}
+                    className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">Celular</label>
+                  <input
+                    type="tel"
+                    required
+                    value={vendedorForm.celular}
+                    onChange={(e) => setVendedorForm({ ...vendedorForm, celular: e.target.value })}
+                    className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">Negocio</label>
+                  <input
+                    type="text"
+                    required
+                    value={vendedorForm.negocio}
+                    onChange={(e) => setVendedorForm({ ...vendedorForm, negocio: e.target.value })}
+                    className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">Dirección</label>
+                  <input
+                    type="text"
+                    required
+                    value={vendedorForm.direccion}
+                    onChange={(e) => setVendedorForm({ ...vendedorForm, direccion: e.target.value })}
+                    className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                  />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 font-mono text-xs tracking-[0.2em] uppercase text-[#0a0807] bg-[#d97644] hover:bg-[#e8854f] transition-colors"
+                  >
+                    Crear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowVendedorModal(false)}
+                    className="flex-1 py-3 font-mono text-xs tracking-[0.2em] uppercase text-[#5c554c] border border-[#2a2520] hover:border-[#d97644] hover:text-[#d97644] transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

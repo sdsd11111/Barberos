@@ -1,6 +1,10 @@
 # CONTEXT.md
 > Última actualización: 2026-07-19 | Estado: Activo | Autor: Antigravity
 
+> **📌 Regla del Grafo:** Al mencionar cualquier documento de Documentación/, usar siempre formato `[[nombre]]`. Esto mantiene las conexiones del Grafo de Obsidian actualizadas.
+
+---
+
 Este documento actúa como la **memoria de ejecución actual** del proyecto BarberOS. Mantiene al equipo y a cualquier agente de desarrollo alineados con la realidad del código en producción en todo momento, evitando confusiones de versiones o supuestos.
 
 ---
@@ -64,9 +68,9 @@ Este documento actúa como la **memoria de ejecución actual** del proyecto Barb
 ---
 
 ## 📂 Enlaces Clave del Vault
-- [_index.md](file:///C:/Users/Cesar/Documents/GRUPO%20EMPRESARIAL%20REYES/PROYECTOS/Barberos/barberos-saas/Documentación/_index.md) — Mapa conceptual de la base de conocimiento.
-- [09-ROADMAP-TECNICO.md](file:///C:/Users/Cesar/Documents/GRUPO%20EMPRESARIAL%20REYES/PROYECTOS/Barberos/barberos-saas/Documentación/09-ROADMAP-TECNICO.md) — Planificación y fases de liberación.
-- [13-COMPONENTES.md](file:///C:/Users/Cesar/Documents/GRUPO%20EMPRESARIAL%20REYES/PROYECTOS/Barberos/barberos-saas/Documentación/13-COMPONENTES.md) — Biblioteca de componentes reales y pendientes.
+- [[_index]] — Mapa conceptual de la base de conocimiento.
+- [[09-ROADMAP-TECNICO]] — Planificación y fases de liberación.
+- [[13-COMPONENTES]] — Biblioteca de componentes reales y pendientes.
 
 ---
 
@@ -74,14 +78,14 @@ Este documento actúa como la **memoria de ejecución actual** del proyecto Barb
 
 ### Error 001 — Tagline con avatar cruzado
 **Fecha:** 2026-07-19  
-**Causa raíz:** El agente generó copy de marca (tagline de logo) sin haber leído previamente `04-SISTEMA-DE-COMUNICACION.md` ni la sección "Arquitectura de Avatares" de `02-ARQUITECTURA-ESTRATEGICA.md`. El texto resultante ("INFRASTRUCTURE | SYSTEMS | TRANSFORMATION") usó palabras en inglés corporativo genérico, directamente contradictorias con las listas de palabras prohibidas y el tono definido para el Avatar 1.  
+**Causa raíz:** El agente generó copy de marca (tagline de logo) sin haber leído previamente [[04-SISTEMA-DE-COMUNICACION]] ni la sección "Arquitectura de Avatares" de [[02-ARQUITECTURA-ESTRATEGICA]]. El texto resultante ("INFRASTRUCTURE | SYSTEMS | TRANSFORMATION") usó palabras en inglés corporativo genérico, directamente contradictorias con las listas de palabras prohibidas y el tono definido para el Avatar 1.  
 **Por qué pasó:** No existía un gate explícito que obligara la lectura de esos dos documentos antes de generar copy. El agente respondió desde memoria de entrenamiento general en lugar de contrastar con la fuente local.  
-**Fix aplicado:** Se añadió el "Gate obligatorio de comunicación" y el "Protocolo de razonamiento escalonado" al final de `skill-madre.md`. Ambos son de cumplimiento obligatorio a partir de esta fecha.  
+**Fix aplicado:** Se añadió el "Gate obligatorio de comunicación" y el "Protocolo de razonamiento escalonado" al final de [[skill-madre]]. Ambos son de cumplimiento obligatorio a partir de esta fecha.  
 **Patrón a reconocer:** Cualquier tarea que incluya palabras como *nombre*, *tagline*, *CTA*, *texto para la web*, *mensaje de WhatsApp* o *copy* activa automáticamente el Nivel 1 del protocolo — sin importar cuán pequeña o rápida parezca la tarea.
 
 ### Error 002 — Empatía antes que confrontación
 **Fecha:** 2026-07-20  
-**Causa raíz:** El agente generó copy de objeción para BarberOS que enfrentaba directamente al prospecto ("¿Por qué no me sirvió la tarjeta de fidelidad clásica?") sin aplicar primero el principio de empatía definido en `04-SISTEMA-DE-COMUNICACION.md` y en la skill de guiones. El texto resultante decía "¿Tienes tiempo para llevar eso a mano?" — confrontación directa antes de generar conexión.  
-**Por qué pasó:** No existía un gate que verificara el orden del flujo retórico antes de generar copy de objeciones. La skill de guiones ya tenía la corrección registrada, pero `CONTEXT.md` — la memoria institucional del proyecto — no la reflejaba, dejando el aprendizaje parcializado en un solo archivo.  
+**Causa raíz:** El agente generó copy de objeción para BarberOS que enfrentaba directamente al prospecto ("¿Por qué no me sirvió la tarjeta de fidelidad clásica?") sin aplicar primero el principio de empatía definido en [[04-SISTEMA-DE-COMUNICACION]] y en la skill de guiones. El texto resultante decía "¿Tienes tiempo para llevar eso a mano?" — confrontación directa antes de generar conexión.  
+**Por qué pasó:** No existía un gate que verificara el orden del flujo retórico antes de generar copy de objeciones. La skill de guiones ya tenía la corrección registrada, pero [[CONTEXT]] — la memoria institucional del proyecto — no la reflejaba, dejando el aprendizaje parcializado en un solo archivo.  
 **Fix aplicado:** Se registró el error en `CONTEXT.md` bajo la sección "Errores de proceso corregidos", garantizando que el aprendizaje viva tanto en la skill específica de guiones como en la memoria central del proyecto.  
 **Patrón a reconocer:** Cualquier tarea que genere copy de objeción, defensa, contra-argumento o pregunta retórica debe verificar primero que el flujo empieza con empatía y validación antes de introducir cualquier elemento de confrontación — sin importar cuánto el framing inicial invite a "abrir con la herida".

@@ -6,6 +6,33 @@
 
 ---
 
+### Sesión 2026-07-26 (Tarde) — Programa Leones: Enmienda, Acuerdo y Guion de Campo
+
+**Documentos creados/actualizados:**
+- [x] [[ACUERDO-CORTO-LEONES]] — Documento de términos para Leones (firma simple por WhatsApp)
+- [x] [[GUION-CAMPO-LEONES-LOJA-2026-07-27]] — Paso a paso para reclutamiento de Leones en Loja
+- [x] [[17-PROGRAMA-LEONES-FUNDADORES]] — Enmienda 2026-07-26 incorporada:
+  - Techo ampliado de 3 a 5 Leones Operativos
+  - Expansión geográfica nacional para reclutamiento de Leones
+  - Dos roles definidos: León Operativo ($25 + 10%) y León Referidor ($10 flat)
+  - Regla de autorreferido (local propio excluido de comisión)
+  - Trial de 15 días solo aplica a Pro (no a Premium)
+  - Reglas duras: anti-pirámide, atribución técnica, sin "gratis", sin IA como gancho
+- [x] [[_index]] — Actualizado con nuevos documentos
+
+**Pendientes del programa Leones:**
+- [ ] Nombre oficial del rol Cuenta Enterprise y comisión definitiva
+- [ ] Definir tercer perfil de León Operativo (distribuidor de insumos)
+- [ ] Actualizar guion de campo para flujo del León Referidor
+
+**Grafo de Obsidian — Actualización Completada:**
+- [x] 15 documentos actualizados con enlaces `[[ ]]` para el Grafo
+- [x] Regla del Grafo agregada en [[skill-madre]], [[_index]] y [[CONTEXT]]
+- [x] 83 conexiones bidireccionales creadas
+- [x] Nota: `Documentación/` permanece en `.gitignore` (IP sensible, no se sube al repo)
+
+---
+
 ### Sesión 2026-07-26 — Sprint A (checkinMethod) + Capa de Control de Acceso (planType gating)
 
 **Sprint A — Completado:**
@@ -21,7 +48,7 @@
 - [x] `UpgradeBanner.tsx` — componente decorativo para barberías PRO donde irían las secciones Premium. Sin pantallas rotas ni errores.
 - [x] `MotorSummaryWidget.tsx` — Server Component: PRO ve banner, PREMIUM ve mapa de riesgo + métricas de equipo + contadores CF
 - [x] `panel/page.tsx` — integrado `MotorSummaryWidget` + `cutsToday` ahora suma CF + identificadas (usa `barbershopId` directamente)
-- [x] `docs/19-INSTRUCCION-MOTOR-DIRECTOR.md` Sección 1.1 — Regla de Gating por planType documentada para cron, APIs, Director IA y frontend. Queda por escrito para que el Director IA herede la misma regla cuando se construya.
+- [x] [[19-INSTRUCCION-MOTOR-DIRECTOR]] Sección 1.1 — Regla de Gating por planType documentada para cron, APIs, Director IA y frontend. Queda por escrito para que el Director IA herede la misma regla cuando se construya.
 
 **Hallazgo:** El SuperAdmin (`/admin`) YA tenía UI de toggle PRO/PREMIUM desde antes. No era un hueco de producto.
 
@@ -122,9 +149,9 @@ Resultado:
 | Barberías en BD | 4: `Probando Barberos`, `Chechebarber`, `Monique`, `Que?` |
 
 **Correcciones de documentación aplicadas:**
-- [x] `CONTEXT.md` — corregida BD: era Postgres/Supabase, ahora MySQL/cPanel. Máquina de estados de feedback corregida.
-- [x] `09-ROADMAP-TECNICO.md` — corregida referencia a PostgreSQL → MySQL/cPanel
-- [x] `13-COMPONENTES.md` — re-corregida sección de feedback: `AWAITING_FEEDBACK` SÍ está implementado en webhook (confirmado por captura WhatsApp real). Lo que falta: `CustomerFeedback` tabla y recordatorio 4-5h.
+- [x] [[CONTEXT]] — corregida BD: era Postgres/Supabase, ahora MySQL/cPanel. Máquina de estados de feedback corregida.
+- [x] [[09-ROADMAP-TECNICO]] — corregida referencia a PostgreSQL → MySQL/cPanel
+- [x] [[13-COMPONENTES]] — re-corregida sección de feedback: `AWAITING_FEEDBACK` SÍ está implementado en webhook (confirmado por captura WhatsApp real). Lo que falta: `CustomerFeedback` tabla y recordatorio 4-5h.
 - [x] `BITACORA.md` sesión 2026-07-24 — marcadas con `[~]` las tareas documentadas por error
 
 **CONSTRUIDO en esta sesión:**
@@ -190,7 +217,7 @@ Resultado:
 
 **Tareas completadas:**
 - [x] **Rating = 5 → reseña Google automática:** implementado en el webhook. El link se envía de forma inmediata al cliente (no via `DelayedTask`, sino directamente en el flujo del webhook). Campo `firstReviewSent` en schema y BD, funcional.
-- [~] **Flujo rating < 5 (`AWAITING_FEEDBACK`, recordatorio 4-5h, tabla `CustomerFeedback`):** documentado como implementado, **en realidad NO existe**. La máquina de estados real es `IDLE → AWAITING_RATING → IDLE` solamente. Cuando rating < 5, el cliente no recibe ninguna acción adicional. (Ver corrección en `13-COMPONENTES.md`)
+- [~] **Flujo rating < 5 (`AWAITING_FEEDBACK`, recordatorio 4-5h, tabla `CustomerFeedback`):** documentado como implementado, **en realidad NO existe**. La máquina de estados real es `IDLE → AWAITING_RATING → IDLE` solamente. Cuando rating < 5, el cliente no recibe ninguna acción adicional. (Ver corrección en [[13-COMPONENTES]])
 - [~] **Cron `/api/cron/delayed-tasks` cada 5 min:** no existe. El procesamiento de `DelayedTask` está embebido en `/api/cron/reactivation`. Solo hay un cron en `vercel.json`.
 - [x] **Campo `salesAgent` en Barbershop:** Agregado para trazabilidad de agentes de ventas (sin cálculo de comisión todavía).
 - [x] **Verificación WhatsApp Business:** Confirmado que el check-in y mensajes corren sobre el número de la barbería vía Evolution API, no número personal del barbero.
@@ -202,8 +229,8 @@ Resultado:
 - [ ] **Copy definitivo de feedback:** César debe entregar el texto real para el flujo rating < 5 cuando se decida construirlo.
 - [ ] **Migración de BD necesaria:** cuando se construya el flujo de feedback (rating < 5), crear `CustomerFeedback` y ajustar la máquina de estados.
 - [ ] **Decisión pendiente:** ¿El flujo rating < 5 entra en el alcance del Motor + Director IA (doc 19) o es una etapa separada? No construir sin confirmación de César.
-- [x] **Holdback de comisión:** Resuelto (sin holdback, comisión activa desde el primer pago). Documentado en `17-PROGRAMA-LEONES-FUNDADORES.md`.
-- [x] **Separación founder deal vs. precio completo:** Resuelto (Barbería Fundadora vs. León Fundador). Documentado en `17-PROGRAMA-LEONES-FUNDADORES.md`.
+- [x] **Holdback de comisión:** Resuelto (sin holdback, comisión activa desde el primer pago). Documentado en [[17-PROGRAMA-LEONES-FUNDADORES]].
+- [x] **Separación founder deal vs. precio completo:** Resuelto (Barbería Fundadora vs. León Fundador). Documentado en [[17-PROGRAMA-LEONES-FUNDADORES]].
 - [ ] **Panel de comisiones para Leones:** Construcción técnica del panel de visualización y cálculo de comisiones. Bloqueante antes de escalar a los 20 Leones.
 - [ ] **Marketing Horizonte 1 (Salida):** Definir criterio numérico exacto de salida (ciudades, barberías activas).
 - [ ] **Relación ActivaQR vs BarberOS:** Aclarar la postura pública sobre la relación entre ambas marcas.
@@ -221,8 +248,8 @@ Resultado:
 - [x] **Primera venta Lifetime cerrada (2026-07-22): USD 500 — Pro Lifetime.** Primer dato real de venta a precio completo.
 - [x] **Push notifications confirmado por versión del hijo:** Sprint 8 completado. Push nativo con sonido como canal primario, polling como fallback.
 - [x] **Reseñas Google pasan a discrecionales:** El barbero decide si el cliente salió satisfecho antes de aprobar el envío. Ya no es automático a las 2h. *(Nota: esta decisión se volvió a revertir en sesión 2026-07-24 — ver esa sesión.)*
-- [x] **Corrección de contradicción interna:** CONTEXT.md (Sprint 5, 6, 7 completados) ahora alineado con 09-ROADMAP-TECNICO.md y 13-COMPONENTES.md.
-- [x] **Documentación actualizada:** 10-ROADMAP-COMERCIAL.md, 14-PRD.md, 03-ARQUITECTURA-WEB.md, 12-UX.md, 13-COMPONENTES.md, 09-ROADMAP-TECNICO.md, 05-ARQUITECTURA-DEL-PRODUCTO.md.
+- [x] **Corrección de contradicción interna:** [[CONTEXT]] (Sprint 5, 6, 7 completados) ahora alineado con [[09-ROADMAP-TECNICO]] y [[13-COMPONENTES]].
+- [x] **Documentación actualizada:** [[10-ROADMAP-COMERCIAL]], [[14-PRD]], [[03-ARQUITECTURA-WEB]], [[12-UX]], [[13-COMPONENTES]], [[09-ROADMAP-TECNICO]], [[05-ARQUITECTURA-DEL-PRODUCTO]].
 
 **Pendientes:**
 - [ ] **Spec técnica de push:** Detalle completo de la implementación de notificaciones push (pendiente confirmar con el hijo).
@@ -273,9 +300,9 @@ Resultado:
 - [x] Implementación de 10 escenas cinematográficas en la Home (Avatar 1).
 - [x] Componentes: `ScrollSequence.tsx` con GSAP, `MarqueeDivisor.tsx`, `VideoFAQ.tsx`, indicador REC parpadeante.
 - [x] 5 imágenes placeholder para el Interrogatorio copiadas a `/public/interrogatorio/`.
-- [x] `skill-madre.md` actualizada con Gate de Comunicación + Protocolo Escalonado + Protocolo de Bitácora.
-- [x] `CONTEXT.md` actualizado con Error 001 (tagline con avatar cruzado).
-- [x] `15-BRAND-KIT-BRIEFING.md` creado como brief para Manus.
+- [x] [[skill-madre]] actualizada con Gate de Comunicación + Protocolo Escalonado + Protocolo de Bitácora.
+- [x] [[CONTEXT]] actualizado con Error 001 (tagline con avatar cruzado).
+- [x] [[15-BRAND-KIT-BRIEFING]] creado como brief para Manus.
 - [x] Decision logo: misma tipografía para "OS", misma altura, cambio de color a cobre. Tagline: pendiente de validación de campo.
 
 ---

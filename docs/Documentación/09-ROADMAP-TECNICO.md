@@ -82,7 +82,7 @@ Pendiente antes de salir a vender en Cuenca:
 
 Objetivo técnico: que el sistema no se caiga con múltiples tenants reales y que cada aprobación, mensaje y premio funcione sin intervención manual del equipo.
 
-**Excepción explícita a la regla de fases:** El Programa de Distribución vía Leones Fundadores (`17-PROGRAMA-LEONES-FUNDADORES.md`) rompe la secuencia de validación técnica deliberadamente. Se acepta el riesgo de escalar distribución (Leones, multi-ciudad) en paralelo a la validación técnica de Fase 1. El riesgo de escalar Motor de Conocimiento/Agentes IA sigue congelado sin excepción.
+**Excepción explícita a la regla de fases:** El Programa de Distribución vía Leones Fundadores ([[17-PROGRAMA-LEONES-FUNDADORES]]) rompe la secuencia de validación técnica deliberadamente. Se acepta el riesgo de escalar distribución (Leones, multi-ciudad) en paralelo a la validación técnica de Fase 1. El riesgo de escalar Motor de Conocimiento/Agentes IA sigue congelado sin excepción.
 
 No se construye en esta fase:
 
@@ -102,7 +102,7 @@ Se activa únicamente cuando exista al menos un piloto dispuesto a pagar por una
 
 ## Fase 3 — Multi-sede y Enterprise
 
-No se documenta en detalle todavía. Referencia: `15-PROYECTOS-Y-PROYECCIONES.md`.
+No se documenta en detalle todavía. Referencia: [[15-BRAND-KIT-BRIEFING]].
 
 ---
 

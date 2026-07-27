@@ -105,7 +105,7 @@ Calificación.
 
 Premios.
 
-QR de auto-registro de datos del cliente. El propio cliente, escaneando un código, puede dejar voluntariamente datos estructurados sobre sí mismo: fecha de nacimiento, hitos personales (graduación, aniversario, etc.). Este dato es determinista y estructurado — no requiere interpretación de IA — y alimenta triggers automáticos (ej. mensaje de cumpleaños), de forma equivalente al cron de reactivación ya existente. Este mismo QR es el mecanismo para crear un nuevo **perfil** dentro de una cuenta existente cuando dos personas comparten número de WhatsApp (ver modelo Cuenta/Perfil en `19-INSTRUCCION-MOTOR-DIRECTOR.md`).
+QR de auto-registro de datos del cliente. El propio cliente, escaneando un código, puede dejar voluntariamente datos estructurados sobre sí mismo: fecha de nacimiento, hitos personales (graduación, aniversario, etc.). Este dato es determinista y estructurado — no requiere interpretación de IA — y alimenta triggers automáticos (ej. mensaje de cumpleaños), de forma equivalente al cron de reactivación ya existente. Este mismo QR es el mecanismo para crear un nuevo **perfil** dentro de una cuenta existente cuando dos personas comparten número de WhatsApp (ver modelo Cuenta/Perfil en [[19-INSTRUCCION-MOTOR-DIRECTOR]]).
 
 ---
 

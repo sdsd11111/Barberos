@@ -30,7 +30,7 @@ relacionado:
 
 Definir cómo se vende BarberOS, a qué precio, y con qué mecanismo de validación, sin contradecir lo que la página pública comunica.
 
-> **Aviso de Posicionamiento:** La adquisición comercial y las campañas públicas están supeditadas a la fase de Silencio Estratégico (Horizonte 1) definida en `18-PLAN-ESTRATEGICO-MARKETING.md`.
+> **Aviso de Posicionamiento:** La adquisición comercial y las campañas públicas están supeditadas a la fase de Silencio Estratégico (Horizonte 1) definida en [[18-PLAN-ESTRATEGICO-MARKETING]].
 
 ---
 
@@ -76,7 +76,7 @@ Trial gratuito sin tarjeta de crédito. Activo en el sitio. El visitante solicit
 
 ## BarberOS Enterprise
 
-No se documenta ni se menciona públicamente todavía. Referencia: `15-PROYECTOS-Y-PROYECCIONES.md`.
+No se documenta ni se menciona públicamente todavía. Referencia: [[15-BRAND-KIT-BRIEFING]].
 
 Estos precios son el ancla. No varían en el copy de la web bajo ninguna circunstancia, incluida la fase de validación.
 
@@ -223,7 +223,7 @@ Perdón del setup de $50 a cambio de: reseña real en Google + video-testimonio 
 
 # Programa de Distribución vía Leones Fundadores
 
-Referencia: `17-PROGRAMA-LEONES-FUNDADORES.md`.
+Referencia: [[17-PROGRAMA-LEONES-FUNDADORES]].
 
 El precio público de setup (USD 50) no cambia bajo ninguna circunstancia. El split de USD 25 para el León Fundador y USD 25 para la empresa es una operación interna, no un precio nuevo al público.
 
@@ -243,4 +243,4 @@ El tier "Starter" privado sigue existiendo y es independiente de este programa �
 
 # Relación con la página pública
 
-Todo lo descrito en este documento como "privado" debe permanecer fuera del copy de `03-ARQUITECTURA-WEB.md` y del sitio en producción. La coherencia entre lo que se promete en la web y lo que ocurre en la venta real es innegociable.
+Todo lo descrito en este documento como "privado" debe permanecer fuera del copy de [[03-ARQUITECTURA-WEB]] y del sitio en producción. La coherencia entre lo que se promete en la web y lo que ocurre en la venta real es innegociable.

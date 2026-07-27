@@ -2,6 +2,8 @@
 
 Este es el punto de acceso central a la base de conocimiento de BarberOS. Para optimizar el uso de tokens, lee este índice y navega únicamente hacia el archivo que contiene el detalle requerido.
 
+> **📌 Regla del Grafo:** Al mencionar cualquier documento en esta documentación, usa siempre formato `[[nombre]]` — esto crea las conexiones del Grafo de Obsidian.
+
 ---
 
 ## 🏛️ Gobernanza y Estrategia (Reglas del Negocio)
@@ -11,6 +13,8 @@ Este es el punto de acceso central a la base de conocimiento de BarberOS. Para o
 - [[10-ROADMAP-COMERCIAL]] — **Roadmap Comercial**: Estrategia de penetración de mercado y adquisición de pilotos.
 - [[11-ROADMAP-SEO]] — **Roadmap SEO**: Estructura de indexación y optimización para captar tráfico orgánico de dueños de barbería.
 - [[17-PROGRAMA-LEONES-FUNDADORES]] — **Leones Fundadores**: Programa de distribución comercial sin pauta.
+  - [[ACUERDO-CORTO-LEONES]] — **Acuerdo de Colaboración**: Documento de términos para Leones (firma simple).
+  - [[GUION-CAMPO-LEONES-LOJA-2026-07-27]] — **Guion de Campo**: Paso a paso para reclutamiento de Leones en Loja.
 - [[18-PLAN-ESTRATEGICO-MARKETING]] — **Plan Estratégico de Marketing**: Horizontes de posicionamiento y silencio estratégico.
 - [[Skill de Guiones BarberOS]] — **Skill de Guiones**: Reglas de tono, microhooks y protocolo de validación para piezas publicitarias y pitches.
 

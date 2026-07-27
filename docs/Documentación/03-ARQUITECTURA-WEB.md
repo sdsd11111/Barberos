@@ -697,7 +697,7 @@ Footer.
 
 Estos componentes se documentarán en:
 
-13-COMPONENTES.md
+[[13-COMPONENTES]]
 
 ---
 
@@ -811,7 +811,7 @@ La arquitectura web estará correctamente implementada cuando:
 
 # Próximos documentos
 
-04-SISTEMA-DE-COMUNICACION.md
+[[04-SISTEMA-DE-COMUNICACION]]
 
 Definirá la voz oficial de BarberOS.
 

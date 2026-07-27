@@ -53,7 +53,7 @@ Confirmado por César: no se activa marca pública (medios digitales/televisivos
 - **Condición de entrada:** cifra de barberías activas defendible en cámara sin exagerar (coherente con Constitución Art. 1: "nunca mostrar un dato sin interpretación" — tampoco un dato inflado).
 - Aquí se activa la identidad visual completa (documento 15, Brand Kit) en su máxima expresión: prensa, entrevistas, posible ronda de inversión apalancada en la valoración conversada hoy.
 
-**Regla dura:** no se salta de Horizonte 1 a Horizonte 3. Si en algún momento César quiere adelantar medios antes de tener el volumen del Horizonte 2, debe quedar registrado como excepción consciente (mismo criterio ya usado en la enmienda a `09-ROADMAP-TECNICO.md`), no como decisión improvisada de entusiasmo.
+**Regla dura:** no se salta de Horizonte 1 a Horizonte 3. Si en algún momento César quiere adelantar medios antes de tener el volumen del Horizonte 2, debe quedar registrado como excepción consciente (mismo criterio ya usado en la enmienda a [[09-ROADMAP-TECNICO]]), no como decisión improvisada de entusiasmo.
 
 ---
 

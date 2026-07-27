@@ -145,7 +145,7 @@ Inventariar los componentes ya construidos y los pendientes, para que el desarro
 
 # Componentes de la landing pública (referencia visual, no funcional)
 
-La landing actual (`barberos-rho-henna.vercel.app`) ya tiene una estructura de 12 secciones cinematográficas con scroll narrativo y cursor personalizado. Estos bloques se mantienen como base visual, pero su contenido y orden se actualizan según `03-ARQUITECTURA-WEB.md` (pendiente de reescritura con el nuevo ADN centrado en tranquilidad/control).
+La landing actual (`barberos-rho-henna.vercel.app`) ya tiene una estructura de 12 secciones cinematográficas con scroll narrativo y cursor personalizado. Estos bloques se mantienen como base visual, pero su contenido y orden se actualizan según [[03-ARQUITECTURA-WEB]] (pendiente de reescritura con el nuevo ADN centrado en tranquilidad/control).
 
 ---
 
