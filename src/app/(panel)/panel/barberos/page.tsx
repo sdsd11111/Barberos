@@ -1,24 +1,24 @@
+// filepath: src/app/(panel)/panel/barberos/page.tsx
 import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
+import PanelHero from "@/components/redesign/PanelHero";
+import MetricTile from "@/components/redesign/MetricTile";
 import BarberosView from "@/components/panel/BarberosView";
 
 export default async function BarberosPage() {
   const session = await verifySession();
   const barbershopId = session.barbershopId;
 
-  // Obtener datos de la barbería para generar QR individuales
   const barbershop = await prisma.barbershop.findUnique({
     where: { id: barbershopId },
-    select: { whatsappNumber: true, currentBoxCode: true },
+    select: { whatsappNumber: true, currentBoxCode: true, name: true },
   });
 
-  // Obtener staff de la barbería
   const staff = await prisma.barberStaff.findMany({
     where: { barbershopId },
     orderBy: { name: "asc" },
   });
 
-  // Obtener todos los clientes de esta barbería
   const customers = await prisma.barberCustomer.findMany({
     where: { barbershopId },
     select: { id: true, name: true, whatsapp: true },
@@ -26,7 +26,6 @@ export default async function BarberosPage() {
   const customerMap = new Map(customers.map((c) => [c.id, c]));
   const customerIds = customers.map((c) => c.id);
 
-  // Obtener todas las visitas aprobadas con calificación
   const visits = await prisma.barberVisit.findMany({
     where: {
       customerId: { in: customerIds },
@@ -36,7 +35,6 @@ export default async function BarberosPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  // Calificación general (todas las visitas con rating)
   const allRatings = visits.filter((v) => v.rating !== null);
   const generalAvg =
     allRatings.length > 0
@@ -44,7 +42,6 @@ export default async function BarberosPage() {
       : 0;
   const generalCount = allRatings.length;
 
-  // Distribución de estrellas general
   const generalDistribution = [0, 0, 0, 0, 0];
   allRatings.forEach((v) => {
     if (v.rating && v.rating >= 1 && v.rating <= 5) {
@@ -52,7 +49,6 @@ export default async function BarberosPage() {
     }
   });
 
-  // Calificación por barbero
   const staffStats = staff.map((member) => {
     const staffVisits = visits.filter((v) => v.staffId === member.id && v.rating !== null);
     const avg =
@@ -91,23 +87,50 @@ export default async function BarberosPage() {
     };
   });
 
-  // Visitas sin barbero asignado (antes de implementar la selección de staff)
   const unassignedVisits = visits.filter((v) => !v.staffId && v.rating !== null);
   const unassignedCount = unassignedVisits.length;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#5c554c] mb-1">
-            Rendimiento
-          </p>
-          <h2 className="font-display text-4xl sm:text-5xl font-light">Barberos</h2>
-        </div>
-        <div className="font-mono text-xs text-[#5c554c]">
-          {generalCount} calificaciones totales
-        </div>
-      </header>
+    <div className="max-w-6xl mx-auto space-y-6 pb-32">
+      {/* HERO */}
+      <PanelHero
+        imageUrl="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1600&q=80"
+        imagePosition="center 30%"
+        eyebrow="Rendimiento por Persona"
+        badge={
+          <span className="bg-[#e8a33d]/15 text-[#e8a33d] border border-[#e8a33d]/30 px-2 py-0.5 text-[9px] font-mono rounded-full uppercase tracking-[0.2em]">
+            ★ {generalAvg.toFixed(1)} Promedio
+          </span>
+        }
+        title="Barberos"
+        subtitle="Mide el desempeño de cada profesional: calificaciones, distribución de estrellas y reseñas reales de tus clientes."
+        minHeight={300}
+      />
+
+      {/* MÉTRICAS RÁPIDAS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <MetricTile
+          label="Calificación General"
+          value={generalAvg > 0 ? generalAvg.toFixed(1) : "—"}
+          caption="Promedio de todas las reseñas"
+          icon="★"
+          accent="amber"
+        />
+        <MetricTile
+          label="Total Reseñas"
+          value={generalCount}
+          caption="Votos acumulados"
+          icon="✎"
+          accent="orange"
+        />
+        <MetricTile
+          label="Profesionales"
+          value={staffStats.length}
+          caption={unassignedCount > 0 ? `+${unassignedCount} sin asignar` : "Activos"}
+          icon="✦"
+          accent="green"
+        />
+      </div>
 
       <BarberosView
         generalAvg={generalAvg}

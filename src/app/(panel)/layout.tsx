@@ -20,7 +20,10 @@ export default async function PanelLayout({
   const isPremium = await isPremiumBarbershop(session.barbershopId);
 
   return (
-    <div className="min-h-screen bg-[#0a0807] text-[#f3ece1]">
+    // overflow-x-hidden defensivo: garantiza que NINGÚN hijo pueda
+    // provocar scroll horizontal en el panel (común en listas de
+    // staff, tablas, contenedores con whitespace-nowrap, etc.).
+    <div className="min-h-screen bg-[#0a0807] text-[#f3ece1] overflow-x-hidden">
       <PanelNav logoutAction={logout} isPremium={isPremium} />
 
       {/* Main Content — con padding top para compensar el header fijo */}

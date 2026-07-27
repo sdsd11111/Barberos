@@ -92,3 +92,16 @@ body {
 .animate-blink {
   animation: blink 1.5s ease-in-out infinite;
 }
+
+/* Animación pulsante del indicador "desliza →" de los tabs.
+   Combina un leve scale + translate horizontal para sugerir movimiento. */
+@keyframes tabs-hint {
+  0%, 100% {
+    transform: translate(0, -50%) scale(1);
+    box-shadow: 0 4px 12px rgba(217, 118, 68, 0.55);
+  }
+  50% {
+    transform: translate(6px, -50%) scale(1.08);
+    box-shadow: 0 8px 20px rgba(217, 118, 68, 0.75);
+  }
+}

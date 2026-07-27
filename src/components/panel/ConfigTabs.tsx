@@ -26,17 +26,22 @@ export default function ConfigTabs({ configData }: ConfigTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("whatsapp");
 
   return (
-    <div className="space-y-6">
-      {/* Tab bar */}
-      <div className="flex border-b border-[#2a2520]">
+    // min-w-0 permite que este grid item se encoja correctamente
+    // dentro de su flex parent (evita overflow horizontal en móvil).
+    // overflow-x-hidden es la red de seguridad final.
+    <div className="space-y-6 min-w-0 overflow-x-hidden">
+      {/* Tab bar — scroll horizontal interno para que si el texto no
+          cabe se scrollee SOLO esta fila, sin propagarse al body. */}
+      <div className="flex border-b border-[#2a2520] overflow-x-auto scrollbar-thin">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`
               relative px-6 py-3 font-mono text-xs tracking-[0.15em] uppercase transition-colors
-              ${activeTab === tab.id 
-                ? "text-[#d97644]" 
+              whitespace-nowrap shrink-0
+              ${activeTab === tab.id
+                ? "text-[#d97644]"
                 : "text-[#5c554c] hover:text-[#a89e90]"
               }
             `}

@@ -34,7 +34,9 @@ export default async function WhatsAppPage() {
     }
 
     return (
-      <div className="space-y-6">
+      // overflow-x-hidden garantiza que ni el header ni los items
+      // del staff puedan generar scroll horizontal en móvil.
+      <div className="space-y-6 overflow-x-hidden">
         <header>
           <p className="font-mono text-xs tracking-[0.3em] uppercase text-[#5c554c] mb-2">
             Ajustes de la Barbería

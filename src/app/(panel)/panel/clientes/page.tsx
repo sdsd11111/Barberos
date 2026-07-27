@@ -1,6 +1,9 @@
+// filepath: src/app/(panel)/panel/clientes/page.tsx
 import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import { isPremiumBarbershop } from "@/lib/plan-guard";
+import PanelHero from "@/components/redesign/PanelHero";
+import MetricTile from "@/components/redesign/MetricTile";
 import ClientesTabs from "@/components/panel/ClientesTabs";
 import ExportDataButton from "@/components/panel/ExportDataButton";
 
@@ -24,7 +27,7 @@ export default async function ClientesPage({
     include: {
       customer: true, // Para obtener el whatsapp y cutsCount de la cuenta
     },
-    orderBy: { createdAt: "desc" }, // Idealmente ordenar por lastVisit, pero requiere join complejo, ordenamos por creación de perfil base
+    orderBy: { createdAt: "desc" },
   });
 
   const profileIds = profiles.map((p) => p.id);
@@ -60,9 +63,12 @@ export default async function ClientesPage({
     const lastVisit = approvedVisits[0] ?? null;
     const isNewThisMonth =
       lastVisit !== null && lastVisit.createdAt >= startOfMonth;
-    
+
     // Loyalty logic
-    const activeCutsCount = barbershop?.loyaltyMode === "BY_ACCOUNT" ? profile.customer.cutsCount : profile.cutsCount;
+    const activeCutsCount =
+      barbershop?.loyaltyMode === "BY_ACCOUNT"
+        ? profile.customer.cutsCount
+        : profile.cutsCount;
     const isRecurrent = activeCutsCount >= 2;
 
     const history = visits.map((v) => ({
@@ -119,23 +125,56 @@ export default async function ClientesPage({
 
   const requiredCuts = barbershop?.requiredCuts ?? 5;
 
-  return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#5c554c] mb-1">
-            Gestión
-          </p>
-          <h2 className="font-display text-4xl sm:text-5xl font-light">Clientes</h2>
-        </div>
-        <div className="flex items-center gap-3">
-          {isPremium && <ExportDataButton variant="compact" />}
-          <div className="font-mono text-xs text-[#5c554c]">
-            {enrichedProfiles.length} perfiles registrados
-          </div>
-        </div>
-      </header>
+  const totalProfiles = enrichedProfiles.length;
+  const recurrentProfiles = enrichedProfiles.filter((p) => p.isRecurrent).length;
+  const newThisMonth = enrichedProfiles.filter((p) => p.isNewThisMonth).length;
 
+  return (
+    <div className="max-w-6xl mx-auto space-y-6 pb-32">
+      {/* HERO */}
+      <PanelHero
+        imageUrl="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1600&q=80"
+        imagePosition="center 35%"
+        eyebrow="Tu Base Viva"
+        badge={
+          <span className="bg-[#f3ece1]/10 text-[#f3ece1] border border-[#f3ece1]/20 px-2 py-0.5 text-[9px] font-mono rounded-full uppercase tracking-[0.2em]">
+            {totalProfiles} Perfiles
+          </span>
+        }
+        title="Clientes"
+        subtitle="Cada perfil cuenta una historia: desde el Consumidor Final hasta tus clientes VIP. Gestiona, filtra y entiéndelos."
+        action={
+          isPremium && <ExportDataButton variant="compact" />
+        }
+        minHeight={300}
+      />
+
+      {/* MÉTRICAS RÁPIDAS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <MetricTile
+          label="Total Perfiles"
+          value={totalProfiles}
+          caption="Clientes en tu base"
+          icon="◐"
+          accent="orange"
+        />
+        <MetricTile
+          label="Recurrentes"
+          value={recurrentProfiles}
+          caption="2+ cortes realizados"
+          icon="↻"
+          accent="amber"
+        />
+        <MetricTile
+          label="Nuevos del Mes"
+          value={newThisMonth}
+          caption="Primer corte este mes"
+          icon="✦"
+          accent="green"
+        />
+      </div>
+
+      {/* TABS DE CLIENTES */}
       <ClientesTabs
         customers={enrichedProfiles}
         initialTab={tab ?? "todos"}
