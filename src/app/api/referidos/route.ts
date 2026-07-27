@@ -39,9 +39,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { nombre, celular, celularNegocio, negocio, direccion } = body;
+    const { nombre, celular, negocio, direccion } = body;
 
-    if (!nombre || !celular || !celularNegocio || !negocio || !direccion) {
+    if (!nombre || !celular || !negocio || !direccion) {
       return NextResponse.json({ error: "Todos los campos son requeridos" }, { status: 400 });
     }
 
@@ -63,7 +63,6 @@ export async function POST(request: NextRequest) {
       data: {
         nombre,
         celular,
-        celularNegocio,
         negocio,
         direccion,
         codigoUnico,

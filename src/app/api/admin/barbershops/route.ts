@@ -21,6 +21,7 @@ const CreateBarbershopSchema = z.object({
   requiredCuts: z.number().default(5),
   googleMapsUrl: z.string().optional(),
   salesAgent: z.string().optional(),
+  ownerPhone: z.string().optional(),
   planType: z.enum(["PRO", "PREMIUM"]).default("PRO"),
 });
 
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
         evolutionApiKey: "", // Se usará la global por defecto
         requiredCuts: data.requiredCuts,
         googleMapsUrl: data.googleMapsUrl || null,
+        ownerPhone: data.ownerPhone || null,
         salesAgent: data.salesAgent?.trim() || null,
         planStatus: "TRIAL",
         planType: data.planType || "PRO",
@@ -101,6 +103,24 @@ export async function POST(request: NextRequest) {
         loginPin,
       },
     });
+
+    // Enviar webhook a barberosplus.com (no bloquea la respuesta)
+    if (data.name && data.whatsappNumber) {
+      fetch(process.env.BARBEROSPLUS_WEBHOOK_URL || "https://barberosplus.com/api/webhook/new-barbershop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": process.env.REFERRAL_WEBHOOK_KEY || "" },
+        body: JSON.stringify({
+          event: "barbershop_created",
+          barbershop: {
+            name: data.name,
+            phoneBusiness: data.whatsappNumber,
+            phonePersonal: data.ownerPhone || null,
+            plan: data.planType || "PRO",
+          },
+          timestamp: new Date().toISOString(),
+        }),
+      }).catch(() => {}); // No bloquear por errores del webhook
+    }
 
     return NextResponse.json(barbershop, { status: 201 });
   } catch (error) {
@@ -120,6 +140,7 @@ const UpdateBarbershopSchema = z.object({
   whatsappNumber: z.string().min(1).optional(),
   requiredCuts: z.number().optional(),
   googleMapsUrl: z.string().nullable().optional(),
+  ownerPhone: z.string().nullable().optional(),
   salesAgent: z.string().nullable().optional(),
 });
 

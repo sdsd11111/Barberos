@@ -27,6 +27,7 @@ model Barbershop {
   loginPin          String         @default("") // PIN de acceso de 6 dígitos único
   currentBoxCode    String         @default("RV55") // Código de caja dinámico activo para check-ins
   salesAgent        String?        // Nombre/código del vendedor o referido que trajo la cuenta
+  ownerPhone        String?        // Teléfono personal del dueño/representante para referidos
   // Motor config — umbrales de riesgo (configurables por barbería)
   riskThresholdNormal  Float       @default(0.8) // < 0.8x = Normal; 0.8x a 1.2x = Próximo a corte (Recordatorio preventivo); > 1.2x = En Riesgo
   riskThresholdAt      Float       @default(1.2) // > 1.2x = En Riesgo / Atrasado
@@ -234,12 +235,52 @@ model RateLimitAttempt {
 model ReferralVendedor {
   id            String   @id @default(cuid())
   nombre        String
-  celular       String   // celular personal
-  celularNegocio String  // celular del negocio
+  celular       String
   negocio       String
   direccion     String
   codigoUnico   String   @unique // 8 caracteres, ej: "X7K9M2A1"
   activo        Boolean  @default(true)
   scansCount    Int      @default(0) // cuántas veces se escaneó su QR
   createdAt     DateTime @default(now())
+
+  // Relaciones
+  leads         ReferralLead[]
+  comisiones    ReferralComision[]
+}
+
+// ReferralLead: registro de cada teléfono que escaneó un QR
+model ReferralLead {
+  id            String    @id @default(cuid())
+  vendedorId    String    // FK a ReferralVendedor
+  telefono      String    // Teléfono que escribió (normalizado E.164)
+  codigoQr      String    // Código QR que escaneó
+  clienteNombre String?   // Nombre si lo proporcionó
+  capturedAt    DateTime  @default(now())
+  converted     Boolean   @default(false)
+  convertedAt  DateTime?
+
+  vendedor      ReferralVendedor @relation(fields: [vendedorId], references: [id])
+
+  @@index([telefono])
+  @@index([capturedAt])
+  @@index([vendedorId])
+}
+
+// ReferralComision: registro de comisiones por ventas referidas
+model ReferralComision {
+  id            String    @id @default(cuid())
+  vendedorId    String    // FK a ReferralVendedor
+  leadId        String?   // FK a ReferralLead que originó la venta
+  transactionId String    // ID de la venta en barberosplus
+  clienteNombre String
+  telefonos     String    // JSON array de teléfonos
+  monto         Float?
+  pagada        Boolean   @default(false)
+  pagadaAt      DateTime?
+  createdAt     DateTime  @default(now())
+
+  vendedor      ReferralVendedor @relation(fields: [vendedorId], references: [id])
+
+  @@index([vendedorId])
+  @@index([transactionId])
 }

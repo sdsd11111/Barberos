@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [requiredCuts, setRequiredCuts] = useState(5);
   const [googleMapsUrl, setGoogleMapsUrl] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
   const [salesAgent, setSalesAgent] = useState("");
   const [planType, setPlanType] = useState<"PRO" | "PREMIUM">("PRO");
 
@@ -173,6 +174,7 @@ export default function AdminDashboard() {
           whatsappNumber,
           requiredCuts: Number(requiredCuts),
           googleMapsUrl,
+          ownerPhone: ownerPhone.trim() || undefined,
           salesAgent: salesAgent.trim() || undefined,
           planType,
         }),
@@ -187,6 +189,7 @@ export default function AdminDashboard() {
         setName("");
         setWhatsappNumber("");
         setGoogleMapsUrl("");
+        setOwnerPhone("");
         setSalesAgent("");
         fetchBarbershops(adminSecret);
       } else {
@@ -467,6 +470,19 @@ export default function AdminDashboard() {
                   value={googleMapsUrl}
                   onChange={(e) => setGoogleMapsUrl(e.target.value)}
                   placeholder="Pegar enlace directo de reseña Google"
+                  className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">
+                  Teléfono Personal del Dueño (Opcional)
+                </label>
+                <input
+                  type="tel"
+                  value={ownerPhone}
+                  onChange={(e) => setOwnerPhone(e.target.value)}
+                  placeholder="Ej. 593991234567"
                   className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
                 />
               </div>
