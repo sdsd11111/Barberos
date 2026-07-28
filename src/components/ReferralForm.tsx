@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getQrDataUrl, getWhatsAppUrl } from "@/lib/qr-generator";
+import DownloadQRButton from "@/components/DownloadQRButton";
 
 interface Vendedor {
   id: string;
@@ -59,16 +60,6 @@ export default function ReferralForm() {
     setCreatedVendedor(null);
   };
 
-  const downloadQR = () => {
-    const qrUrl = getQrDataUrl(createdVendedor!.codigoUnico, 300);
-    const link = document.createElement("a");
-    link.href = qrUrl;
-    link.download = `QR-${createdVendedor!.codigoUnico}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   if (createdVendedor) {
     const qrUrl = getQrDataUrl(createdVendedor.codigoUnico, 300);
     const whatsappUrl = getWhatsAppUrl(createdVendedor.codigoUnico);
@@ -95,12 +86,12 @@ export default function ReferralForm() {
           </div>
 
           {/* Descargar QR */}
-          <button
-            onClick={downloadQR}
-            className="w-full py-3 font-mono text-xs tracking-[0.2em] uppercase text-[#0a0807] bg-[#d97644] hover:bg-[#e8854f] transition-colors"
-          >
-            Descargar QR
-          </button>
+          <DownloadQRButton
+            qrUrl={qrUrl}
+            barbershopName={createdVendedor.codigoUnico}
+            filePrefix="QR"
+            variant="solid"
+          />
 
           {/* Info */}
           <div className="space-y-2 text-left bg-[#0a0807] border border-[#2a2520] p-4">

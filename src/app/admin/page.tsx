@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getQrDataUrl } from "@/lib/qr-generator";
+import DownloadQRButton from "@/components/DownloadQRButton";
 
 interface Barbershop {
   id: string;
@@ -816,13 +818,13 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right space-x-1">
-                        <button
-                          onClick={() => window.open(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`https://wa.me/593963425323?text=Hola,%20me%20interesa%20el%20sistema,%20vengo%20de%20parte%20de%20${v.codigoUnico}`)}`, "_blank")}
-                          className="px-2 py-1 bg-[#2a2520] text-[#a89e90] hover:text-[#f3ece1] border border-[#2a2520] rounded"
-                          title="Ver QR"
-                        >
-                          QR
-                        </button>
+                        <DownloadQRButton
+                          qrUrl={getQrDataUrl(v.codigoUnico, 300)}
+                          barbershopName={v.codigoUnico}
+                          filePrefix="QR"
+                          variant="panel"
+                          label="QR"
+                        />
                         <button
                           onClick={() => handleToggleVendedorActivo(v)}
                           className={`px-2 py-1 border rounded ${
