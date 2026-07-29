@@ -2,18 +2,20 @@
 id: 07-motor-de-conocimiento
 titulo: Motor de Conocimiento
 categoria: inteligente
-estado: congelado
-sprint: fase-2-premium
-ultima_revision: 2026-07-19
+estado: activo-capa-deterministica
+sprint: fase-2-premium-en-construccion
+ultima_revision: 2026-07-29
 relacionado:
   - 08-ARQUITECTURA-IA
+  - 19-INSTRUCCION-MOTOR-DIRECTOR
+  - 09-ROADMAP-TECNICO
 ---
 
 # 07-MOTOR-DE-CONOCIMIENTO.md
 
-> Versión: 2.0
+> Versión: 3.0
 >
-> Estado: Activo
+> Estado: Activo (capa determinística implementada y en producción)
 >
 > Clasificación: CONFIDENCIAL
 >
@@ -462,3 +464,44 @@ más valioso se volverá para su dueño.
 Ese conocimiento constituye el principal activo intelectual de BarberOS.
 
 Debe protegerse, evolucionar y documentarse con el mismo cuidado que el código fuente.
+
+---
+
+# 📍 Estado de implementación (cotejo 2026-07-29)
+
+## Lo que ya existe en código
+
+**Capa Determinística — IMPLEMENTADA Y EN PRODUCCIÓN desde 2026-07-25:**
+
+### Modelo de datos
+- `CustomerProfile` — persona real dentro de una cuenta WhatsApp (modelo Cuenta/Perfil).
+- `ProfileMotorContext` — contexto calculado por el Motor por perfil: frecuencia, riesgo, vigencia, distribución horaria.
+- `MotorSnapshot` — resumen nocturno por barbería en 3 dimensiones: Negocio, Clientes, Equipo.
+- `TestExclusion` — tabla editable de números excluidos del cálculo (ej. barberos, dueños, números de prueba).
+- Campos nuevos en `BarberVisit`: `checkinMethod` (`SELF` / `BARBER_ASSISTED_KNOWN` / `BARBER_ASSISTED_ANONYMOUS`), `profileId`, `services`, `visitHour`.
+- Campos nuevos en `Barbershop`: `riskThresholdNormal`, `riskThresholdAt`, `loyaltyMode` (`BY_PROFILE` / `BY_ACCOUNT`), `visitDurationMin`, `anonymousVisitCounter`.
+
+### Librería determinística (`src/lib/motor.ts`)
+- `calculateAvgDaysBetween()` — ventana móvil de 8 visitas por perfil.
+- `calculateRiskLevel()` — umbrales configurables por barbería: `AT_RISK` / `DELAYED` / `NORMAL` / `INSUFFICIENT_DATA`.
+- `calculateProfileFrequency()` — frecuencia e indicadores por perfil.
+- `calculateStaffMetrics()` — promedios de equipo (solo visitas con barbero real).
+- `calculateVisitsByHour()` — distribución horaria para análisis de capacidad.
+- `runMotorForBarbershop()` — runner completo para una barbería.
+- `persistMotorResults()` — persiste snapshot y contextos en BD.
+
+### Cron nocturno
+- `/api/cron/motor` — ejecución diaria a las **3am** (Vercel Cron).
+- Solo procesa barberías con `planType === "PREMIUM"` y `planStatus` ACTIVE o TRIAL.
+- Paginación secuencial + manejo de errores por barbería (no aborta el batch).
+
+### Reglas de diseño aplicadas
+- **Separación dura entre Motor e IA:** la IA (Groq Llama 3.3 70B) consume el snapshot del Motor. Nunca toca datos crudos. Cero alucinación de datos.
+- **Regla de Gating por planType:** los endpoints del Motor y los componentes del panel verifican `planType === "PREMIUM"`. Cuentas PRO ven `UpgradeBanner` decorativo en lugar de pantallas rotas.
+- **Historial legacy de `checkinMethod`:** las 23 visitas pre-existentes en BD tienen `checkinMethod = "SELF"` por default. Decisión documentada: no se migra retroactivamente. El Director IA debe comunicar esta limitación al analizar periodos anteriores.
+
+## Pendiente de evolución
+
+- **Aprendizaje por barbería (capa 7):** actualmente cada barbería se mide contra sus propios umbrales; no hay todavía un motor que detecte automáticamente cambios de tendencia y los proponga como sugerencia al dueño.
+- **Análisis de Mercado (cuarta dimensión):** no hay datos suficientes para construirla (1 barbería real con volumen + 1 piloto fundador + datos de prueba).
+- **Notas operativas del barbero (override temporal de contexto):** la columna existe como intención en este documento, pero no está modelada en `schema.prisma` todavía. Queda como backlog si la demanda real lo justifica.

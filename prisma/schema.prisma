@@ -23,6 +23,7 @@ model Barbershop {
   trialEndsAt       DateTime?
   connectionStatus  String         @default("DISCONNECTED") // DISCONNECTED, CONNECTED, WAITING_QR
   whatsappConnected String?        // El número que realmente escaneó el código
+  vertical          String         @default("BARBERIA") // BARBERIA | SALON | OTRO — agregado para alinear schema con DB
   createdAt         DateTime       @default(now())
   loginPin          String         @default("") // PIN de acceso de 6 dígitos único
   currentBoxCode    String         @default("RV55") // Código de caja dinámico activo para check-ins
@@ -244,6 +245,7 @@ model ReferralVendedor {
   negocio       String
   direccion     String
   codigoUnico   String   @unique // 8 caracteres, ej: "X7K9M2A1"
+  cedula        String?  @unique // Cédula de identidad (10 dígitos EC). Único cuando exista. Null para registros legacy sin Alianza.
   activo        Boolean  @default(true)
   scansCount    Int      @default(0) // cuántas veces se escaneó su QR
   createdAt     DateTime @default(now())
@@ -251,6 +253,7 @@ model ReferralVendedor {
   // Relaciones
   leads         ReferralLead[]
   comisiones    ReferralComision[]
+  alianza       AlianzaContract?
 }
 
 // ReferralLead: registro de cada teléfono que escaneó un QR
@@ -288,4 +291,43 @@ model ReferralComision {
 
   @@index([vendedorId])
   @@index([transactionId])
+}
+
+// AlianzaContract: contrato firmado del Programa de Aliados Comerciales.
+// 1:1 con ReferralVendedor. Contiene datos contractuales + PDF persistido.
+model AlianzaContract {
+  id               String   @id @default(cuid())
+  vendedorId       String   @unique // 1 a 1 con ReferralVendedor
+  fechaAsignacion  DateTime @default(now())
+  zonaTerritorio   String?  // Zona/territorio de exclusividad (opcional, ver Cláusula 2)
+  diasPagoComision Int      // 1..30, "dentro de los primeros __ días de cada mes" (Cláusula 3.6)
+  metodoPago       String   // "transferencia" | "payphone" | "efectivo" | "otro" (Cláusula 3.6)
+  ciudadFirma      String
+  diaFirma         Int      // 1..31
+  mesFirma         String   // "Enero".."Diciembre"
+  anioFirma        Int      // default 2026
+
+  // PDF persistido
+  pdfBytes         Bytes    @db.LongBlob
+  pdfMimeType      String   @default("application/pdf")
+  pdfSize          Int
+
+  // Trazabilidad de aceptación
+  ipAceptacion     String?
+  userAgent        String?  @db.Text
+  aceptadoAt       DateTime @default(now())
+
+  vendedor         ReferralVendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@index([aceptadoAt])
+  @@index([metodoPago])
+}
+
+// WalletConfig: configuración de wallet/planes por barbería.
+// Agregado para alinear schema con la DB existente (no modificar).
+model WalletConfig {
+  id            String   @id @default(cuid())
+  barbershopId  String   @unique
+  plans         String?  @db.LongText
+  updatedAt     DateTime
 }

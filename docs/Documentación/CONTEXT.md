@@ -1,5 +1,5 @@
 # CONTEXT.md
-> Última actualización: 2026-07-19 | Estado: Activo | Autor: Antigravity
+> Última actualización: 2026-07-29 | Estado: Activo | Autor: Antigravity
 
 > **📌 Regla del Grafo:** Al mencionar cualquier documento de Documentación/, usar siempre formato `[[nombre]]`. Esto mantiene las conexiones del Grafo de Obsidian actualizadas.
 
@@ -39,31 +39,70 @@ Este documento actúa como la **memoria de ejecución actual** del proyecto Barb
   - Rating = 5 → link Google My Business enviado de inmediato. **Implementado.**
   - Rating < 5 → `AWAITING_FEEDBACK` + solicita comentario escrito → guarda en `BarberVisit.comment`. **Implementado.** (Sin recordatorio a las 4-5h todavía.)
 
-### Fase 2 — BarberOS Premium
-- **Motor de Conocimiento (07)**: ❄️ **CONGELADO**. Cero código.
-- **Agentes de IA (08)**: ❄️ **CONGELADO**. Cero código.
+### Fase 2 — BarberOS Premium (en construcción activa)
+- **Motor de Conocimiento (07)**: ✅ **Capa Determinística IMPLEMENTADA Y EN PRODUCCIÓN** (2026-07-25). Ver [[07-MOTOR-DE-CONOCIMIENTO]] y [[19-INSTRUCCION-MOTOR-DIRECTOR]] para el detalle.
+  - Tablas nuevas: `CustomerProfile`, `ProfileMotorContext`, `MotorSnapshot`, `TestExclusion`.
+  - Campos nuevos en `BarberVisit`: `checkinMethod`, `profileId`, `services`, `visitHour`.
+  - Campos nuevos en `Barbershop`: `riskThresholdNormal`, `riskThresholdAt`, `loyaltyMode`, `visitDurationMin`, `anonymousVisitCounter`.
+  - Librería determinística: `src/lib/motor.ts` con cálculo de frecuencia, riesgo, métricas de equipo y distribución horaria.
+  - Cron nocturno: `/api/cron/motor` (3am) — solo procesa barberías PREMIUM.
+- **Director IA (08)**: ✅ **PRIMER AGENTE IMPLEMENTADO EN PRODUCCIÓN** (2026-07-26) — Director General con Groq Llama 3.3 70B.
+  - Fallback transparente al motor determinístico si falla la API key.
+  - Disclaimer obligatorio de incertidumbre por tarjeta.
+  - Detección temprana de Atrasados + Riesgo Crítico.
+  - Documentado en [[19-INSTRUCCION-MOTOR-DIRECTOR]].
+- **Sistema de Control de Acceso por planType (2026-07-26)**: ✅ Implementado.
+  - `src/lib/plan-guard.ts` con `checkPremiumAccess()` (APIs) e `isPremiumBarbershop()` (RSC).
+  - `UpgradeBanner.tsx` para secciones Premium en cuentas PRO (sin pantallas rotas).
+  - `MotorSummaryWidget.tsx` en panel principal: PRO ve banner, PREMIUM ve mapa de riesgo + métricas de equipo + contadores CF.
 
 ---
 
 ## 🛠️ Foto Técnica de Producción
 
 ### Dependencias Clave
-- `next`: `16.2.10` (App Router)
-- `prisma`: `7.8.0`
+- `next`: `16.2.10` (App Router + Turbopack)
+- `react`: `19.2.4`
+- `prisma`: `7.8.0` con `@prisma/adapter-mariadb`
 - `jose`: `6.2.3` (para firma de JWT en runtime Edge/Node)
 - `axios`: `1.18.1` (comunicación con Evolution API)
 - `web-push`: `3.x` (PWA Push Notifications vía VAPID)
+- `groq-sdk` (Director IA — Llama 3.3 70B)
 
-### Variables de entorno requeridas (nuevas)
-- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` — clave pública VAPID (expuesta al browser).
-- `VAPID_PRIVATE_KEY` — clave privada VAPID (solo servidor). **Debe agregarse a Vercel manualmente.**
-- `VAPID_EMAIL` — email de contacto para VAPID.
+### Estructura del proyecto (post-rediseño)
+- `src/components/redesign/` — Sistema visual premium (GlassCard, MetricTile, SectionTabs, PanelHero, FloatingNav, TabsCarousel, PillButton, ProgressRing).
+- `src/components/panel/` — Componentes del panel del dueño (PanelNav, DashboardClient, ClientesTabs, ConfigForm, DirectorWidget, MotorSummaryWidget, UpgradeBanner, etc.).
+- `src/components/landing/` — Componentes de la landing pública.
+- `src/components/public/` — Componentes de páginas públicas secundarias.
+- `src/lib/` — Utilidades (motor.ts, plan-guard.ts, rate-limit.ts, push.ts, evolution.ts, boxcode.ts, dal.ts).
 
-> ⚠️ **Antes del próximo deploy a Vercel:** agregar las 3 vars VAPID al dashboard de Vercel (Settings → Environment Variables). Sin ellas, el webhook fallará silenciosamente al intentar enviar pushes.
+### Variables de entorno requeridas
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` — clave pública VAPID (expuesta al browser). **Pendiente configurar en Vercel Dashboard.**
+- `VAPID_PRIVATE_KEY` — clave privada VAPID (solo servidor). **Pendiente configurar en Vercel Dashboard.**
+- `VAPID_EMAIL` — email de contacto para VAPID. **Pendiente configurar en Vercel Dashboard.**
+- `GROQ_API_KEY` — API key del Director IA (Groq Llama 3.3 70B). **Configurada y operativa.** Decisión explícita: se mantiene la llave de pruebas del tier gratuito por la fase piloto. Backlog: migrar a llave productiva propia antes de escalar más allá de las 4 barberías piloto.
+- `BARBEROSPLUS_API_KEY` — API key compartida con barberosplus.com para el sistema de referidos QR. Configurada.
+- `ADMIN_SECRET_KEY` — Bearer token para SuperAdmin.
 
-### Componentes y Rutas No Documentados Anteriormente
-1. **SuperAdmin (`/admin`)**: Panel completo para onboarding de nuevas barberías y control de `planStatus` (TRIAL/ACTIVE/SUSPENDED) autenticado con `ADMIN_SECRET_KEY` vía Bearer.
+> ⚠️ **Pendiente deploy:** las 3 vars VAPID deben agregarse al dashboard de Vercel (Settings → Environment Variables). Sin ellas, el webhook fallará silenciosamente al intentar enviar pushes.
+
+### Componentes y Rutas documentados en la base de conocimiento
+1. **SuperAdmin (`/admin`)**: Panel completo para onboarding de nuevas barberías y control de `planStatus` (TRIAL/ACTIVE/SUSPENDED) autenticado con `ADMIN_SECRET_KEY` vía Bearer. Toggle PRO/PREMIUM funcional.
 2. **`planStatus` / `trialEndsAt`**: Campos definidos en el modelo `Barbershop` para control comercial.
+3. **`/panel/configuracion`**: UI para que el dueño edite `riskThresholdNormal`, `riskThresholdAt`, `loyaltyMode`, `visitDurationMin`. Protegido por sesión. Backend: `PATCH /api/barbershop/settings`.
+4. **`/panel/clientes`**: Dashboard de Perfiles (`CustomerProfile`) con atribución de Cuenta WhatsApp y cálculo de lealtad según `loyaltyMode` (BY_PROFILE vs BY_ACCOUNT).
+5. **`/registro/[barbershopId]`**: Flujo público de auto-registro vía QR. Captura Nombre, WhatsApp, Fecha de Nacimiento (Día/Mes) y Canal de adquisición. Backend: `/api/clientes/registro` con validación Zod y rate limit persistente.
+6. **Sistema de Referidos QR**: Integración bidireccional con barberosplus.com vía webhooks firmados. Ver [[21-SISTEMA-REFERIDOS-QR]] y [[22-SISTEMA-COMISIONES-REFERRAL]]. Reporte final en [[24-REPORTE-FINAL-INTEGRACION]].
+7. **Sistema de Rediseño Visual** (`src/components/redesign/`): Sistema de componentes premium con glassmorfismo, paleta de marca coherente (#d97644 / #e8a33d / #0D0D0D / #f3ece1), tipografía editorial (Fraunces + Space Grotesk + JetBrains Mono). Ver [[13-COMPONENTES]].
+
+### Tablas añadidas en producción (post-Fase 0)
+- `CustomerProfile` — persona real dentro de una cuenta WhatsApp (modelo Cuenta/Perfil).
+- `ProfileMotorContext` — contexto calculado por el Motor (frecuencia, riesgo, vigencia) por perfil.
+- `MotorSnapshot` — resumen nocturno por barbería (dimensiones: Negocio, Clientes, Equipo).
+- `TestExclusion` — números excluidos del cálculo (ej. barberos, dueños, números de prueba).
+- `RateLimitAttempt` — intentos de rate-limit persistente en MySQL.
+- Campos en `BarberVisit`: `checkinMethod` (SELF, BARBER_ASSISTED_KNOWN, BARBER_ASSISTED_ANONYMOUS), `profileId`, `services`, `visitHour`.
+- Campos en `Barbershop`: `riskThresholdNormal`, `riskThresholdAt`, `loyaltyMode` (BY_PROFILE/BY_ACCOUNT), `visitDurationMin`, `anonymousVisitCounter`, `salesAgent`.
 
 ---
 
@@ -71,6 +110,46 @@ Este documento actúa como la **memoria de ejecución actual** del proyecto Barb
 - [[_index]] — Mapa conceptual de la base de conocimiento.
 - [[09-ROADMAP-TECNICO]] — Planificación y fases de liberación.
 - [[13-COMPONENTES]] — Biblioteca de componentes reales y pendientes.
+
+---
+
+## 🎨 Rediseño Visual del Panel (2026-07-27 → 2026-07-29)
+
+**Contexto:** El panel existente mostraba bloques sólidos apilados sin jerarquía visual ni identidad de marca coherente con el sitio público. Se construyó un sistema de componentes premium reutilizables en `src/components/redesign/`, alineado con la paleta de marca ya programada (#d97644, #e8a33d, #0D0D0D, #f3ece1) y la dirección cinematográfica definida en [[15-BRAND-KIT-BRIEFING]].
+
+### Componentes creados
+| Componente | Tipo | Función |
+|---|---|---|
+| `GlassCard` | Client | Tarjeta con efecto vidrio (fondo `bg-[#1a1614]/70`, borde sutil, gradiente lineal en el top). |
+| `MetricTile` | Client | Tarjeta glassmórfica para métricas. Acepta accent (`orange`/`amber`/`green`/`neutral`), badge, footer. |
+| `PanelHero` | Server | Hero a sangre completa con imagen + degradado oscuro + viñeta naranja. Soporta eyebrow, badge, action y overlay. |
+| `SectionTabs` | Client | Tabs píldora/segmented control con badge numérico y variantes `pill` y `underline`. |
+| `TabsCarousel` | Client | Wrapper con scroll horizontal + flecha pulsante "desliza →" en móvil. Auto-hide tras 5s. |
+| `PillButton` | Client | Botón píldora con variantes `primary` (gradiente naranja) / `ghost` / `outline`. |
+| `ProgressRing` | Server | Anillo de progreso SVG con gradiente naranja→ámbar. |
+| `FloatingNav` | Client | Barra inferior flotante con tabs circulares (referencia fitness) y tooltip on hover. |
+
+### Paleta aplicada (NO cambiar)
+- Fondo: `#0a0807` (carbón cálido, NO negro puro).
+- Texto principal: `#f3ece1` (crema).
+- Texto secundario: `#a89e90`, `#5c554c`.
+- Acento primario: `#d97644` (naranja terracota).
+- Acento secundario: `#e8a33d` (ámbar/dorado).
+- Acento positivo: `#4ADE80` (verde) — **SOLO** indicadores positivos, nunca decoración.
+- Tipografía: **Fraunces** (serif display) + **Space Grotesk** (sans body) + **JetBrains Mono** (etiquetas uppercase, métricas).
+
+### Imágenes hero usadas (Unsplash CDN)
+- Dashboard Reputación: `photo-1521590832167-7bcbfaa6381f`
+- Dashboard Clientes: `photo-1503951914875-452162b0f3f1`
+- Dashboard Retención: `photo-1599351431202-1e0f0137899a`
+- Dashboard Recupera: `photo-1622286342621-4bd786c2447c`
+
+### Patrones aprendidos (referencia para futuras sesiones)
+- **Server Components con Prisma NO pueden importarse en Client Components.** Si el padre es client, pasar el resultado de Prisma como `children` o `ReactNode` prop.
+- **Hidratación de tiempo falla con `toLocaleTimeString`.** Usar `getUTCHours() - 5` (Ecuador = UTC-5) con `suppressHydrationWarning`.
+- **Pre-existe un error de hidratación en `BarberosView.tsx`** que no es causado por este rediseño. Mantener `suppressHydrationWarning` hasta investigar.
+- **GlassCards sobre imágenes hero** deben usar `elevated` prop para sumar `ring-1 ring-[#d97644]/15` y mantener contraste.
+- **`FloatingNav` con `z-40` queda debajo del `ApprovalQueue` flotante** (que usa `z-50`). Mantener este orden para que la cola de aprobación tape la nav cuando esté activa.
 
 ---
 

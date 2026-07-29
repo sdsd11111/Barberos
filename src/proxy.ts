@@ -22,7 +22,9 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api/admin") ||
     pathname.startsWith("/api/clientes/registro") ||
     pathname.startsWith("/registro/") ||
-    pathname.startsWith("/r/")
+    pathname.startsWith("/r/") ||
+    pathname.startsWith("/alianza") ||
+    pathname.startsWith("/api/alianza")
   ) {
     return NextResponse.next();
   }

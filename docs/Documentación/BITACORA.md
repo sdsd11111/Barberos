@@ -6,6 +6,50 @@
 
 ---
 
+### Sesión 2026-07-27 → 2026-07-29 — Sprint E (Rediseño Visual del Panel)
+
+**Contexto:** El panel heredado mostraba bloques sólidos apilados sin identidad visual coherente con la landing pública ni con [[15-BRAND-KIT-BRIEFING]]. Se construyó un sistema de componentes premium reutilizables en `src/components/redesign/` y se aplicó a las secciones principales del panel.
+
+**Componentes creados (todos en `src/components/redesign/`):**
+- [x] `GlassCard` — tarjeta con efecto vidrio (`bg-[#1a1614]/70` + borde sutil + línea de luz en el top).
+- [x] `MetricTile` — tarjeta glassmórfica para métricas con accent (`orange`/`amber`/`green`/`neutral`).
+- [x] `PanelHero` — hero a sangre completa con imagen + degradado + viñeta naranja.
+- [x] `SectionTabs` — tabs píldora/segmented control con dos variantes (`pill` y `underline`).
+- [x] `TabsCarousel` — wrapper con scroll horizontal + flecha pulsante "desliza →" en móvil.
+- [x] `PillButton` — botón píldora con variantes (`primary`/`ghost`/`outline`).
+- [x] `ProgressRing` — anillo de progreso SVG con gradiente naranja→ámbar.
+- [x] `FloatingNav` — barra inferior flotante con tabs circulares (estilo referencia fitness).
+
+**Documentación sincronizada (2026-07-29):**
+- [x] [[CONTEXT]] — sección "Rediseño Visual del Panel (2026-07-27 → 2026-07-29)" agregada con paleta, imágenes hero y patrones aprendidos.
+- [x] [[13-COMPONENTES]] — sección "Sistema de Rediseño Visual" agregada con documentación detallada de cada componente nuevo.
+- [x] [[06-DASHBOARD]] — sección "Componentes visuales del Dashboard" agregada con mapeo concepto→componente.
+- [x] [[09-ROADMAP-TECNICO]] — Sprint E agregado al bloque "Fase 1 — Piloto Fundador".
+- [x] [[07-MOTOR-DE-CONOCIMIENTO]] — estado actualizado de `congelado` a `activo-capa-deterministica`.
+- [x] [[08-ARQUITECTURA-IA]] — estado actualizado de `congelado` a `activo-director-general-implementado`.
+- [x] [[12-UX]] — sección "Identidad visual" reescrita con el sistema de rediseño completo.
+
+**Imágenes Unsplash aplicadas:**
+- Dashboard Reputación: `photo-1521590832167-7bcbfaa6381f`
+- Dashboard Clientes: `photo-1503951914875-452162b0f3f1`
+- Dashboard Retención: `photo-1599351431202-1e0f0137899a`
+- Dashboard Recupera: `photo-1622286342621-4bd786c2447c`
+
+**Patrones aprendidos (lecciones para futuras sesiones):**
+- Los **Server Components que usan Prisma NO pueden importarse en Client Components.** Hay que pasarlos como `children` o `ReactNode` props.
+- La **hidratación del tiempo falla con `toLocaleTimeString`**. Usar `getUTCHours() - 5` (Ecuador = UTC-5) con `suppressHydrationWarning`.
+- `BarberosView.tsx` tiene un error de hidratación preexistente (no causado por este rediseño). Mantener `suppressHydrationWarning` hasta investigar.
+- `GlassCard` sobre `PanelHero` debe usar prop `elevated` para mantener contraste.
+- `FloatingNav` con `z-40` queda debajo del `ApprovalQueue` (z-50). Mantener este orden.
+
+**Pendientes del rediseño:**
+- [ ] Reemplazar sidebar fijo por `FloatingNav` también en desktop (actualmente coexisten).
+- [ ] Aplicar `SectionTabs` + `TabsCarousel` a `/panel/configuracion` y `/panel/barberos` (actualmente solo en `/panel`).
+- [ ] Definir imagen hero para `/panel/clientes` con dirección fotográfica coherente con [[15-BRAND-KIT-BRIEFING]].
+- [ ] Audit visual: confirmar que no quedan bloques sólidos heredados en páginas que deberían usar `GlassCard`.
+
+---
+
 ### Sesión 2026-07-26 (Tarde) — Programa Leones: Enmienda, Acuerdo y Guion de Campo
 
 **Documentos creados/actualizados:**

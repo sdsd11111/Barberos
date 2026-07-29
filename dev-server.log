@@ -1,0 +1,13 @@
+
+> barberos-saas@0.1.0 dev
+> next dev
+
+⚠ Port 3000 is in use by process 29620, using available port 3001 instead.
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.110.115:3001
+- Environments: .env
+✓ Ready in 857ms
+⚠ Both `outputFileTracingRoot` and `turbopack.root` are set, but they must have the same value.
+Using `outputFileTracingRoot` value: D:\Abel paginas\Barberos solo\barberos-main\.
+

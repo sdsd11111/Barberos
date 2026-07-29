@@ -3,16 +3,20 @@ id: 06-dashboard
 titulo: Especificaciones del Dashboard
 categoria: tecnico
 estado: activo
-sprint: fase-0-completada
-ultima_revision: 2026-07-19
+sprint: fase-1-piloto-activo
+ultima_revision: 2026-07-29
 relacionado:
   - 09-ROADMAP-TECNICO
   - 13-COMPONENTES
+  - 12-UX
+  - 15-BRAND-KIT-BRIEFING
+  - 07-MOTOR-DE-CONOCIMIENTO
+  - 08-ARQUITECTURA-IA
 ---
 
 # 06-DASHBOARD.md
 
-> Versión: 2.0
+> Versión: 3.0
 >
 > Estado: Activo
 >
@@ -30,6 +34,10 @@ relacionado:
 > 02-ARQUITECTURA-ESTRATEGICA.md
 >
 > 05-ARQUITECTURA-DEL-PRODUCTO.md
+>
+> 13-COMPONENTES.md (sistema de rediseño)
+>
+> 15-BRAND-KIT-BRIEFING.md (paleta y dirección visual)
 
 ---
 
@@ -444,6 +452,47 @@ Ejemplo.
 ¿Por qué bajaron mis clientes este mes?
 
 La IA utilizará los datos del Dashboard para responder.
+
+---
+
+# Componentes visuales del Dashboard (Sprint E, 2026-07-29)
+
+A partir del Sprint E, el Dashboard se renderiza sobre el **sistema de rediseño** descrito en [[13-COMPONENTES]]. Las tarjetas conceptuales definidas en este documento se traducen a:
+
+| Concepto narrativo | Componente |
+|---|---|
+| Hero "¿Cómo está tu barbería?" | `PanelHero` (imagen real + degradado + eyebrow + título + acción) |
+| Selector de sección narrativa | `SectionTabs` (variante `pill`) envuelto en `TabsCarousel` para móvil |
+| Métrica individual (Capa 1, 2, 3) | `MetricTile` (acento `orange` para primario, `amber` para预警, `green` para positivo, `neutral` para estándar) |
+| Contenedor de bloque | `GlassCard` (con `elevated` cuando está sobre `PanelHero`) |
+| Anillo de progreso (lealtad / retención) | `ProgressRing` |
+| Navegación principal | `FloatingNav` (móvil/tablet) + sidebar heredado (desktop) |
+| Botón de acción | `PillButton` (variante `primary` para CTAs) |
+
+**Regla de uso:** todo nuevo desarrollo del Dashboard debe construirse sobre estos componentes. Los componentes heredados (sidebar fijo, métricas en grid sólido, etc.) siguen activos pero son candidatos a reemplazo gradual.
+
+---
+
+# Dimensiones del Snapshot del Motor (conexión con [[07-MOTOR-DE-CONOCIMIENTO]])
+
+El Dashboard Premium consume el `MotorSnapshot` producido por el Motor de Conocimiento. La narrativa se estructura en 3 dimensiones:
+
+## Dimensión Negocio
+- Volumen total de cortes (incluye `BARBER_ASSISTED_ANONYMOUS`).
+- Visitas por hora (para análisis de capacidad).
+- Tendencia semanal.
+
+## Dimensión Clientes
+- Perfiles en Riesgo Crítico (`AT_RISK`).
+- Perfiles en Atraso Inicial (`DELAYED`).
+- Perfiles Normales (`NORMAL`).
+- Perfiles con datos insuficientes (`INSUFFICIENT_DATA`).
+
+## Dimensión Equipo
+- Top barberos por rating.
+- Promedio de cortes por barbero (solo visitas con barbero real).
+
+**Regla de Gating:** cuentas `PRO` ven `UpgradeBanner` en lugar de estas 3 dimensiones. Documentado en [[19-INSTRUCCION-MOTOR-DIRECTOR]] sección 1.1.
 
 ---
 

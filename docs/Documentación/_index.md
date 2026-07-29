@@ -30,10 +30,35 @@ Este es el punto de acceso central a la base de conocimiento de BarberOS. Para o
 - [[15-BRAND-KIT-BRIEFING]] — **Brand Kit Briefing**: Especificaciones y consolidación de la esencia visual de BarberOS para el diseñador gráfico (Manus).
 - [[20-SEGURIDAD-Y-CONTINUIDAD]] — **Seguridad y Continuidad**: Políticas de secretos, Rate-Limiting persistente en MySQL, aislamiento multi-tenant y Plan de Recuperación de BD (DRP).
 
-## 🤖 Inteligencia y Futuro (Congelado hasta Fase 2)
-- [[07-MOTOR-DE-CONOCIMIENTO]] — **Motor de Conocimiento**: Lógica de almacenamiento semántico y procesamiento de eventos históricos.
-- [[08-ARQUITECTURA-IA]] — **Arquitectura de Inteligencia**: Red de agentes de IA especializados y orquestador maestro.
+## 🤖 Inteligencia y Motor (Fase 2 en construcción)
+- [[07-MOTOR-DE-CONOCIMIENTO]] — **Motor de Conocimiento**: Lógica de almacenamiento semántico y procesamiento de eventos históricos. *Estado 2026-07-29: capa determinística implementada y en producción.*
+- [[08-ARQUITECTURA-IA]] — **Arquitectura de Inteligencia**: Red de agentes de IA especializados y orquestador maestro. *Estado 2026-07-29: Director General IA implementado con Groq Llama 3.3 70B.*
+- [[19-INSTRUCCION-MOTOR-DIRECTOR]] — **Instrucción de Construcción del Motor + Director IA**: Especificación funcional para el constructor. Define la regla de Gating por planType y el contrato Motor↔IA.
 
 ---
+
+## ⚙️ Operaciones y Seguridad
+- [[20-SEGURIDAD-Y-CONTINUIDAD]] — **Seguridad y Continuidad**: Rate-limiting persistente en MySQL, política de secretos (GROQ_API_KEY), aislamiento multi-tenant y Plan de Recuperación de BD (DRP).
+- [[23-REPORTE-PROGRAMADOR-BARBEROPLUS]] — **Reporte para Programador de barberosplus.com**: Guía de integración de webhooks firmados.
+- [[24-REPORTE-FINAL-INTEGRACION]] — **Reporte Final de Integración**: Estado final del flujo bidireccional BarberOS ↔ barberosplus.com (sistema de referidos QR).
+
+---
+## 📂 Documentos de Bitácora y Contexto Operativo
+- [[CONTEXT]] — **Memoria de Ejecución**: Estado actual del código en producción. Fuente de verdad sobre sprints completados, schema de BD, variables de entorno y sistema de rediseño visual.
+- [[BITACORA]] — **Bitácora**: Puente de memoria entre sesiones de trabajo con Antigravity. Máximo 5 sesiones activas.
+
+---
+
 > [!TIP]
 > **Obsidian Graph View**: Si utilizas Obsidian, todas estas notas se mostrarán interconectadas gracias a los enlaces de arriba. Puedes usar el plugin **Dataview** para consultar dinámicamente el estado y sprint de cada documento.
+
+---
+
+> **📍 Última actualización del mapa:** 2026-07-29 (post-Sprint E de Rediseño Visual).
+> **Documentos que cambiaron de estado en esta actualización:**
+> - [[07-MOTOR-DE-CONOCIMIENTO]]: `congelado` → `activo-capa-deterministica`
+> - [[08-ARQUITECTURA-IA]]: `congelado` → `activo-director-general-implementado`
+> - [[09-ROADMAP-TECNICO]]: `fase-0-completada` → `fase-1-piloto-activo`
+> - [[13-COMPONENTES]]: agregado Sistema de Rediseño Visual (`src/components/redesign/`)
+> - [[CONTEXT]]: sección "Rediseño Visual del Panel" agregada
+> - [[BITACORA]]: sesión 2026-07-27→29 (Sprint E) agregada

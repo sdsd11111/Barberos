@@ -2,18 +2,21 @@
 id: 08-arquitectura-ia
 titulo: Arquitectura IA
 categoria: inteligente
-estado: congelado
-sprint: fase-2-premium
-ultima_revision: 2026-07-19
+estado: activo-director-general-implementado
+sprint: fase-2-premium-en-construccion
+ultima_revision: 2026-07-29
 relacionado:
   - 07-MOTOR-DE-CONOCIMIENTO
+  - 19-INSTRUCCION-MOTOR-DIRECTOR
+  - 09-ROADMAP-TECNICO
+  - 20-SEGURIDAD-Y-CONTINUIDAD
 ---
 
 # 08-ARQUITECTURA-IA.md
 
-> Versión: 2.0
+> Versión: 3.0
 >
-> Estado: Activo
+> Estado: Activo (Director General IA implementado y en producción)
 >
 > Clasificación: CONFIDENCIAL
 >
@@ -470,3 +473,58 @@ describirá el orden correcto para construir BarberOS.
 No todo debe desarrollarse al mismo tiempo.
 
 La arquitectura técnica deberá respetar las prioridades del negocio.
+
+---
+
+# 📍 Estado de implementación (cotejo 2026-07-29)
+
+## Director General IA — IMPLEMENTADO Y EN PRODUCCIÓN (Sprint D, 2026-07-26)
+
+**Modelo:** Groq Llama 3.3 70B Versatile (`https://api.groq.com/openai/v1/chat/completions`).
+**Variable de entorno:** `GROQ_API_KEY`. Decisión documentada: se mantiene la llave de pruebas del tier gratuito durante la fase piloto. Backlog: migrar a llave productiva propia antes de escalar más allá de las 4 barberías piloto. Ver [[20-SEGURIDAD-Y-CONTINUIDAD]].
+
+### Principios arquitectónicos respetados
+
+1. **La IA nunca analiza datos crudos.** Consume el `MotorSnapshot` producido por [[07-MOTOR-DE-CONOCIMIENTO]]. Cero alucinación de datos numéricos.
+2. **Estructura de 5 pasos obligatoria** (definida en [[19-INSTRUCCION-MOTOR-DIRECTOR]] sección 5):
+   1. Responder la pregunta.
+   2. Explicar por qué llegó a esa conclusión.
+   3. Mostrar evidencia (datos del snapshot).
+   4. Proponer acciones (botones de 1-Clic a WhatsApp).
+   5. Indicar posibles riesgos.
+3. **Disclaimer obligatorio de incertidumbre** por tarjeta: *"⚠️ Esto es un patrón detectado en datos, no una certeza absoluta — revisa la situación y decide tú como dueño."*
+
+### Detección temprana
+
+- **Riesgo Crítico (`AT_RISK`):** clientes que sobrepasan el `riskThresholdAt` configurado por la barbería.
+- **Atraso Inicial (`DELAYED`):** clientes que sobrepasan `riskThresholdNormal` pero todavía no llegan a `riskThresholdAt`. Esto permite rescatar antes de la pérdida total.
+
+### Fallback transparente
+
+- Si la API key falla, no responde, o devuelve error: el sistema activa el **motor de reglas determinístico local** (mismo snapshot, lógica de umbrales hard-coded).
+- Logging explícito en consola (`isGenerativeLLM: false` en metadata de la respuesta).
+- En el UI, el `DirectorWidget` muestra badge dinámico: `LLM Real (Groq llama-3.3-70b-versatile)` o `Motor Determinístico`.
+
+### Gating por planType
+
+- Toda llamada al Director IA valida `planType === "PREMIUM"` antes de invocar la API del modelo.
+- Cuentas `PRO` ven `UpgradeBanner` decorativo en lugar de pantalla rota o error.
+- Documentado en [[19-INSTRUCCION-MOTOR-DIRECTOR]] sección 1.1.
+
+### Rate limit y escalabilidad
+
+- Tier Groq gratuito: 30 req/minuto y 14,400/día.
+- Suficiente para las barberías Premium actuales (1-2 reales).
+- **Backlog:** si el número de clientes Premium supera las 30 barberías ejecutando el cron a las 3am en simultáneo, se debe implementar una cola secuencial o delay de 500ms entre barberías.
+
+### Limitación histórica documentada
+
+- Las 23 visitas pre-existentes en BD tienen `checkinMethod = "SELF"` por default (no verificado).
+- El Director IA **debe comunicar esta limitación** cuando analice periodos anteriores a la implantación del Motor — nunca presentar esos datos como verificados.
+- Sin script de migración retroactiva (sería una suposición, no un dato real).
+
+## Pendiente de evolución
+
+- **Agentes especializados (Clientes, Equipo, Reputación, Comercial, Contenido):** se activan uno a uno, en el orden que determine la demanda real observada en Fase 1. Sin prisa.
+- **Memoria estratégica (preferencias del dueño, metas, decisiones anteriores):** conceptualmente definida en este documento, pero no modelada todavía. Queda como backlog si la demanda real lo justifica.
+- **Aprendizaje validado:** la IA aún no confirma decisiones del dueño antes de incorporarlas a la memoria estratégica. La regla arquitectónica está, la implementación no.

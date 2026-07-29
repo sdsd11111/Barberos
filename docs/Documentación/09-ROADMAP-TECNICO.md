@@ -3,11 +3,14 @@ id: 09-roadmap-tecnico
 titulo: Roadmap Técnico
 categoria: tecnico
 estado: activo
-sprint: fase-0-completada
-ultima_revision: 2026-07-19
+sprint: fase-1-piloto-activo
+ultima_revision: 2026-07-29
 relacionado:
   - 13-COMPONENTES
   - 06-DASHBOARD
+  - 07-MOTOR-DE-CONOCIMIENTO
+  - 08-ARQUITECTURA-IA
+  - 19-INSTRUCCION-MOTOR-DIRECTOR
 ---
 
 # 09-ROADMAP-TECNICO.md
@@ -59,46 +62,34 @@ El roadmap técnico existe para evitar la tentación de construir el Motor de Co
 
 # Fases
 
-## Fase 0 — Validación (Estado actual)
+## Fase 0 — Validación (✅ Completada — ver bloque superior)
 
-Ya completado:
+Esta fase está cerrada. El contenido histórico se conserva en `BITACORA.md` (sección 2026-07-25 y anteriores).
 
-- Next.js + Prisma + MySQL (cPanel/StackCP) funcionando. *(La BD de producción es MySQL via cPanel, no PostgreSQL/Supabase como indicaba documentación anterior. Migró en etapa previa. Driver actual: `@prisma/adapter-mariadb`. Prisma abstrae el motor.)*
-- Registro de corte vía panel.
-- Envío de WhatsApp automático vía Evolution API.
-- Barra de progreso Unicode.
-- Webhook de calificación (rating 1-5).
-- Flujo de aprobación anti-fraude (check-in PENDING → APPROVED/REJECTED).
-- Límite de 24h por cliente para evitar check-ins duplicados.
-- Multi-tenant seguro a nivel de consulta (`barbershopId + whatsapp`).
+---
 
-Pendiente antes de salir a vender en Cuenca:
+## Fase 1 — Piloto (10 barberías fundadoras) — EN PROGRESO
 
-- **Sprint 5 — Roles y autenticación multi-tenant.** Necesario en cuanto exista más de una barbería real operando simultáneamente; sin esto, un piloto puede ver datos de otro.
-- **Sprint 6 — Automatizaciones (cron jobs).** El mensaje "Te extrañamos" para clientes con más de 30 días sin volver. Es la primera pieza de valor que el dueño ve *sin hacer nada*, y es además la funcionalidad que más se menciona en el discurso de ventas.
-- **Sprint 7 — Dashboard con métricas reales.** Sustituye el "Libro Diario" vacío por datos reales de los pilotos: clientes activos, tasa de retorno, próximos premios a entregar.
+**Estado actual (2026-07-29):**
+- 4 barberías reales operativas en BD de producción: Probando Barberos (PREMIUM ACTIVE), Chechebarber (PRO ACTIVE), Monique (PRO TRIAL), Que? (PREMIUM TRIAL).
+- El sistema está validado para operar multi-tenant sin caídas. Sprints A, B, C, D y E completados.
+- **Decisión documentada (2026-07-25):** El Motor de Conocimiento y el Director IA **rompen la regla de fases** deliberadamente. Se construyen en paralelo a Fase 1 para responder a la deuda activa con 2 clientes que ya pagan Premium. Ver [[19-INSTRUCCION-MOTOR-DIRECTOR]] sección 0 para la justificación completa.
 
-## Fase 1 — Piloto (10 barberías fundadoras)
+**Programa de Distribución vía Leones Fundadores ([[17-PROGRAMA-LEONES-FUNDADORES]]):** Sigue corriendo en paralelo a la validación técnica, como excepción explícita a la regla de fases. Sin cambios.
 
-Objetivo técnico: que el sistema no se caiga con múltiples tenants reales y que cada aprobación, mensaje y premio funcione sin intervención manual del equipo.
+## Fase 2 — BarberOS Premium 🟡 EN CONSTRUCCIÓN ACTIVA
 
-**Excepción explícita a la regla de fases:** El Programa de Distribución vía Leones Fundadores ([[17-PROGRAMA-LEONES-FUNDADORES]]) rompe la secuencia de validación técnica deliberadamente. Se acepta el riesgo de escalar distribución (Leones, multi-ciudad) en paralelo a la validación técnica de Fase 1. El riesgo de escalar Motor de Conocimiento/Agentes IA sigue congelado sin excepción.
+**Excepción documentada (2026-07-25):** Esta fase se activó antes de cerrar Fase 1 por la deuda activa con 2 clientes que ya pagan Premium ($19.99/mes). Las piezas se construyen en paralelo a Fase 1, no en serie.
 
-No se construye en esta fase:
+**Capas ya implementadas:**
+1. ✅ **Motor de Conocimiento — capa Determinística:** `src/lib/motor.ts` + `/api/cron/motor` (3am) + tablas `CustomerProfile` / `ProfileMotorContext` / `MotorSnapshot` / `TestExclusion`. Calcula frecuencia por perfil, riesgo (`AT_RISK` / `DELAYED` / `NORMAL` / `INSUFFICIENT_DATA`), métricas de equipo (solo visitas con barbero real) y distribución horaria. Ver [[07-MOTOR-DE-CONOCIMIENTO]].
+2. ✅ **Agente 1 (Director General IA):** Groq Llama 3.3 70B con fallback determinístico. Disclaimer obligatorio de incertidumbre. Detección temprana de Atrasados + Riesgo Crítico. Ver [[08-ARQUITECTURA-IA]] y [[19-INSTRUCCION-MOTOR-DIRECTOR]].
+3. ✅ **Control de Acceso por planType:** `src/lib/plan-guard.ts`. PRO ve banner de upgrade en lugar de pantallas rotas.
 
-- Motor de Conocimiento (07).
-- Agentes de IA (08).
-- Dashboard analítico avanzado (LTV, churn predictivo).
-
-Esas piezas quedan documentadas pero **congeladas** hasta que la Fase 1 entregue evidencia real de qué preguntas hacen los dueños sobre su negocio. Esa evidencia es la que decide qué agente se construye primero.
-
-## Fase 2 — BarberOS Premium (post-validación)
-
-Se activa únicamente cuando exista al menos un piloto dispuesto a pagar por una versión con inteligencia — no antes. Orden de construcción dentro de esta fase:
-
-1. Motor de Conocimiento — capa Eventos + Contexto (las dos capas que ya existen como datos crudos en el schema actual).
-2. Agente 1 (Director General IA) — es el único agente que se libera primero, porque responde preguntas generales sin necesitar los especialistas.
-3. Agentes especializados (Clientes, Equipo, Reputación, Comercial, Contenido) — se activan uno a uno, en el orden que determine la demanda real observada en la Fase 1.
+**Pendiente en esta fase:**
+- Agentes especializados (Clientes, Equipo, Reputación, Comercial, Contenido) — se activan uno a uno según demanda real observada en Fase 1.
+- Cron de cumpleaños (`/api/cron/birthday`) — la data ya está en `CustomerProfile.birthDate`.
+- Migración de `GROQ_API_KEY` a tier productivo propio (backlog).
 
 ## Fase 3 — Multi-sede y Enterprise
 
@@ -108,10 +99,10 @@ No se documenta en detalle todavía. Referencia: [[15-BRAND-KIT-BRIEFING]].
 
 # Deuda técnica aceptada (temporalmente)
 
-- Autenticación simple (número de WhatsApp como identificador) antes de un sistema de roles completo — aceptable mientras hay pocos tenants.
-- Sin dashboard analítico — aceptable mientras no hay volumen de datos que lo justifique.
-
-Esta deuda se paga en el orden de las fases, nunca antes.
+- ~~Autenticación simple (número de WhatsApp como identificador) antes de un sistema de roles completo~~ — **RESUELTA** (Sprint 5, 2026-07-19). Cookie `session` con JWT firmado y DAL para Server Components.
+- ~~Sin dashboard analítico~~ — **RESUELTA** (Sprint 7, 2026-07-19 + Fase 2, 2026-07-25). Métricas reales en vivo + Motor de Conocimiento con snapshots nocturnos.
+- API Key de Groq en tier gratuito — **pendiente migrar** a llave productiva propia antes de escalar más allá de 4 barberías piloto. Documentado en [[20-SEGURIDAD-Y-CONTINUIDAD]].
+- Variables VAPID no configuradas en Vercel — **bloqueante** antes del próximo deploy para que las push notifications funcionen.
 
 ---
 
