@@ -3,6 +3,7 @@ import Image from "next/image";
 import VideoFAQ, { type FAQCard } from "@/components/landing/VideoFAQ";
 import CTABlock from "@/components/shared/CTABlock";
 import StructuredData from "@/components/shared/StructuredData";
+import { planesPro, planesPremium } from "@/lib/planes";
 
 // ⚠️ COPY PROVISIONAL — pendiente de sello final contra 04-SISTEMA-DE-COMUNICACION.md
 // No publicar a producción sin aprobación explícita de César sobre este texto.
@@ -13,11 +14,9 @@ import StructuredData from "@/components/shared/StructuredData";
 // - Referencia: 03-ARQUITECTURA-WEB.md — Página 6 / Precios.
 
 // Configuración de precios de Setup (Configurable para promociones)
-const PRICING_CONFIG = {
-  setupListPrice: Number(process.env.NEXT_PUBLIC_SETUP_LIST_PRICE) || 100,
-  setupPromoPrice: Number(process.env.NEXT_PUBLIC_SETUP_PROMO_PRICE) || 50,
-  isPromoActive: true,
-};
+// ⚠️ Configurar los valores de setup en src/lib/planes.ts (única fuente de verdad).
+const SETUP_LIST_PRICE = Number(process.env.NEXT_PUBLIC_SETUP_LIST_PRICE) || 100;
+const SETUP_PROMO_PRICE = Number(process.env.NEXT_PUBLIC_SETUP_PROMO_PRICE) || 50;
 
 export const metadata: Metadata = {
   title: "Precios — BarberOS — Setup $50 (Promo) + Prueba 15 días gratis",
@@ -154,129 +153,6 @@ const faqSchema = {
   })),
 };
 
-const setupText = `Setup: USD $${PRICING_CONFIG.setupPromoPrice} (Promo)`;
-
-const planesPro = [
-  {
-    tipo: "Prueba 15 días",
-    precio: "$0",
-    periodo: "15 días",
-    descripcion: "Prueba BarberOS Pro gratis. Sin tarjeta, sin compromiso.",
-    incluye: [
-      "Check-in por WhatsApp",
-      "Panel de clientes y visitas",
-      "Fidelización automática",
-      "Dashboard en tiempo real",
-      "Sistema de premios",
-      "Integración Google Reviews",
-    ],
-    nota: "Setup regular USD 100 → Oferta USD 50 al activar",
-    destacado: false,
-    whatsapp: false,
-  },
-  {
-    tipo: "Mensual",
-    precio: "$9.99",
-    periodo: "/ mes",
-    descripcion: "Paga mes a mes sin compromiso.",
-    incluye: [
-      "Check-in por WhatsApp",
-      "Panel de clientes y visitas",
-      "Fidelización automática",
-      "Dashboard en tiempo real",
-      "Sistema de premios",
-      "Integración Google Reviews",
-    ],
-    nota: "Setup regular USD 100 → Oferta USD 50 al activar",
-    destacado: false,
-    whatsapp: false,
-  },
-  {
-    tipo: "Anual",
-    precio: "$99",
-    periodo: "/ año",
-    descripcion: "Ahorra más de USD 20 al año.",
-    incluye: [
-      "Check-in por WhatsApp",
-      "Panel de clientes y visitas",
-      "Fidelización automática",
-      "Dashboard en tiempo real",
-      "Sistema de premios",
-      "Integración Google Reviews",
-    ],
-    nota: "Equivale a $8.25/mes + Setup regular USD 100 (Oferta $50)",
-    destacado: false,
-    whatsapp: false,
-  },
-  {
-    tipo: "Lifetime",
-    precio: "$500",
-    periodo: "pago único",
-    descripcion: "Acceso permanente sin mensualidades.",
-    incluye: [
-      "Todo lo del plan Anual",
-      "Actualizaciones gratis de por vida",
-      "Sin costos mensuales",
-      "Soporte por WhatsApp",
-    ],
-    nota: "Setup USD 50 en oferta incluido. O hasta 12 cuotas sin intereses",
-    destacado: true,
-    whatsapp: true,
-  },
-];
-
-const planesPremium = [
-  {
-    tipo: "Mensual",
-    precio: "$19.99",
-    periodo: "/ mes",
-    descripcion: "Paga mes a mes sin compromiso.",
-    incluye: [
-      "Todo lo del plan Pro",
-      "Motor de Conocimiento",
-      "IA especializada en tu barbería",
-      "Recomendaciones automáticas",
-      "Alertas inteligentes",
-      "Consultor IA 24/7",
-    ],
-    nota: "+ USD 5/mes tokens IA. Setup regular USD 100 → Oferta USD 50",
-    destacado: false,
-    whatsapp: false,
-  },
-  {
-    tipo: "Anual",
-    precio: "$199",
-    periodo: "/ año",
-    descripcion: "Ahorra más de USD 40 al año.",
-    incluye: [
-      "Todo lo del plan Pro",
-      "Motor de Conocimiento",
-      "IA especializada en tu barbería",
-      "Recomendaciones automáticas",
-      "Alertas inteligentes",
-      "Consultor IA 24/7",
-    ],
-    nota: "Equivale a $16.58/mes + tokens. Setup regular USD 100 (Oferta $50)",
-    destacado: false,
-    whatsapp: false,
-  },
-  {
-    tipo: "Lifetime",
-    precio: "$1000",
-    periodo: "pago único",
-    descripcion: "Acceso permanente sin mensualidades.",
-    incluye: [
-      "Todo lo del plan Anual",
-      "Actualizaciones gratis de por vida",
-      "Sin costos mensuales",
-      "Soporte prioritario por WhatsApp",
-    ],
-    nota: "Setup USD 50 en oferta incluido. Tokens IA 2 años. Hasta 12 cuotas",
-    destacado: true,
-    whatsapp: true,
-  },
-];
-
 export default function PreciosPage() {
   return (
     <>
@@ -296,8 +172,8 @@ export default function PreciosPage() {
               <em className="not-italic text-[#d97644]">qué obtienes exactamente</em>.
             </h1>
             <p className="font-display italic text-xl text-[#a89e90] font-light max-w-xl leading-relaxed mb-8">
-              Setup: <span className="line-through text-[#5c554c]">USD 100</span>{" "}
-              <strong className="text-[#d97644] not-italic">USD 50 (Promoción activa)</strong>. Mensualidades bajas. Prueba 15 días gratis.
+              Setup: <span className="line-through text-[#5c554c]">USD {SETUP_LIST_PRICE}</span>{" "}
+              <strong className="text-[#d97644] not-italic">USD {SETUP_PROMO_PRICE} (Promoción activa)</strong>. Mensualidades bajas. Prueba 15 días gratis.
               Sin letra pequeña, sin cargos escondidos, sin permanencia.
             </p>
           </div>
@@ -499,7 +375,7 @@ export default function PreciosPage() {
 
           {/* Nota aclaratoria */}
           <p className="mt-12 font-mono text-xs text-[#5c554c] text-center tracking-wide">
-            Prueba 15 días gratis. Sin tarjeta, sin compromiso. El setup de activación promocional de USD 50 (precio regular <span className="line-through">USD 100</span>) se paga solo cuando decides continuar.
+            Prueba 15 días gratis. Sin tarjeta, sin compromiso. El setup de activación promocional de USD {SETUP_PROMO_PRICE} (precio regular <span className="line-through">USD {SETUP_LIST_PRICE}</span>) se paga solo cuando decides continuar.
           </p>
         </div>
       </section>
