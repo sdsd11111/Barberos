@@ -62,7 +62,7 @@ export default function WhatsAppContent() {
 
     init();
 
-    // Polling rápido de estado (cada 3 segundos) para detectar el escaneo del celular al instante
+    // Polling de estado (cada 3 segundos) para detectar el escaneo del celular al instante
     const interval = setInterval(async () => {
       const newStatus = await fetchStatus();
       if (newStatus === "CONNECTED") {
@@ -70,11 +70,19 @@ export default function WhatsAppContent() {
       }
     }, 3000);
 
+    // Refresco automático del código QR cada 25s para evitar que caduque en pantalla sin que el usuario se dé cuenta
+    const qrInterval = setInterval(async () => {
+      if (status !== "CONNECTED") {
+        fetchQR();
+      }
+    }, 25000);
+
     return () => {
       isMounted = false;
       clearInterval(interval);
+      clearInterval(qrInterval);
     };
-  }, []);
+  }, [status]);
 
   const handleManualCheck = async () => {
     setChecking(true);

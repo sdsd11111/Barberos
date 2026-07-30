@@ -134,7 +134,7 @@ export async function getFreshQR(instanceName: string): Promise<{ qrcode?: strin
         headers: {
           apikey: EVOLUTION_API_KEY,
         },
-        timeout: 5000,
+        timeout: 12000, // 12 segundos para dar suficiente margen al VPS
       });
 
       const data = response.data;
@@ -146,14 +146,14 @@ export async function getFreshQR(instanceName: string): Promise<{ qrcode?: strin
         return { qrcode: formattedQr, code: data?.pairingCode || data?.code, success: true };
       }
 
-      // Si no devolvió QR en este intento, esperar 800ms y reintentar
+      // Si no devolvió QR en este intento, esperar 1 segundo y reintentar
       if (attempt < 3) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     } catch (error: any) {
       console.error(`[Evolution API] Intento ${attempt} fallido obteniendo QR:`, error.response?.data || error.message);
       if (attempt < 3) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
   }
