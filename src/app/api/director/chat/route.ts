@@ -213,6 +213,44 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Obtener la última visita aprobada registrada EN VIVO
+    const latestVisit = await prisma.barberVisit.findFirst({
+      where: { barbershopId, status: "APPROVED" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    let latestVisitCustomerName: string | null = null;
+    let latestVisitCustomerWhatsapp: string | null = null;
+    let latestVisitStaffName: string | null = null;
+
+    if (latestVisit) {
+      if (latestVisit.customerId) {
+        const cust = await prisma.barberCustomer.findUnique({
+          where: { id: latestVisit.customerId },
+          select: { name: true, whatsapp: true },
+        });
+        if (cust) {
+          latestVisitCustomerName = cust.name;
+          latestVisitCustomerWhatsapp = cust.whatsapp;
+        }
+      }
+      if (latestVisit.staffId) {
+        const stf = await prisma.barberStaff.findUnique({
+          where: { id: latestVisit.staffId },
+          select: { name: true },
+        });
+        if (stf) {
+          latestVisitStaffName = stf.name;
+        }
+      }
+    }
+
+    // Obtener el último cliente registrado EN VIVO
+    const latestCreatedCustomer = await prisma.barberCustomer.findFirst({
+      where: { barbershopId },
+      orderBy: { id: "desc" },
+    });
+
     const staffMembers = await prisma.barberStaff.findMany({
       where: { barbershopId },
       select: { id: true, name: true, role: true },
@@ -297,6 +335,20 @@ export async function POST(request: NextRequest) {
         totalClientesRegistrados: liveTotalCustomers,
         totalVisitasAprobadas: Math.max(liveTotalVisitsApproved, snapshot?.totalVisitsApproved ?? 0),
         visitasConsumidorFinalCF: Math.max(liveAnonymousVisits, snapshot?.totalAnonymousVisits ?? 0),
+        ultimasVisitasYClientesEnVivo: {
+          ultimaVisitaAprobada: latestVisit ? {
+            nombreCliente: latestVisitCustomerName || "Consumidor Final (Sin registrar)",
+            whatsappCliente: latestVisitCustomerWhatsapp || null,
+            barberoQueLoAtendio: latestVisitStaffName || "No especificado",
+            fechaYHoraExacta: new Date(latestVisit.createdAt).toLocaleString("es-EC", { timeZone: "America/Guayaquil" }),
+            fechaIso: new Date(latestVisit.createdAt).toISOString(),
+          } : null,
+          ultimoClienteRegistrado: latestCreatedCustomer ? {
+            nombre: latestCreatedCustomer.name || "Cliente Registrado",
+            whatsapp: latestCreatedCustomer.whatsapp,
+            ultimaVisita: latestCreatedCustomer.lastVisitAt ? new Date(latestCreatedCustomer.lastVisitAt).toLocaleString("es-EC", { timeZone: "America/Guayaquil" }) : null,
+          } : null
+        },
         topClientesMasFrecuentes: topFrequentCustomers.map((c) => ({
           nombre: c.name || "Cliente Registrado",
           whatsapp: c.whatsapp,
@@ -405,7 +457,24 @@ export async function POST(request: NextRequest) {
     const lastUserMsg = messages[messages.length - 1]?.content?.toLowerCase() || "";
     let fallbackReply = "";
 
-    if (lastUserMsg.includes("cuantos cliente") || lastUserMsg.includes("cuántos cliente") || lastUserMsg.includes("frecuente")) {
+    if (lastUserMsg.includes("ultimo cliente") || lastUserMsg.includes("último cliente") || lastUserMsg.includes("reciente")) {
+      if (latestVisit) {
+        const clientName = latestVisitCustomerName || "Consumidor Final (Sin registrar)";
+        const dateStr = new Date(latestVisit.createdAt).toLocaleString("es-EC", { timeZone: "America/Guayaquil" });
+        const staffName = latestVisitStaffName;
+
+        fallbackReply = `El último cliente atendido fue "${clientName}", con una visita registrada el ${dateStr}${staffName ? ` con ${staffName}` : ""}.
+        
+Esto es lo que muestra el registro en vivo de tu base de datos. Si necesitas más información sobre este cliente o cualquier otro, con gusto te ayudo.`;
+      } else if (latestCreatedCustomer) {
+        const dateStr = latestCreatedCustomer.lastVisitAt ? new Date(latestCreatedCustomer.lastVisitAt).toLocaleString("es-EC", { timeZone: "America/Guayaquil" }) : null;
+        fallbackReply = `El último cliente registrado en el sistema es "${latestCreatedCustomer.name || "Cliente Registrado"}"${dateStr ? `, con última visita el ${dateStr}` : ""}.
+
+Esto es lo que muestra la base de datos de tu barbería en este momento.`;
+      } else {
+        fallbackReply = `Aún no tienes visitas ni clientes registrados en la base de datos de tu barbería.`;
+      }
+    } else if (lastUserMsg.includes("cuantos cliente") || lastUserMsg.includes("cuántos cliente") || lastUserMsg.includes("frecuente")) {
       const topClient = topFrequentCustomers[0];
       if (liveTotalCustomers > 0) {
         fallbackReply = `Tienes ${liveTotalCustomers} clientes registrados en tu barbería.${topClient ? ` El que más se repite es ${topClient.name || "Cliente Registrado"}, con ${topClient.cutsCount} cortes — muy por encima del resto.` : ""}
