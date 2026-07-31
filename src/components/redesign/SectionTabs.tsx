@@ -30,7 +30,8 @@ export default function SectionTabs({
   onChange,
   variant = "pill",
   className = "",
-}: SectionTabsProps) {
+  accentColor,
+}: SectionTabsProps & { accentColor?: string }) {
   if (variant === "underline") {
     return (
       <div className={`flex gap-1 overflow-x-auto ${className}`}>
@@ -49,10 +50,11 @@ export default function SectionTabs({
               {tab.label}
               {tab.badge !== undefined && (
                 <span
+                  style={isActive && accentColor ? { backgroundColor: `${accentColor}25`, color: accentColor } : undefined}
                   className={[
                     "ml-2 px-1.5 py-0.5 rounded-full text-[9px]",
                     isActive
-                      ? "bg-[#d97644]/15 text-[#d97644]"
+                      ? accentColor ? "" : "bg-[#d97644]/15 text-[#d97644]"
                       : "bg-[#2a2520] text-[#a89e90]",
                   ].join(" ")}
                 >
@@ -60,7 +62,10 @@ export default function SectionTabs({
                 </span>
               )}
               {isActive && (
-                <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-[#d97644]" />
+                <span
+                  style={accentColor ? { backgroundColor: accentColor } : undefined}
+                  className="absolute left-0 right-0 -bottom-px h-0.5 bg-[#d97644]"
+                />
               )}
             </button>
           );
@@ -73,10 +78,6 @@ export default function SectionTabs({
   return (
     <div
       className={[
-        // flex con min-w-max permite que los tabs mantengan su tamaño
-        // natural sin comprimirse. shrink-0 en cada botón garantiza que
-        // no se reduzcan. El scroll horizontal lo provee el contenedor
-        // padre (que tiene overflow-x-auto).
         "flex items-center gap-1 p-1 rounded-full shrink-0",
         "bg-[#1a1614]/70 border border-[#3a2f25]/80",
         "backdrop-blur-md shadow-[0_4px_24px_rgba(0,0,0,0.4)]",
@@ -92,13 +93,16 @@ export default function SectionTabs({
             role="tab"
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
+            style={isActive && accentColor ? { backgroundColor: accentColor } : undefined}
             className={[
               "relative flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-full shrink-0 snap-start",
               "font-mono text-[10px] tracking-[0.25em] uppercase whitespace-nowrap",
               "transition-all duration-200 ease-out",
               "active:scale-95",
               isActive
-                ? "bg-gradient-to-b from-[#e89263] to-[#d97644] text-[#1a0f08] shadow-[0_4px_12px_-2px_rgba(217,118,68,0.55)]"
+                ? accentColor
+                  ? "text-[#1a0f08] font-bold shadow-lg"
+                  : "bg-gradient-to-b from-[#e89263] to-[#d97644] text-[#1a0f08] shadow-[0_4px_12px_-2px_rgba(217,118,68,0.55)]"
                 : "text-[#a89e90] hover:text-[#f3ece1] hover:bg-[#f3ece1]/5",
             ].join(" ")}
           >

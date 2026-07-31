@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import RegistrationForm from "@/components/public/RegistrationForm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 export default async function QRRegistrationPage({
   params,
@@ -12,12 +13,14 @@ export default async function QRRegistrationPage({
 
   const barbershop = await prisma.barbershop.findUnique({
     where: { id: barbershopId },
-    select: { name: true },
+    select: { name: true, vertical: true },
   });
 
   if (!barbershop) {
     notFound();
   }
+
+  const terms = getTenantTerms(barbershop.vertical);
 
   return (
     <div className="min-h-screen bg-[#0a0807] text-[#f3ece1] flex flex-col selection:bg-[#d97644] selection:text-[#0a0807]">
@@ -36,10 +39,10 @@ export default async function QRRegistrationPage({
         <div className="w-full max-w-md">
           <div className="text-center mb-10">
             <h1 className="font-display text-4xl font-light tracking-wide mb-2 text-[#f3ece1]">
-              Regístrate en <span className="text-[#d97644] font-medium">{barbershop.name}</span>
+              Regístrate en <span className={`${terms.accentColorClass} font-medium`}>{barbershop.name}</span>
             </h1>
             <p className="text-[#a89e90] font-sans font-light">
-              Completa tus datos para empezar a acumular cortes gratis y acceder a tus beneficios.
+              Completa tus datos para empezar a acumular {terms.rewardUnitPlural} gratis y acceder a tus beneficios.
             </p>
           </div>
 

@@ -3,40 +3,42 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 export default function PanelNav({
   logoutAction,
   isPremium = false,
+  vertical,
 }: {
   logoutAction: () => Promise<void>;
   isPremium?: boolean;
+  vertical?: string | null;
 }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const terms = getTenantTerms(vertical);
 
-  const navLinks = isPremium
-    ? [
-        { href: "/panel", label: "Dashboard", exact: true },
-        { href: "/panel/clientes", label: "Clientes" },
-        { href: "/panel/barberos", label: "Barberos" },
-        { href: "/panel/whatsapp", label: "Configuración" },
-      ]
-    : [
-        { href: "/panel", label: "Dashboard", exact: true },
-        { href: "/panel/clientes", label: "Clientes" },
-        { href: "/panel/barberos", label: "Barberos" },
-        { href: "/panel/whatsapp", label: "Configuración" },
-      ];
+  const navLinks = [
+    { href: "/panel", label: "Dashboard", exact: true },
+    { href: "/panel/clientes", label: "Clientes" },
+    { href: "/panel/barberos", label: terms.staffTitle },
+    { href: "/panel/whatsapp", label: "Configuración" },
+  ];
+
+  const isGabinete = (vertical || "").toUpperCase() === "GABINETE" || (vertical || "").toUpperCase() === "SALON";
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-[#2a2520] bg-[#0a0807]/95 backdrop-blur-sm flex items-center px-4 sm:px-6 justify-between">
+      <nav
+        style={isGabinete ? { backgroundColor: "rgba(18, 10, 12, 0.95)", borderColor: "rgba(254, 136, 159, 0.25)" } : undefined}
+        className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-[#2a2520] bg-[#0a0807]/95 backdrop-blur-sm flex items-center px-4 sm:px-6 justify-between transition-colors"
+      >
         {/* Logo */}
         <Link
           href="/panel"
-          className="font-display text-xl font-light tracking-widest text-[#f3ece1] hover:text-[#d97644] transition-colors"
+          className="font-display text-xl font-light tracking-widest text-[#f3ece1] transition-colors"
         >
-          BarberOS
+          {terms.brandName}
         </Link>
 
         {/* Desktop links */}
@@ -47,8 +49,11 @@ export default function PanelNav({
               <li key={href}>
                 <Link
                   href={href}
-                  className={`font-mono text-xs tracking-[0.2em] uppercase transition-colors ${
-                    isActive ? "text-[#d97644]" : "text-[#5c554c] hover:text-[#a89e90]"
+                  style={isActive ? { color: terms.accentColor, borderColor: terms.accentColor } : undefined}
+                  className={`font-mono text-xs tracking-[0.2em] uppercase transition-colors px-2 py-1 ${
+                    isActive
+                      ? `border rounded-sm font-bold`
+                      : "text-[#5c554c] hover:text-[#a89e90]"
                   }`}
                 >
                   {label}

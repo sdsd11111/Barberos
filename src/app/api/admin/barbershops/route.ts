@@ -23,6 +23,7 @@ const CreateBarbershopSchema = z.object({
   salesAgent: z.string().optional(),
   ownerPhone: z.string().optional(),
   planType: z.enum(["PRO", "PREMIUM"]).default("PRO"),
+  vertical: z.enum(["BARBERIA", "GABINETE", "SALON"]).default("BARBERIA"),
 });
 
 // GET /api/admin/barbershops - Listar todas las barberías
@@ -98,6 +99,7 @@ export async function POST(request: NextRequest) {
         salesAgent: data.salesAgent?.trim() || null,
         planStatus: "TRIAL",
         planType: data.planType || "PRO",
+        vertical: data.vertical || "BARBERIA",
         trialEndsAt,
         connectionStatus: "DISCONNECTED",
         loginPin,
@@ -191,6 +193,7 @@ const UpdateBarbershopSchema = z.object({
   googleMapsUrl: z.string().nullable().optional(),
   ownerPhone: z.string().nullable().optional(),
   salesAgent: z.string().nullable().optional(),
+  vertical: z.enum(["BARBERIA", "GABINETE", "SALON"]).optional(),
 });
 
 // PATCH /api/admin/barbershops - Cambiar planStatus/planType manualmente o editar datos de la barbería
@@ -207,7 +210,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Datos inválidos", details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { barbershopId, planStatus, planType, name, whatsappNumber, requiredCuts, googleMapsUrl, salesAgent } = parsed.data;
+    const { barbershopId, planStatus, planType, name, whatsappNumber, requiredCuts, googleMapsUrl, salesAgent, vertical } = parsed.data;
 
     // Construir data de actualización de forma dinámica
     const updateData: any = {};
@@ -217,6 +220,7 @@ export async function PATCH(request: NextRequest) {
     if (requiredCuts !== undefined) updateData.requiredCuts = requiredCuts;
     if (googleMapsUrl !== undefined) updateData.googleMapsUrl = googleMapsUrl;
     if (salesAgent !== undefined) updateData.salesAgent = salesAgent;
+    if (vertical !== undefined) updateData.vertical = vertical;
     
     if (whatsappNumber !== undefined) {
       updateData.whatsappNumber = normalizeWhatsapp(whatsappNumber);

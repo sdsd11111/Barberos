@@ -1,9 +1,9 @@
-// filepath: src/app/(panel)/panel/barberos/page.tsx
 import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import PanelHero from "@/components/redesign/PanelHero";
 import MetricTile from "@/components/redesign/MetricTile";
 import BarberosView from "@/components/panel/BarberosView";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 export default async function BarberosPage() {
   const session = await verifySession();
@@ -11,8 +11,10 @@ export default async function BarberosPage() {
 
   const barbershop = await prisma.barbershop.findUnique({
     where: { id: barbershopId },
-    select: { whatsappNumber: true, currentBoxCode: true, name: true },
+    select: { whatsappNumber: true, currentBoxCode: true, name: true, vertical: true },
   });
+
+  const terms = getTenantTerms(barbershop?.vertical);
 
   const staff = await prisma.barberStaff.findMany({
     where: { barbershopId },
@@ -90,11 +92,14 @@ export default async function BarberosPage() {
   const unassignedVisits = visits.filter((v) => !v.staffId && v.rating !== null);
   const unassignedCount = unassignedVisits.length;
 
+  const isGabinete = (barbershop?.vertical || "").toUpperCase() === "GABINETE" || (barbershop?.vertical || "").toUpperCase() === "SALON";
+  const accentOv = isGabinete ? terms.accentColor : undefined;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-32">
       {/* HERO */}
       <PanelHero
-        imageUrl="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1600&q=80"
+        imageUrl={terms.heroImage}
         imagePosition="center 30%"
         eyebrow="Rendimiento por Persona"
         badge={
@@ -102,8 +107,8 @@ export default async function BarberosPage() {
             ★ {generalAvg.toFixed(1)} Promedio
           </span>
         }
-        title="Barberos"
-        subtitle="Mide el desempeño de cada profesional: calificaciones, distribución de estrellas y reseñas reales de tus clientes."
+        title={terms.staffTitle}
+        subtitle={`Mide el desempeño de cada ${terms.staffSingular.toLowerCase()}: calificaciones, distribución de estrellas y reseñas reales de tus clientes.`}
         minHeight={300}
       />
 
@@ -115,6 +120,7 @@ export default async function BarberosPage() {
           caption="Promedio de todas las reseñas"
           icon="★"
           accent="amber"
+          accentOverride={accentOv}
         />
         <MetricTile
           label="Total Reseñas"
@@ -122,6 +128,7 @@ export default async function BarberosPage() {
           caption="Votos acumulados"
           icon="✎"
           accent="orange"
+          accentOverride={accentOv}
         />
         <MetricTile
           label="Profesionales"
@@ -140,6 +147,7 @@ export default async function BarberosPage() {
         unassignedCount={unassignedCount}
         whatsappNumber={barbershop?.whatsappNumber || ""}
         currentBoxCode={barbershop?.currentBoxCode || ""}
+        vertical={barbershop?.vertical}
       />
     </div>
   );

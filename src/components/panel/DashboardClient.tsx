@@ -12,10 +12,12 @@ import RegisterVisitButton from "@/components/RegisterVisitButton";
 import ExportDataButton from "@/components/panel/ExportDataButton";
 import ApprovalQueue from "@/components/ApprovalQueue";
 import DirectorWidget from "@/components/panel/DirectorWidget";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 export interface DashboardClientProps {
   barbershopId: string;
   barbershopName: string;
+  vertical?: string | null;
   isPremium: boolean;
   healthScore: number;
   healthStatus: string;
@@ -63,28 +65,10 @@ export interface DashboardClientProps {
 
 type TabId = "reputacion" | "clientes" | "retencion" | "recupera";
 
-const HERO_IMAGES: Record<TabId, { url: string; position: string }> = {
-  reputacion: {
-    url: "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=1600&q=80",
-    position: "center",
-  },
-  clientes: {
-    url: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1600&q=80",
-    position: "center",
-  },
-  retencion: {
-    url: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1600&q=80",
-    position: "center 30%",
-  },
-  recupera: {
-    url: "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=1600&q=80",
-    position: "center",
-  },
-};
-
 export default function DashboardClient({
   barbershopId,
   barbershopName,
+  vertical,
   isPremium,
   healthScore,
   healthStatus,
@@ -104,6 +88,36 @@ export default function DashboardClient({
   motorWidget,
 }: DashboardClientProps) {
   const [activeTab, setActiveTab] = useState<TabId>("reputacion");
+  const terms = getTenantTerms(vertical);
+
+  const isGabinete = (vertical || "").toUpperCase() === "GABINETE" || (vertical || "").toUpperCase() === "SALON";
+
+  const heroImages: Record<TabId, { url: string; position: string }> = {
+    reputacion: {
+      url: isGabinete
+        ? "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1600&q=80"
+        : "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=1600&q=80",
+      position: "center",
+    },
+    clientes: {
+      url: isGabinete
+        ? "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1600&q=80"
+        : "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1600&q=80",
+      position: "center",
+    },
+    retencion: {
+      url: isGabinete
+        ? "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=1600&q=80"
+        : "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1600&q=80",
+      position: "center 30%",
+    },
+    recupera: {
+      url: isGabinete
+        ? "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=1600&q=80"
+        : "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=1600&q=80",
+      position: "center",
+    },
+  };
 
   const customersToRecover = [...overdueCustomers, ...preCutCustomers];
 
@@ -114,7 +128,10 @@ export default function DashboardClient({
     { id: "recupera", label: "Recupera", icon: "⚠", badge: customersToRecover.length },
   ];
 
-  const heroImage = HERO_IMAGES[activeTab];
+  const heroImage = heroImages[activeTab];
+
+  // Override de color para MetricTiles cuando es Gabinete
+  const accentOv = isGabinete ? terms.accentColor : undefined;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-32">
@@ -145,6 +162,7 @@ export default function DashboardClient({
                 suffix="/100"
                 size={112}
                 stroke={9}
+                color={terms.accentColor}
               />
               <div className="min-w-0">
                 <div className="flex items-center gap-2 font-display text-xl text-[#f3ece1]">
@@ -156,7 +174,7 @@ export default function DashboardClient({
                 </p>
               </div>
             </div>
-            <RegisterVisitButton barbershopId={barbershopId} />
+            <RegisterVisitButton barbershopId={barbershopId} vertical={vertical} />
           </div>
         }
         overlay={
@@ -170,6 +188,7 @@ export default function DashboardClient({
               activeTab={activeTab}
               onChange={(id) => setActiveTab(id as TabId)}
               variant="pill"
+              accentColor={terms.accentColor}
             />
           </TabsCarousel>
         }
@@ -185,6 +204,7 @@ export default function DashboardClient({
               caption={`${totalRatings} reseñas registradas`}
               icon="★"
               accent="amber"
+              accentOverride={accentOv}
               footer={
                 <>
                   <span>↑</span>
@@ -198,6 +218,7 @@ export default function DashboardClient({
               caption="Votos recibidos de clientes"
               icon="✎"
               accent="amber"
+              accentOverride={accentOv}
             />
             <MetricTile
               label="Tendencia"
@@ -230,6 +251,7 @@ export default function DashboardClient({
               caption="Clientes en tu base"
               icon="◐"
               accent="orange"
+              accentOverride={accentOv}
               href="/panel/clientes?tab=todos"
               footer={
                 <>
@@ -241,14 +263,14 @@ export default function DashboardClient({
             <MetricTile
               label="Nuevos del Mes"
               value={newCustomersThisMonth}
-              caption="Primer corte este mes"
+              caption={`Primer ${terms.rewardUnitSingular} este mes`}
               icon="✦"
               accent="green"
             />
             <MetricTile
               label="Recurrentes"
               value={recurrentCustomers}
-              caption="2+ cortes registrados"
+              caption={`2+ ${terms.rewardUnitPlural} registrados`}
               icon="↻"
               accent="neutral"
               href="/panel/clientes?tab=recurrentes"
@@ -367,13 +389,15 @@ export default function DashboardClient({
               caption="Superaron su ciclo"
               icon="↘"
               accent="orange"
+              accentOverride={accentOv}
             />
             <MetricTile
-              label="0.8x Pre-corte"
+              label={`0.8x Pre-${terms.rewardUnitSingular}`}
               value={preCutCustomers.length}
               caption="Pronto a salir"
               icon="⏰"
               accent="amber"
+              accentOverride={accentOv}
             />
           </div>
 
@@ -394,7 +418,7 @@ export default function DashboardClient({
 
             {customersToRecover.length === 0 ? (
               <p className="font-mono text-xs text-emerald-400 italic">
-                ¡Excelente! Todos tus clientes están dentro de su ciclo habitual de corte.
+                ¡Excelente! Todos tus clientes están dentro de su ciclo habitual de {terms.rewardUnitSingular}.
               </p>
             ) : (
               <div className="space-y-2">
@@ -404,8 +428,8 @@ export default function DashboardClient({
                   const pattern = cust.metrics.avgIntervalDays;
 
                   const msgText = isOverdue
-                    ? `¡Hola ${cust.name || ""}! Te extrañamos en ${barbershopName}. Tu tiempo habitual de corte es cada ${pattern} días y han pasado ${days} días. ¡Te esperamos para renovar tu estilo!`
-                    : `¡Hola ${cust.name || ""}! En ${barbershopName} recordamos que ya casi se cumple tu ciclo habitual de corte (hace ${days} días). ¿Te agendamos un espacio?`;
+                    ? `¡Hola ${cust.name || ""}! Te extrañamos en ${barbershopName}. Tu tiempo habitual de ${terms.rewardUnitSingular} es cada ${pattern} días y han pasado ${days} días. ¡Te esperamos para renovar tu estilo!`
+                    : `¡Hola ${cust.name || ""}! En ${barbershopName} recordamos que ya casi se cumple tu ciclo habitual de ${terms.rewardUnitSingular} (hace ${days} días). ¿Te agendamos un espacio?`;
 
                   return (
                     <div
@@ -425,7 +449,7 @@ export default function DashboardClient({
                                 : "bg-amber-950/40 text-amber-400 border-amber-800",
                             ].join(" ")}
                           >
-                            {isOverdue ? "1.2x Excedido" : "0.8x Pre-corte"}
+                            {isOverdue ? "1.2x Excedido" : `0.8x Pre-${terms.rewardUnitSingular}`}
                           </span>
                         </div>
                         <p className="font-mono text-[10px] text-[#5c554c] mt-0.5">
@@ -476,7 +500,7 @@ export default function DashboardClient({
               No hay visitas registradas el día de hoy
             </p>
             <p className="font-mono text-[10px] text-[#5c554c] tracking-widest uppercase text-center">
-              Usa el botón "Registrar corte" arriba para añadir un registro manual.
+              Usa el botón &quot;{terms.actionButtonText}&quot; arriba para añadir un registro manual.
             </p>
           </GlassCard>
         ) : (
@@ -486,7 +510,7 @@ export default function DashboardClient({
                 <tr className="border-b border-[#3a2f25]/60 text-[#5c554c] uppercase">
                   <th className="py-3 px-3">Cliente</th>
                   <th className="py-3 px-3">WhatsApp</th>
-                  <th className="py-3 px-3">Cortes</th>
+                  <th className="py-3 px-3" style={{ textTransform: 'capitalize' }}>{terms.rewardUnitPlural}</th>
                   <th className="py-3 px-3">Estado</th>
                   <th className="py-3 px-3">Calificación</th>
                   <th className="py-3 px-3 text-right">Hora</th>

@@ -6,6 +6,7 @@ import PanelHero from "@/components/redesign/PanelHero";
 import MetricTile from "@/components/redesign/MetricTile";
 import ClientesTabs from "@/components/panel/ClientesTabs";
 import ExportDataButton from "@/components/panel/ExportDataButton";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 export default async function ClientesPage({
   searchParams,
@@ -129,11 +130,19 @@ export default async function ClientesPage({
   const recurrentProfiles = enrichedProfiles.filter((p) => p.isRecurrent).length;
   const newThisMonth = enrichedProfiles.filter((p) => p.isNewThisMonth).length;
 
+  const terms = getTenantTerms(barbershop?.vertical);
+  const isGabinete = (barbershop?.vertical || "").toUpperCase() === "GABINETE" || (barbershop?.vertical || "").toUpperCase() === "SALON";
+  const accentOv = isGabinete ? terms.accentColor : undefined;
+
+  const heroImage = isGabinete
+    ? "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1600&q=80"
+    : "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1600&q=80";
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-32">
       {/* HERO */}
       <PanelHero
-        imageUrl="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1600&q=80"
+        imageUrl={heroImage}
         imagePosition="center 35%"
         eyebrow="Tu Base Viva"
         badge={
@@ -157,18 +166,20 @@ export default async function ClientesPage({
           caption="Clientes en tu base"
           icon="◐"
           accent="orange"
+          accentOverride={accentOv}
         />
         <MetricTile
           label="Recurrentes"
           value={recurrentProfiles}
-          caption="2+ cortes realizados"
+          caption={`2+ ${terms.rewardUnitPlural} realizados`}
           icon="↻"
           accent="amber"
+          accentOverride={accentOv}
         />
         <MetricTile
           label="Nuevos del Mes"
           value={newThisMonth}
-          caption="Primer corte este mes"
+          caption={`Primer ${terms.rewardUnitSingular} este mes`}
           icon="✦"
           accent="green"
         />
@@ -180,6 +191,7 @@ export default async function ClientesPage({
         initialTab={tab ?? "todos"}
         requiredCuts={requiredCuts}
         loyaltyMode={barbershop?.loyaltyMode ?? "BY_PROFILE"}
+        vertical={barbershop?.vertical}
       />
     </div>
   );

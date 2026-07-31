@@ -1,7 +1,6 @@
-"use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 interface SettingsProps {
   initialData: {
@@ -11,6 +10,7 @@ interface SettingsProps {
     visitDurationMin: number | null;
     businessInfo: string | null;
     requiredCuts: number;
+    vertical?: string | null;
   };
   isPremium: boolean;
 }
@@ -28,7 +28,10 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
     visitDurationMin: initialData.visitDurationMin || "",
     businessInfo: initialData.businessInfo || "",
     requiredCuts: initialData.requiredCuts,
+    vertical: initialData.vertical || "BARBERIA",
   });
+
+  const terms = getTenantTerms(formData.vertical);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -48,6 +51,7 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
         loyaltyMode: formData.loyaltyMode,
         visitDurationMin: formData.visitDurationMin === "" ? null : parseInt(formData.visitDurationMin.toString()),
         requiredCuts: parseInt(formData.requiredCuts.toString()),
+        vertical: formData.vertical,
       };
 
       if (isPremium) {
@@ -95,6 +99,33 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
         </div>
       )}
 
+      {/* Tipo de Negocio / Vertical */}
+      <div className="bg-[#131110] border border-[#2a2520] p-6 space-y-6">
+        <div>
+          <h2 className="text-lg text-[#f3ece1] font-display font-light tracking-wide mb-1">
+            Tipo de Negocio
+          </h2>
+          <p className="text-sm text-[#a89e90] font-sans">
+            Selecciona la identidad de tu establecimiento para adaptar automáticamente las imágenes, textos y términos de tu plataforma.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-widest text-[#a89e90] font-mono">
+            Modalidad del Negocio
+          </label>
+          <select
+            name="vertical"
+            value={formData.vertical}
+            onChange={handleChange}
+            className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 focus:outline-none transition-colors font-sans"
+          >
+            <option value="BARBERIA">💈 Barbería (Estilo masculino, cortes y barba)</option>
+            <option value="GABINETE">💅 Gabinete de Belleza / Salón (Estética femenina, servicios y cuidado)</option>
+          </select>
+        </div>
+      </div>
+
       {/* Información del Negocio — Solo PREMIUM */}
       {isPremium && (
         <div className="bg-[#131110] border border-[#2a2520] p-6 space-y-6">
@@ -103,12 +134,12 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
               <h2 className="text-lg text-[#f3ece1] font-display font-light tracking-wide">
                 Información de tu Negocio
               </h2>
-              <span className="bg-[#d97644]/10 text-[#d97644] border border-[#d97644]/30 px-2 py-0.5 text-[9px] font-mono rounded">
+              <span style={{ color: terms.accentColor, borderColor: `${terms.accentColor}4D`, backgroundColor: `${terms.accentColor}1A` }} className="border px-2 py-0.5 text-[9px] font-mono rounded">
                 PREMIUM
               </span>
             </div>
             <p className="text-sm text-[#a89e90] font-sans leading-relaxed">
-              Describe tu barbería: cuántos barberos tienes, desde cuándo operas, horario de atención, 
+              Describe tu {terms.businessTypeName.toLowerCase()}: cuántos {terms.staffTitle.toLowerCase()} tienes, desde cuándo operas, horario de atención, 
               servicios que ofreces, zona/barrio, competencia cercana, cualquier detalle relevante. 
               El Director IA usará esta información para personalizar sus recomendaciones.
             </p>
@@ -124,8 +155,8 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
               onChange={handleChange}
               maxLength={BUSINESS_INFO_MAX}
               rows={6}
-              placeholder="Ej: Somos una barbería en el centro de Cuenca, operamos desde 2019 con 3 sillas. Atendemos de lunes a sábado de 9am a 7pm. Nuestros servicios principales son corte, barba y cejas. Tenemos competencia directa a 2 cuadras (Barbería X). Nuestro diferenciador es el trato personalizado y la fidelización por WhatsApp."
-              className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-4 focus:border-[#d97644] focus:outline-none transition-colors font-sans text-sm leading-relaxed resize-y min-h-[120px]"
+              placeholder={`Ej: Somos un ${terms.businessTypeName.toLowerCase()} en el centro de Cuenca, operamos desde 2019. Atendemos de lunes a sábado de 9am a 7pm. Nuestros servicios principales son cuidado facial, manicure y pestañas. Nuestro diferenciador es el trato personalizado y la fidelización por WhatsApp.`}
+              className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-4 focus:outline-none transition-colors font-sans text-sm leading-relaxed resize-y min-h-[120px]"
             />
             <div className="flex justify-between items-center">
               <p className="text-xs text-[#5c554c]">
@@ -165,12 +196,12 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
                 name="riskThresholdNormal"
                 value={formData.riskThresholdNormal}
                 onChange={handleChange}
-                className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 pl-10 focus:border-[#d97644] focus:outline-none transition-colors font-mono"
+                className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 pl-10 focus:outline-none transition-colors font-mono"
                 required
               />
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5c554c] font-mono">X</span>
             </div>
-            <p className="text-xs text-[#5c554c] mt-1">Ej: 0.8 significa que si suele venir cada 10 días, al día 8 se le recordará su próximo corte.</p>
+            <p className="text-xs text-[#5c554c] mt-1">Ej: 0.8 significa que si suele venir cada 10 días, al día 8 se le recordará su próximo {terms.rewardUnitSingular}.</p>
           </div>
 
           <div className="space-y-2">
@@ -184,7 +215,7 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
                 name="riskThresholdAt"
                 value={formData.riskThresholdAt}
                 onChange={handleChange}
-                className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 pl-10 focus:border-[#d97644] focus:outline-none transition-colors font-mono"
+                className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 pl-10 focus:outline-none transition-colors font-mono"
                 required
               />
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5c554c] font-mono">X</span>
@@ -199,7 +230,7 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
         <div>
           <h2 className="text-lg text-[#f3ece1] font-display font-light tracking-wide mb-1">Modo de Fidelidad</h2>
           <p className="text-sm text-[#a89e90] font-sans">
-            ¿Cómo cuentas las visitas para premios (cortes gratis)?
+            ¿Cómo cuentas las visitas para premios ({terms.rewardUnitPlural} gratis)?
           </p>
         </div>
 
@@ -209,7 +240,7 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
             name="loyaltyMode"
             value={formData.loyaltyMode}
             onChange={handleChange}
-            className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 focus:border-[#d97644] focus:outline-none transition-colors font-sans"
+            className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 focus:outline-none transition-colors font-sans"
           >
             <option value="BY_PROFILE">Por Perfil (Cada persona acumula para sí misma)</option>
             <option value="BY_ACCOUNT">Por Cuenta (Padre e hijo acumulan juntos en el mismo WhatsApp)</option>
@@ -217,7 +248,9 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-widest text-[#a89e90] font-mono">Cortes para Premio</label>
+          <label style={{ textTransform: 'uppercase' }} className="text-xs tracking-widest text-[#a89e90] font-mono">
+            {terms.rewardUnitPlural} para Premio
+          </label>
           <input
             type="number"
             min="2"
@@ -226,10 +259,10 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
             name="requiredCuts"
             value={formData.requiredCuts}
             onChange={handleChange}
-            className="w-full max-w-[200px] bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 focus:border-[#d97644] focus:outline-none transition-colors font-mono"
+            className="w-full max-w-[200px] bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 focus:outline-none transition-colors font-mono"
             required
           />
-          <p className="text-xs text-[#5c554c] mt-1">¿Cuántos cortes necesita un cliente para ganar su corte gratis? (Mínimo 2, máximo 50)</p>
+          <p className="text-xs text-[#5c554c] mt-1">¿Cuántos {terms.rewardUnitPlural} necesita un cliente para ganar su {terms.rewardUnitSingular} gratis? (Mínimo 2, máximo 50)</p>
         </div>
       </div>
 
@@ -238,7 +271,7 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
         <div>
           <h2 className="text-lg text-[#f3ece1] font-display font-light tracking-wide mb-1">Operativa</h2>
           <p className="text-sm text-[#a89e90] font-sans">
-            Duración estándar de un servicio. Sirve para calcular capacidad de la barbería.
+            Duración estándar de un servicio. Sirve para calcular capacidad del {terms.businessTypeName.toLowerCase()}.
           </p>
         </div>
 
@@ -252,7 +285,7 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
             value={formData.visitDurationMin}
             onChange={handleChange}
             placeholder="Opcional (Ej. 40)"
-            className="w-full max-w-[200px] bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 focus:border-[#d97644] focus:outline-none transition-colors font-mono"
+            className="w-full max-w-[200px] bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3 focus:outline-none transition-colors font-mono"
           />
           <p className="text-xs text-[#5c554c] mt-1">Déjalo en blanco si no quieres capturar la hora de inicio de las visitas.</p>
         </div>
@@ -261,7 +294,8 @@ export default function ConfigForm({ initialData, isPremium }: SettingsProps) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full sm:w-auto bg-[#d97644] text-[#0a0807] hover:bg-[#e08b60] disabled:bg-[#d97644]/50 disabled:cursor-not-allowed font-mono text-sm tracking-[0.2em] uppercase py-4 px-8 transition-colors flex items-center justify-center min-w-[200px]"
+        style={{ backgroundColor: terms.accentColor }}
+        className="w-full sm:w-auto text-[#0a0807] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed font-mono text-sm tracking-[0.2em] uppercase py-4 px-8 transition-colors flex items-center justify-center min-w-[200px] font-bold"
       >
         {loading ? "Guardando..." : "Guardar Cambios"}
       </button>

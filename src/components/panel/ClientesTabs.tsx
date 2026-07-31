@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 interface VisitHistoryItem {
   id: string;
@@ -31,6 +32,7 @@ interface ClientesTabsProps {
   initialTab: string;
   requiredCuts: number;
   loyaltyMode: string;
+  vertical?: string | null;
 }
 
 function StarRating({ rating }: { rating: number | null }) {
@@ -55,9 +57,11 @@ function StarRating({ rating }: { rating: number | null }) {
 function LoyaltyBar({
   cutsCount,
   requiredCuts,
+  accentColor = "#d97644",
 }: {
   cutsCount: number;
   requiredCuts: number;
+  accentColor?: string;
 }) {
   const progress = Math.min((cutsCount % requiredCuts) / requiredCuts, 1) * 100;
   const completedCycles = Math.floor(cutsCount / requiredCuts);
@@ -69,15 +73,15 @@ function LoyaltyBar({
           {cutsCount % requiredCuts}/{requiredCuts} para premio
         </span>
         {completedCycles > 0 && (
-          <span className="font-mono text-[10px] text-[#d97644]">
+          <span style={{ color: accentColor }} className="font-mono text-[10px]">
             🎁 {completedCycles}x completado
           </span>
         )}
       </div>
       <div className="h-1 bg-[#2a2520] rounded-full overflow-hidden">
         <div
-          className="h-full bg-[#d97644] rounded-full transition-all"
-          style={{ width: `${progress}%` }}
+          className="h-full rounded-full transition-all"
+          style={{ width: `${progress}%`, backgroundColor: accentColor }}
         />
       </div>
     </div>
@@ -466,7 +470,9 @@ export default function ClientesTabs({
   initialTab,
   requiredCuts,
   loyaltyMode,
+  vertical,
 }: ClientesTabsProps) {
+  const terms = getTenantTerms(vertical);
   const [activeTab, setActiveTab] = useState<"todos" | "nuevos" | "recurrentes">(
     (["todos", "nuevos", "recurrentes"].includes(initialTab)
       ? initialTab
@@ -506,9 +512,10 @@ export default function ClientesTabs({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
+            style={activeTab === tab.id ? { backgroundColor: terms.accentColor, borderColor: terms.accentColor } : undefined}
             className={`flex-1 py-3 px-4 font-mono text-xs tracking-wider uppercase transition-colors ${
               activeTab === tab.id
-                ? "bg-[#d97644] text-[#0a0807] font-bold"
+                ? "text-[#0a0807] font-bold"
                 : "bg-[#0a0807] text-[#5c554c] hover:text-[#f3ece1] hover:bg-[#131110]"
             }`}
           >

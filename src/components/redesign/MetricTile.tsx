@@ -71,13 +71,23 @@ export default function MetricTile({
   caption,
   footer,
   accent = "neutral",
+  accentOverride,
   icon,
   href,
   onClick,
   headerExtra,
   className = "",
-}: MetricTileProps) {
+}: MetricTileProps & { accentOverride?: string }) {
   const a = accentMap[accent];
+
+  // Si se provee accentOverride, generamos estilos inline que sobrescriben la clase
+  const overrideStyles = accentOverride ? {
+    valueColor: accentOverride,
+    footerColor: accentOverride,
+    bgColor: `${accentOverride}18`,
+    borderColor: `${accentOverride}4D`,
+    iconColor: accentOverride,
+  } : null;
 
   const content = (
     <div
@@ -89,9 +99,10 @@ export default function MetricTile({
         href || onClick
           ? "hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(0,0,0,0.55)] cursor-pointer"
           : "",
-        a.border,
+        overrideStyles ? "" : a.border,
         className,
       ].join(" ")}
+      style={overrideStyles ? { borderColor: overrideStyles.borderColor } : undefined}
     >
       {/* Línea superior sutil */}
       <div
@@ -106,9 +117,9 @@ export default function MetricTile({
             <span
               className={[
                 "inline-flex items-center justify-center w-7 h-7 rounded-full text-sm shrink-0",
-                a.bg,
-                accent === "amber" ? "text-[#e8a33d]" : accent === "orange" ? "text-[#d97644]" : "",
+                overrideStyles ? "" : a.bg,
               ].join(" ")}
+              style={overrideStyles ? { backgroundColor: overrideStyles.bgColor, color: overrideStyles.iconColor } : undefined}
             >
               {icon}
             </span>
@@ -126,8 +137,9 @@ export default function MetricTile({
           className={[
             "font-display text-4xl sm:text-5xl font-light leading-none",
             "group-hover:scale-[1.02] transition-transform",
-            a.value,
+            overrideStyles ? "" : a.value,
           ].join(" ")}
+          style={overrideStyles ? { color: overrideStyles.valueColor } : undefined}
         >
           {value}
         </p>
@@ -142,8 +154,9 @@ export default function MetricTile({
           className={[
             "mt-4 pt-3 border-t border-[#3a2f25]/60",
             "font-mono text-[10px] flex items-center gap-1.5",
-            a.footerText,
+            overrideStyles ? "" : a.footerText,
           ].join(" ")}
+          style={overrideStyles ? { color: overrideStyles.footerColor } : undefined}
         >
           {footer}
         </div>

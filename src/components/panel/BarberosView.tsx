@@ -3,6 +3,8 @@
 import { useState } from "react";
 import DownloadQRButton from "@/components/DownloadQRButton";
 
+import { getTenantTerms } from "@/lib/tenant-dictionary";
+
 interface ReviewItem {
   id: string;
   rating: number;
@@ -31,6 +33,7 @@ interface BarberosViewProps {
   unassignedCount: number;
   whatsappNumber: string;
   currentBoxCode: string;
+  vertical?: string | null;
 }
 
 function buildStaffQrUrl(whatsappNumber: string, boxCode: string, staffName: string) {
@@ -40,25 +43,25 @@ function buildStaffQrUrl(whatsappNumber: string, boxCode: string, staffName: str
   )}`;
 }
 
-function StarDisplay({ rating }: { rating: number }) {
+function StarDisplay({ rating, starColor = "#f59e0b" }: { rating: number; starColor?: string }) {
   return (
-    <span className="text-amber-400 tracking-wider">
+    <span style={{ color: starColor }} className="tracking-wider">
       {"★".repeat(Math.round(rating))}
       {"☆".repeat(5 - Math.round(rating))}
     </span>
   );
 }
 
-function RatingBar({ stars, count, total }: { stars: number; count: number; total: number }) {
+function RatingBar({ stars, count, total, barColor = "#f59e0b" }: { stars: number; count: number; total: number; barColor?: string }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
     <div className="flex items-center gap-2 text-xs font-mono">
       <span className="text-[#5c554c] w-4 text-right">{stars}</span>
-      <span className="text-amber-400">★</span>
+      <span style={{ color: barColor }}>★</span>
       <div className="flex-1 h-2 bg-[#1c1917] rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-500"
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, backgroundColor: barColor }}
         />
       </div>
       <span className="text-[#5c554c] w-8 text-right">{count}</span>
@@ -71,50 +74,57 @@ function StaffCard({
   isSelected,
   onClick,
   qrUrl,
+  accentColor,
+  staffSingular,
+  icon,
 }: {
   staff: StaffStat;
   isSelected: boolean;
   onClick: () => void;
   qrUrl: string;
+  accentColor: string;
+  staffSingular: string;
+  icon: string;
 }) {
   return (
     <button
       onClick={onClick}
+      style={isSelected ? { borderColor: accentColor } : undefined}
       className={`w-full text-left p-4 sm:p-5 border transition-all duration-200 ${
         isSelected
-          ? "bg-[#131110] border-[#d97644]"
+          ? "bg-[#131110]"
           : "bg-[#0a0807] border-[#2a2520] hover:border-[#3a3530]"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
-        {/* Foto rectangular del barbero */}
+        {/* Foto rectangular */}
         <div className="w-16 h-20 bg-[#131110] border border-[#2a2520] shrink-0 overflow-hidden relative">
           {staff.photoUrl ? (
             <img src={staff.photoUrl} alt={staff.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-xl bg-[#131110]">
-              💈
+              {icon}
             </div>
           )}
         </div>
 
-        {/* Info del barbero */}
+        {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <h4 className="font-display text-lg font-light text-[#f3ece1] truncate">{staff.name}</h4>
             {staff.totalRatings > 0 && (
-              <span className="font-display text-2xl font-light text-[#d97644] ml-2">
+              <span style={{ color: accentColor }} className="font-display text-2xl font-light ml-2">
                 {staff.avgRating.toFixed(1)}
               </span>
             )}
           </div>
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] text-[#5c554c] uppercase tracking-wider">
-              {staff.role === "OWNER" ? "Dueño" : "Barbero"}
+              {staff.role === "OWNER" ? "Dueño" : staffSingular}
             </span>
             {staff.totalRatings > 0 ? (
               <div className="flex items-center gap-1.5">
-                <StarDisplay rating={staff.avgRating} />
+                <StarDisplay rating={staff.avgRating} starColor={accentColor} />
                 <span className="font-mono text-[10px] text-[#5c554c]">
                   ({staff.totalRatings})
                 </span>
@@ -150,9 +160,13 @@ export default function BarberosView({
   unassignedCount,
   whatsappNumber,
   currentBoxCode,
+  vertical,
 }: BarberosViewProps) {
   const [selectedView, setSelectedView] = useState<"general" | string>("general");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState<number>(10);
+  const terms = getTenantTerms(vertical);
+  const isGabinete = (vertical || "").toUpperCase() === "GABINETE" || (vertical || "").toUpperCase() === "SALON";
+  const icon = isGabinete ? "💅" : "💈";
 
   const selectedStaff = selectedView !== "general"
     ? staffStats.find((s) => s.id === selectedView)
@@ -185,19 +199,19 @@ export default function BarberosView({
 
   return (
     <div className="space-y-6">
-      {/* QR General de la Barbería (Reubicado del Dashboard) */}
+      {/* QR General */}
       {selectedView === "general" && whatsappNumber && (
         <div className="bg-[#131110] border border-[#2a2520] p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center sm:text-left">
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#d97644]">
+            <span style={{ color: terms.accentColor }} className="font-mono text-[10px] tracking-[0.3em] uppercase">
               QR PRINCIPAL DE CAJA
             </span>
             <h3 className="font-display text-2xl font-light text-[#f3ece1]">
               QR General para Clientes
             </h3>
             <p className="font-mono text-xs text-[#5c554c] max-w-md">
-              Escanea para registrar corte con el código de caja en vivo:{" "}
-              <strong className="text-[#d97644] font-normal">{currentBoxCode}</strong>
+              Escanea para registrar {terms.rewardUnitSingular} con el código de caja en vivo:{" "}
+              <strong style={{ color: terms.accentColor }} className="font-normal">{currentBoxCode}</strong>
             </p>
           </div>
 
@@ -211,18 +225,19 @@ export default function BarberosView({
                 }}
               />
             </div>
-            <DownloadQRButton qrUrl={generalQrUrl} barbershopName="Barbería General" />
+            <DownloadQRButton qrUrl={generalQrUrl} barbershopName={terms.businessTypeName} />
           </div>
         </div>
       )}
 
-      {/* Tabs superiores idénticos al diseño */}
+      {/* Tabs superiores */}
       <div className="flex gap-2 overflow-x-auto pb-1 items-center">
         <button
           onClick={() => handleSelectTab("general")}
+          style={selectedView === "general" ? { backgroundColor: terms.accentColor, borderColor: terms.accentColor, color: "#0a0807" } : undefined}
           className={`px-5 py-2 font-mono text-xs tracking-[0.2em] uppercase whitespace-nowrap border transition-colors ${
             selectedView === "general"
-              ? "bg-[#d97644] text-[#0a0807] border-[#d97644] font-bold"
+              ? "font-bold"
               : "bg-transparent text-[#5c554c] border-[#2a2520] hover:text-[#a89e90] hover:border-[#3a3530]"
           }`}
         >
@@ -232,9 +247,10 @@ export default function BarberosView({
           <button
             key={staff.id}
             onClick={() => handleSelectTab(staff.id)}
+            style={selectedView === staff.id ? { backgroundColor: terms.accentColor, borderColor: terms.accentColor, color: "#0a0807" } : undefined}
             className={`px-5 py-2 font-mono text-xs tracking-[0.2em] uppercase whitespace-nowrap border transition-colors ${
               selectedView === staff.id
-                ? "bg-[#d97644] text-[#0a0807] border-[#d97644] font-bold shadow-sm"
+                ? "font-bold shadow-sm"
                 : "bg-[#0a0807] text-[#5c554c] border-[#2a2520] hover:text-[#a89e90] hover:border-[#3a3530]"
             }`}
           >
@@ -349,10 +365,10 @@ export default function BarberosView({
                 Código QR exclusivo de {selectedStaff.name}
               </h3>
               <p className="font-mono text-xs text-[#5c554c] leading-relaxed max-w-xl">
-                El cliente escanea este QR y el sistema <strong className="text-[#d97644] font-normal">automáticamente sabe</strong> que fue atendido por <span className="text-[#a89e90]">{selectedStaff.name}</span>, sin necesidad de preguntarle por WhatsApp.
+                El cliente escanea este QR y el sistema <strong style={{ color: terms.accentColor }} className="font-normal">automáticamente sabe</strong> que fue atendido por <span className="text-[#a89e90]">{selectedStaff.name}</span>, sin necesidad de preguntarle por WhatsApp.
               </p>
               <p className="font-mono text-xs text-[#5c554c]">
-                Código de caja activo: <span className="text-[#d97644] font-bold">{currentBoxCode}</span> — se actualiza con cada check-in
+                Código de caja activo: <span style={{ color: terms.accentColor }} className="font-bold">{currentBoxCode}</span> — se actualiza con cada check-in
               </p>
             </div>
           </div>
@@ -394,11 +410,11 @@ export default function BarberosView({
           </p>
           {currentCount > 0 ? (
             <>
-              <p className="font-display text-7xl sm:text-8xl font-light text-[#d97644]">
+              <p style={{ color: terms.accentColor }} className="font-display text-7xl sm:text-8xl font-light">
                 {currentAvg.toFixed(1)}
               </p>
               <div className="mt-2">
-                <StarDisplay rating={currentAvg} />
+                <StarDisplay rating={currentAvg} starColor={terms.accentColor} />
               </div>
               <p className="font-mono text-[10px] text-[#5c554c] mt-2">
                 {currentCount} calificaciones
@@ -422,6 +438,7 @@ export default function BarberosView({
               stars={stars}
               count={currentDistribution[stars - 1]}
               total={currentCount}
+              barColor={terms.accentColor}
             />
           ))}
         </div>
@@ -514,6 +531,9 @@ export default function BarberosView({
                       ? buildStaffQrUrl(whatsappNumber, currentBoxCode, staff.name)
                       : ""
                   }
+                  accentColor={terms.accentColor}
+                  staffSingular={terms.staffSingular}
+                  icon={icon}
                 />
               ))}
           </div>

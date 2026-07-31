@@ -9,6 +9,7 @@ const settingsSchema = z.object({
   visitDurationMin: z.number().min(5).max(480).nullable().optional(),
   businessInfo: z.string().max(2000).nullable().optional(),
   requiredCuts: z.number().min(2).max(50).optional(),
+  vertical: z.enum(["BARBERIA", "GABINETE", "SALON"]).optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -38,6 +39,7 @@ export async function PATCH(request: NextRequest) {
     if (data.visitDurationMin !== undefined) updateData.visitDurationMin = data.visitDurationMin;
     if (data.businessInfo !== undefined) updateData.businessInfo = data.businessInfo;
     if (data.requiredCuts !== undefined) updateData.requiredCuts = data.requiredCuts;
+    if (data.vertical !== undefined) updateData.vertical = data.vertical;
 
     const updated = await prisma.barbershop.update({
       where: { id: barbershopId },
@@ -53,6 +55,7 @@ export async function PATCH(request: NextRequest) {
         visitDurationMin: updated.visitDurationMin,
         businessInfo: updated.businessInfo,
         requiredCuts: updated.requiredCuts,
+        vertical: updated.vertical,
       },
     });
   } catch (error) {

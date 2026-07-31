@@ -21,6 +21,7 @@ interface Barbershop {
   commissionStatus: string;
   referredByName: string | null;
   referredByCode: string | null;
+  vertical: string;
 }
 
 export default function AdminDashboard() {
@@ -38,6 +39,7 @@ export default function AdminDashboard() {
   const [ownerPhone, setOwnerPhone] = useState("");
   const [salesAgent, setSalesAgent] = useState("");
   const [planType, setPlanType] = useState<"PRO" | "PREMIUM">("PRO");
+  const [vertical, setVertical] = useState<"BARBERIA" | "GABINETE">("BARBERIA");
 
   // Estado para la barbería en edición
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -46,6 +48,7 @@ export default function AdminDashboard() {
   const [editRequiredCuts, setEditRequiredCuts] = useState(5);
   const [editGoogleMapsUrl, setEditGoogleMapsUrl] = useState("");
   const [editSalesAgent, setEditSalesAgent] = useState("");
+  const [editVertical, setEditVertical] = useState<"BARBERIA" | "GABINETE">("BARBERIA");
 
   // Estado para tab de vendedores
   const [activeTab, setActiveTab] = useState<"barbershops" | "vendedores">("barbershops");
@@ -183,6 +186,7 @@ export default function AdminDashboard() {
           ownerPhone: ownerPhone.trim() || undefined,
           salesAgent: salesAgent.trim() || undefined,
           planType,
+          vertical,
         }),
       });
 
@@ -197,6 +201,7 @@ export default function AdminDashboard() {
         setGoogleMapsUrl("");
         setOwnerPhone("");
         setSalesAgent("");
+        setVertical("BARBERIA");
         fetchBarbershops(adminSecret);
       } else {
         const errData = await response.json();
@@ -285,6 +290,7 @@ export default function AdminDashboard() {
     setEditRequiredCuts(shop.requiredCuts);
     setEditGoogleMapsUrl(shop.googleMapsUrl || "");
     setEditSalesAgent(shop.salesAgent || "");
+    setEditVertical((shop.vertical === "GABINETE" || shop.vertical === "SALON") ? "GABINETE" : "BARBERIA");
   };
 
   const handleSaveEdit = async (barbershopId: string) => {
@@ -307,6 +313,7 @@ export default function AdminDashboard() {
           requiredCuts: Number(editRequiredCuts),
           googleMapsUrl: editGoogleMapsUrl.trim() || null,
           salesAgent: editSalesAgent.trim() || null,
+          vertical: editVertical,
         }),
       });
 
@@ -509,6 +516,20 @@ export default function AdminDashboard() {
 
               <div>
                 <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">
+                  Tipo de Negocio
+                </label>
+                <select
+                  value={vertical}
+                  onChange={(e) => setVertical(e.target.value as "BARBERIA" | "GABINETE")}
+                  className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                >
+                  <option value="BARBERIA">💈 Barbería</option>
+                  <option value="GABINETE">💅 Gabinete de Belleza / Salón</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-mono text-[10px] tracking-wider uppercase text-[#5c554c] mb-1">
                   Vendedor / Referido por (Opcional)
                 </label>
                 <input
@@ -595,6 +616,17 @@ export default function AdminDashboard() {
                                     className="w-full px-2 py-1 font-mono text-xs bg-[#131110] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
                                   />
                                 </div>
+                                <div>
+                                  <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">Tipo de Negocio</label>
+                                  <select
+                                    value={editVertical}
+                                    onChange={(e) => setEditVertical(e.target.value as "BARBERIA" | "GABINETE")}
+                                    className="w-full px-2 py-1 font-mono text-xs bg-[#131110] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+                                  >
+                                    <option value="BARBERIA">💈 Barbería</option>
+                                    <option value="GABINETE">💅 Gabinete / Salón</option>
+                                  </select>
+                                </div>
                                 <div className="sm:col-span-2">
                                   <label className="block font-mono text-[9px] uppercase text-[#5c554c] mb-1">Link Reseña Google</label>
                                   <input
@@ -626,7 +658,16 @@ export default function AdminDashboard() {
                           <>
                             {/* Fila de Lectura Normal */}
                             <td className="py-4 font-display text-base text-[#f3ece1] font-light">
-                              <div>{shop.name}</div>
+                              <div className="flex items-center gap-2">
+                                {shop.name}
+                                <span className={`px-1.5 py-0.5 text-[9px] font-mono rounded ${
+                                  shop.vertical === "GABINETE" || shop.vertical === "SALON"
+                                    ? "bg-pink-950/40 text-pink-300 border border-pink-800"
+                                    : "bg-amber-950/40 text-amber-300 border border-amber-800"
+                                }`}>
+                                  {shop.vertical === "GABINETE" || shop.vertical === "SALON" ? "💅 Gabinete" : "💈 Barbería"}
+                                </span>
+                              </div>
                               {shop.googleMapsUrl ? (
                                 <a
                                   href={shop.googleMapsUrl}

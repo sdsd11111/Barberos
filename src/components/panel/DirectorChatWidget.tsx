@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 interface Message {
   id: string;
@@ -8,20 +9,32 @@ interface Message {
   content: string;
 }
 
-const SUGGESTIONS = [
-  "¿A quién estoy a punto de perder esta semana?",
-  "¿Qué horas tengo vacías que debería llenar?",
-  "¿Cómo va el rendimiento de mis barberos?",
-  "¿Qué me recomiendas hacer hoy?",
-];
-
 export default function DirectorChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [vertical, setVertical] = useState<string | null>(null);
+  const terms = getTenantTerms(vertical);
+  
+  useEffect(() => {
+    fetch("/api/barbershop/status")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.vertical) setVertical(data.vertical);
+      })
+      .catch(() => {});
+  }, []);
+
+  const suggestions = [
+    "¿A quién estoy a punto de perder esta semana?",
+    "¿Qué horas tengo vacías que debería llenar?",
+    `¿Cómo va el rendimiento de mis ${terms.staffTitle.toLowerCase()}?`,
+    "¿Qué me recomiendas hacer hoy?",
+  ];
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
-      content: `Hola. Soy el Director de BarberOS, el asesor de tu barbería.
+      content: `Hola. Soy el Director de ${terms.brandName}, el asesor de tu ${terms.businessTypeName.toLowerCase()}.
 
 He revisado la información calculada por el Motor de Conocimiento. ¿En qué aspecto de tu negocio quieres enfocarte hoy? Puedes hacerme cualquier pregunta sobre tus clientes, equipo u horarios.`,
     },
@@ -72,7 +85,7 @@ He revisado la información calculada por el Motor de Conocimiento. ¿En qué as
           {
             id: (Date.now() + 1).toString(),
             role: "assistant",
-            content: "👑 Esta funcionalidad es exclusiva de **BarberOS Premium**. Puedes actualizar tu plan en la sección de Precios para activar el Director IA.",
+            content: `👑 Esta funcionalidad es exclusiva de **${terms.brandName} Premium**. Puedes actualizar tu plan en la sección de Precios para activar el Director IA.`,
           },
         ]);
         return;
@@ -110,16 +123,17 @@ He revisado la información calculada por el Motor de Conocimiento. ¿En qué as
       {/* Botón flotante desplegable */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#131110] border border-[#d97644] text-[#f3ece1] hover:text-[#d97644] px-5 py-3 shadow-2xl transition-all duration-300 group hover:bg-[#1a1715]"
+        style={{ borderColor: terms.accentColor }}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#131110] text-[#f3ece1] px-5 py-3 shadow-2xl transition-all duration-300 group hover:bg-[#1a1715]"
       >
         <span className="text-xl animate-bounce">🤖</span>
         <div className="text-left hidden sm:block">
-          <p className="font-mono text-xs tracking-wider uppercase font-bold text-[#f3ece1] group-hover:text-[#d97644]">
+          <p style={{ color: terms.accentColor }} className="font-mono text-xs tracking-wider uppercase font-bold">
             Director IA 24/7
           </p>
-          <p className="font-mono text-[9px] text-[#d97644]">Consultor Especializado</p>
+          <p className="font-mono text-[9px] text-[#a89e90]">Consultor Especializado</p>
         </div>
-        <span className="px-2 py-0.5 bg-[#d97644]/20 text-[#d97644] border border-[#d97644]/40 font-mono text-[9px] uppercase tracking-widest rounded-sm">
+        <span style={{ color: terms.accentColor, backgroundColor: `${terms.accentColor}33`, borderColor: `${terms.accentColor}66` }} className="px-2 py-0.5 border font-mono text-[9px] uppercase tracking-widest rounded-sm font-bold">
           PREMIUM
         </span>
       </button>
@@ -130,18 +144,18 @@ He revisado la información calculada por el Motor de Conocimiento. ¿En qué as
           {/* Header del Chat */}
           <div className="p-4 bg-[#0a0807] border-b border-[#2a2520] flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#d97644]/10 border border-[#d97644]/40 rounded-full flex items-center justify-center text-lg">
+              <div style={{ backgroundColor: `${terms.accentColor}1A`, borderColor: `${terms.accentColor}66` }} className="w-9 h-9 border rounded-full flex items-center justify-center text-lg">
                 🤖
               </div>
               <div>
                 <h3 className="font-display text-base font-light text-[#f3ece1] flex items-center gap-2">
-                  Director BarberOS
-                  <span className="px-1.5 py-0.2 bg-amber-950/40 border border-amber-800 text-amber-400 font-mono text-[9px] uppercase">
+                  Director {terms.brandName}
+                  <span style={{ color: terms.accentColor, borderColor: `${terms.accentColor}66`, backgroundColor: `${terms.accentColor}1A` }} className="px-1.5 py-0.2 border font-mono text-[9px] uppercase font-bold">
                     24/7
                   </span>
                 </h3>
                 <p className="font-mono text-[10px] text-[#5c554c]">
-                  Asesor de tu barbería (Basado en datos del Motor)
+                  Asesor de tu {terms.businessTypeName.toLowerCase()} (Basado en datos del Motor)
                 </p>
               </div>
             </div>
@@ -163,9 +177,10 @@ He revisado la información calculada por el Motor de Conocimiento. ¿En qué as
                 }`}
               >
                 <div
+                  style={m.role === "user" ? { backgroundColor: terms.accentColor, color: "#0a0807" } : undefined}
                   className={`max-w-[88%] p-3.5 rounded-sm whitespace-pre-wrap leading-relaxed ${
                     m.role === "user"
-                      ? "bg-[#d97644] text-[#0a0807] font-mono font-medium"
+                      ? "font-mono font-bold"
                       : "bg-[#131110] border border-[#2a2520] text-[#f3ece1]"
                   }`}
                 >
@@ -176,7 +191,7 @@ He revisado la información calculada por el Motor de Conocimiento. ¿En qué as
 
             {loading && (
               <div className="flex items-center gap-2 text-[#5c554c] font-mono text-xs p-2">
-                <span className="w-2 h-2 bg-[#d97644] rounded-full animate-ping" />
+                <span style={{ backgroundColor: terms.accentColor }} className="w-2 h-2 rounded-full animate-ping" />
                 <span>El Director está analizando tus datos...</span>
               </div>
             )}
@@ -190,11 +205,11 @@ He revisado la información calculada por el Motor de Conocimiento. ¿En qué as
                 Preguntas recomendadas:
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {SUGGESTIONS.map((s, idx) => (
+                {suggestions.map((s, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSend(s)}
-                    className="font-mono text-[10px] bg-[#131110] hover:bg-[#1f1b18] border border-[#2a2520] hover:border-[#d97644] text-[#a89e90] hover:text-[#f3ece1] px-2.5 py-1 transition-colors text-left"
+                    className="font-mono text-[10px] bg-[#131110] hover:bg-[#1f1b18] border border-[#2a2520] hover:border-[#f3ece1] text-[#a89e90] hover:text-[#f3ece1] px-2.5 py-1 transition-colors text-left"
                   >
                     {s}
                   </button>
@@ -203,30 +218,26 @@ He revisado la información calculada por el Motor de Conocimiento. ¿En qué as
             </div>
           )}
 
-          {/* Input Form */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSend();
-            }}
-            className="p-3 bg-[#131110] border-t border-[#2a2520] flex gap-2"
-          >
+          {/* Input de Chat */}
+          <div className="p-3 bg-[#0a0807] border-t border-[#2a2520] flex gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Hazle una pregunta al Director sobre tu negocio..."
-              className="flex-1 bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] font-mono text-xs px-3 py-2.5 focus:outline-none focus:border-[#d97644]"
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder={`Haz una pregunta al Director sobre tu ${terms.businessTypeName.toLowerCase()}...`}
               disabled={loading}
+              className="flex-1 bg-[#131110] border border-[#2a2520] text-[#f3ece1] px-3 py-2 font-mono text-xs focus:outline-none focus:border-[#f3ece1]"
             />
             <button
-              type="submit"
+              onClick={() => handleSend()}
               disabled={loading || !input.trim()}
-              className="bg-[#d97644] text-[#0a0807] font-mono text-xs uppercase px-4 py-2.5 hover:bg-[#e8854f] transition-colors disabled:opacity-50 font-bold shrink-0"
+              style={{ backgroundColor: terms.accentColor }}
+              className="px-4 py-2 font-mono text-xs uppercase font-bold text-[#0a0807] hover:brightness-110 disabled:opacity-50 transition-colors"
             >
               Enviar
             </button>
-          </form>
+          </div>
         </div>
       )}
     </>

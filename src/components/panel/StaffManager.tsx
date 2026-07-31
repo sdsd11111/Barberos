@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 interface StaffMember {
   id: string;
@@ -9,13 +10,16 @@ interface StaffMember {
   photoUrl?: string | null;
 }
 
-export default function StaffManager() {
+export default function StaffManager({ vertical }: { vertical?: string | null }) {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [newName, setNewName] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const terms = getTenantTerms(vertical);
+  const isGabinete = (vertical || "").toUpperCase() === "GABINETE" || (vertical || "").toUpperCase() === "SALON";
+  const icon = isGabinete ? "💅" : "💈";
 
   const fetchStaff = async () => {
     try {
@@ -99,7 +103,7 @@ export default function StaffManager() {
   };
 
   const handleDeleteStaff = async (id: string) => {
-    if (!confirm("¿Seguro que deseas eliminar a este barbero?")) return;
+    if (!confirm(`¿Seguro que deseas eliminar a este ${terms.staffSingular.toLowerCase()}?`)) return;
     try {
       const res = await fetch(`/api/barbershop/staff?id=${id}`, {
         method: "DELETE",
@@ -113,14 +117,10 @@ export default function StaffManager() {
   };
 
   return (
-    // overflow-x-hidden + min-w-0: garantiza que ningún hijo (botones,
-    // inputs, items de la lista, avatares) pueda generar scroll
-    // horizontal en móvil. El padding también baja en móvil para
-    // dejar más espacio útil (p-8 → p-5 sm:p-8).
     <div className="border border-[#2a2520] bg-[#131110] p-5 sm:p-8 space-y-6 overflow-x-hidden min-w-0">
       <div className="border-b border-[#2a2520] pb-4">
-        <span className="font-mono text-xs tracking-[0.2em] uppercase text-[#5c554c] break-words">
-          Equipo de Trabajo / Profesionales
+        <span style={{ color: terms.accentColor }} className="font-mono text-xs tracking-[0.2em] uppercase break-words font-bold">
+          Equipo de Trabajo / {terms.staffTitle}
         </span>
         <p className="font-mono text-xs text-[#a89e90] mt-1">
           Agrega a las personas que atienden en tu establecimiento y sube su fotografía. Tus clientes los seleccionarán al calificar o agendar.
@@ -130,13 +130,12 @@ export default function StaffManager() {
       {/* Formulario para agregar */}
       <form onSubmit={handleAddStaff} className="space-y-4 min-w-0">
         <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center min-w-0">
-          {/* Avatar selector preview */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-14 h-14 bg-[#0a0807] border border-[#2a2520] rounded-full overflow-hidden flex items-center justify-center relative shrink-0">
               {photoPreview ? (
                 <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl text-[#5c554c]">💈</span>
+                <span className="text-2xl text-[#5c554c]">{icon}</span>
               )}
             </div>
             <div className="min-w-0">
@@ -160,19 +159,19 @@ export default function StaffManager() {
             </div>
           </div>
 
-          {/* Input + botón: en móvil se apilan verticalmente (flex-col) */}
           <div className="flex-1 flex flex-col sm:flex-row gap-3 w-full min-w-0">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="Nombre del profesional (ej: Carlos, Juan)"
-              className="flex-1 min-w-0 bg-[#0a0807] border border-[#2a2520] px-4 py-2.5 font-mono text-xs text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
+              placeholder={`Nombre del ${terms.staffSingular.toLowerCase()} (ej: Maria, Sofia)`}
+              className="flex-1 min-w-0 bg-[#0a0807] border border-[#2a2520] px-4 py-2.5 font-mono text-xs text-[#f3ece1] focus:outline-none focus:border-[#f3ece1]"
             />
             <button
               type="submit"
               disabled={submitting || !newName.trim()}
-              className="px-5 py-2.5 font-mono text-xs tracking-widest uppercase bg-[#d97644] text-[#0a0807] hover:bg-[#e8854f] transition-all disabled:opacity-50 font-bold shrink-0 whitespace-nowrap"
+              style={{ backgroundColor: terms.accentColor }}
+              className="px-5 py-2.5 font-mono text-xs tracking-widest uppercase text-[#0a0807] hover:brightness-110 transition-all disabled:opacity-50 font-bold shrink-0 whitespace-nowrap"
             >
               {submitting ? "Agregando..." : "+ Agregar"}
             </button>
@@ -180,7 +179,6 @@ export default function StaffManager() {
         </div>
       </form>
 
-      {/* Lista de miembros */}
       {loading ? (
         <p className="font-mono text-xs text-[#5c554c]">Cargando lista...</p>
       ) : staff.length === 0 ? (
@@ -192,23 +190,20 @@ export default function StaffManager() {
           {staff.map((s, idx) => (
             <li
               key={s.id}
-              // min-w-0 + overflow-hidden: garantiza que el item no
-              // pueda expandir el <ul> ni generar scroll horizontal.
               className="flex flex-col sm:flex-row sm:items-center justify-between bg-[#0a0807] border border-[#2a2520] p-4 gap-3 min-w-0 overflow-hidden"
             >
               <div className="flex items-center gap-4 min-w-0 flex-1">
-                {/* Foto / Avatar del Barbero */}
                 <div className="w-12 h-12 bg-[#131110] border border-[#2a2520] rounded-full overflow-hidden flex items-center justify-center shrink-0 relative group">
                   {s.photoUrl ? (
                     <img src={s.photoUrl} alt={s.name} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-xl">💈</span>
+                    <span className="text-xl">{icon}</span>
                   )}
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-mono text-xs text-[#d97644] font-bold shrink-0">
+                    <span style={{ color: terms.accentColor }} className="font-mono text-xs font-bold shrink-0">
                       {idx + 1}.
                     </span>
                     <span className="font-display text-lg text-[#f3ece1] truncate">
@@ -216,13 +211,13 @@ export default function StaffManager() {
                     </span>
                   </div>
                   <p className="font-mono text-[10px] text-[#5c554c] truncate">
-                    {s.role === "OWNER" ? "Dueño / Barbero Principal" : "Barbero del equipo"}
+                    {s.role === "OWNER" ? `Dueño / ${terms.staffSingular} Principal` : `${terms.staffSingular} del equipo`}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
-                <label className="cursor-pointer font-mono text-[10px] tracking-wider uppercase text-[#d97644] hover:underline whitespace-nowrap">
+                <label style={{ color: terms.accentColor }} className="cursor-pointer font-mono text-[10px] tracking-wider uppercase hover:underline whitespace-nowrap">
                   Cambiar Foto
                   <input
                     type="file"

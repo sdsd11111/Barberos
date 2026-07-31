@@ -47,9 +47,9 @@ export default function ProgressRing({
     >
       <svg width={size} height={size} className="-rotate-90">
         <defs>
-          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={`ringGrad-${color.replace('#','')}`} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={color} stopOpacity="1" />
-            <stop offset="100%" stopColor="#e8a33d" stopOpacity="0.95" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.65" />
           </linearGradient>
         </defs>
         <circle
@@ -64,7 +64,7 @@ export default function ProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="url(#ringGrad)"
+          stroke={`url(#ringGrad-${color.replace('#','')})`}
           strokeWidth={stroke}
           strokeLinecap="round"
           fill="none"

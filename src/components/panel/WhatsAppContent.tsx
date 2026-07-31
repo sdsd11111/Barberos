@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import PushSubscriptionButton from "@/components/PushSubscriptionButton";
 import StaffManager from "@/components/panel/StaffManager";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
-export default function WhatsAppContent() {
+export default function WhatsAppContent({ vertical }: { vertical?: string | null }) {
   const [status, setStatus] = useState<"LOADING" | "CONNECTED" | "WAITING_QR" | "DISCONNECTED" | "ERROR">("LOADING");
   const [qrcode, setQrcode] = useState<string | null>(null);
   const [connectedNumber, setConnectedNumber] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [barbershopId, setBarbershopId] = useState<string | null>(null);
+  const terms = getTenantTerms(vertical);
 
   const [loadingQR, setLoadingQR] = useState(false);
 
@@ -62,15 +64,13 @@ export default function WhatsAppContent() {
 
     init();
 
-    // Polling de estado (cada 3 segundos) para detectar el escaneo del celular al instante
     const interval = setInterval(async () => {
       const newStatus = await fetchStatus();
       if (newStatus === "CONNECTED") {
-        setQrcode(null); // Limpiar QR cuando ya está conectado
+        setQrcode(null);
       }
     }, 3000);
 
-    // Refresco automático del código QR cada 25s para evitar que caduque en pantalla sin que el usuario se dé cuenta
     const qrInterval = setInterval(async () => {
       if (status !== "CONNECTED") {
         fetchQR();
@@ -93,7 +93,6 @@ export default function WhatsAppContent() {
   return (
     <div className="space-y-8">
       <div className="border border-[#2a2520] bg-[#131110] p-8 space-y-6 relative overflow-hidden">
-        {/* Glow de estado */}
         {status === "CONNECTED" && (
           <div
             className="absolute -top-24 -left-24 w-48 h-48 rounded-full pointer-events-none"
@@ -109,11 +108,12 @@ export default function WhatsAppContent() {
           </span>
           <div className="flex items-center gap-2">
             <span
+              style={status === "WAITING_QR" ? { backgroundColor: terms.accentColor } : undefined}
               className={`w-2.5 h-2.5 rounded-full ${
                 status === "CONNECTED"
                   ? "bg-green-500 animate-pulse"
                   : status === "WAITING_QR"
-                  ? "bg-amber-500 animate-pulse"
+                  ? "animate-pulse"
                   : "bg-red-500"
               }`}
             />
@@ -137,7 +137,7 @@ export default function WhatsAppContent() {
             </h3>
             {connectedNumber && (
               <p className="font-mono text-sm text-[#a89e90]">
-                Número vinculado: <span className="text-[#d97644]">+{connectedNumber}</span>
+                Número vinculado: <span style={{ color: terms.accentColor }}>+{connectedNumber}</span>
               </p>
             )}
             <p className="font-mono text-xs text-[#5c554c] max-w-sm mx-auto leading-relaxed">
@@ -147,7 +147,7 @@ export default function WhatsAppContent() {
         ) : (
           <div className="space-y-6 flex flex-col items-center">
             <p className="font-mono text-xs text-[#a89e90] text-center max-w-md leading-relaxed">
-              Escanea el código QR desde la aplicación de WhatsApp de tu celular (Dispositivos Vinculados) para activar el sistema de fidelidad de tu barbería.
+              Escanea el código QR desde la aplicación de WhatsApp de tu celular (Dispositivos Vinculados) para activar el sistema de fidelidad de tu {terms.businessTypeName.toLowerCase()}.
             </p>
 
             {qrcode ? (
@@ -160,7 +160,7 @@ export default function WhatsAppContent() {
               </div>
             ) : (
               <div className="w-64 h-64 bg-[#0a0807] border border-[#2a2520] flex flex-col items-center justify-center gap-3">
-                <span className="w-6 h-6 border-2 border-[#d97644] border-t-transparent rounded-full animate-spin" />
+                <span style={{ borderColor: terms.accentColor, borderTopColor: 'transparent' }} className="w-6 h-6 border-2 rounded-full animate-spin" />
                 <span className="font-mono text-[10px] text-[#5c554c] tracking-widest uppercase">
                   Generando QR...
                 </span>
@@ -180,7 +180,8 @@ export default function WhatsAppContent() {
             <button
               onClick={fetchQR}
               disabled={loadingQR}
-              className="px-4 py-2 font-mono text-[10px] tracking-[0.2em] uppercase text-[#d97644] border border-[#d97644]/40 hover:border-[#d97644] transition-all disabled:opacity-50"
+              style={{ color: terms.accentColor, borderColor: `${terms.accentColor}66` }}
+              className="px-4 py-2 font-mono text-[10px] tracking-[0.2em] uppercase border transition-all disabled:opacity-50 hover:brightness-125"
             >
               {loadingQR ? "Generando QR..." : "🔄 Recargar Código QR"}
             </button>
@@ -190,15 +191,14 @@ export default function WhatsAppContent() {
           <button
             onClick={handleManualCheck}
             disabled={checking}
-            className="px-4 py-2 font-mono text-[10px] tracking-[0.2em] uppercase text-[#a89e90] border border-[#2a2520] hover:border-[#d97644] hover:text-[#d97644] transition-all disabled:opacity-50"
+            className="px-4 py-2 font-mono text-[10px] tracking-[0.2em] uppercase text-[#a89e90] border border-[#2a2520] hover:border-[#f3ece1] transition-all disabled:opacity-50"
           >
             {checking ? "Verificando..." : "Actualizar Estado"}
           </button>
         </div>
       </div>
 
-      {/* Gestión del Equipo de Trabajo */}
-      <StaffManager />
+      <StaffManager vertical={vertical} />
 
       {barbershopId && (
         <PushSubscriptionButton barbershopId={barbershopId} />
