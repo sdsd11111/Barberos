@@ -28,6 +28,7 @@ export default function AdminDashboard() {
   const [adminSecret, setAdminSecret] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
+  const [filterVertical, setFilterVertical] = useState<"ALL" | "BARBERIA" | "GABINETE">("ALL");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -362,6 +363,24 @@ export default function AdminDashboard() {
     );
   }
 
+  const barberiasCount = barbershops.filter(
+    (s) => s.vertical !== "GABINETE" && s.vertical !== "SALON"
+  ).length;
+
+  const gabinetesCount = barbershops.filter(
+    (s) => s.vertical === "GABINETE" || s.vertical === "SALON"
+  ).length;
+
+  const filteredBarbershops = barbershops.filter((shop) => {
+    if (filterVertical === "BARBERIA") {
+      return shop.vertical !== "GABINETE" && shop.vertical !== "SALON";
+    }
+    if (filterVertical === "GABINETE") {
+      return shop.vertical === "GABINETE" || shop.vertical === "SALON";
+    }
+    return true;
+  });
+
   return (
     <main className="min-h-screen bg-[#0a0807] text-[#f3ece1] p-10">
       <div className="max-w-7xl mx-auto space-y-12">
@@ -552,17 +571,65 @@ export default function AdminDashboard() {
 
           {/* Listado y Gestión */}
           <div className="lg:col-span-2 bg-[#131110] border border-[#2a2520] p-8 space-y-6">
-            <h3 className="font-display text-2xl font-light text-[#f3ece1]">
-              Barberías Registradas ({barbershops.length})
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2a2520] pb-4">
+              <h3 className="font-display text-2xl font-light text-[#f3ece1]">
+                {filterVertical === "ALL"
+                  ? `Todos los Negocios (${filteredBarbershops.length})`
+                  : filterVertical === "BARBERIA"
+                  ? `Barberías (${filteredBarbershops.length})`
+                  : `Gabinetes (${filteredBarbershops.length})`}
+              </h3>
+
+              {/* Filtro por tipo de negocio (Vertical) */}
+              <div className="flex items-center gap-1 bg-[#0a0807] border border-[#2a2520] p-1 rounded">
+                <button
+                  type="button"
+                  onClick={() => setFilterVertical("ALL")}
+                  className={`px-3 py-1.5 font-mono text-xs rounded transition-all ${
+                    filterVertical === "ALL"
+                      ? "bg-[#d97644] text-[#0a0807] font-bold"
+                      : "text-[#a89e90] hover:text-[#f3ece1] hover:bg-[#1a1714]"
+                  }`}
+                >
+                  Todos ({barbershops.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterVertical("BARBERIA")}
+                  className={`px-3 py-1.5 font-mono text-xs rounded flex items-center gap-1 transition-all ${
+                    filterVertical === "BARBERIA"
+                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/50 font-bold"
+                      : "text-[#a89e90] hover:text-[#f3ece1] hover:bg-[#1a1714]"
+                  }`}
+                >
+                  💈 Barberías ({barberiasCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterVertical("GABINETE")}
+                  className={`px-3 py-1.5 font-mono text-xs rounded flex items-center gap-1 transition-all ${
+                    filterVertical === "GABINETE"
+                      ? "bg-pink-500/20 text-pink-300 border border-pink-500/50 font-bold"
+                      : "text-[#a89e90] hover:text-[#f3ece1] hover:bg-[#1a1714]"
+                  }`}
+                >
+                  💅 Gabinetes ({gabinetesCount})
+                </button>
+              </div>
+            </div>
+
             {barbershops.length === 0 ? (
-              <p className="font-mono text-xs text-[#5c554c]">No hay barberías registradas aún.</p>
+              <p className="font-mono text-xs text-[#5c554c]">No hay negocios registrados aún.</p>
+            ) : filteredBarbershops.length === 0 ? (
+              <p className="font-mono text-xs text-[#5c554c] py-4 text-center">
+                No hay negocios de tipo {filterVertical === "BARBERIA" ? "Barbería" : "Gabinete"}.
+              </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left font-mono text-xs text-[#a89e90]">
                   <thead>
                     <tr className="border-b border-[#2a2520] text-[#5c554c] uppercase">
-                      <th className="py-3">Barbería</th>
+                      <th className="py-3">Negocio</th>
                       <th className="py-3">WhatsApp</th>
                       <th className="py-3">Código PIN</th>
                     <th className="py-3">Comisión</th>
@@ -572,7 +639,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {barbershops.map((shop) => (
+                    {filteredBarbershops.map((shop) => (
                       <tr key={shop.id} className="border-b border-[#1c1917] hover:bg-[#0a0807]">
                         {editingId === shop.id ? (
                           <>

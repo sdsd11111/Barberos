@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     const barbershop = await prisma.barbershop.findUnique({
       where: { id: barbershopId },
-      select: { evolutionInstance: true, connectionStatus: true, whatsappConnected: true },
+      select: { evolutionInstance: true, connectionStatus: true, whatsappConnected: true, vertical: true },
     });
 
     if (!barbershop) {
@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
       status: internalStatus,
       whatsappConnected: barbershop.whatsappConnected,
       barbershopId: barbershopId,
+      vertical: barbershop.vertical,
     });
   } catch (error) {
     console.error("[GET /api/barbershop/status] Error:", error);

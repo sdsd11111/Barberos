@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { isPremiumBarbershop } from "@/lib/plan-guard";
 import UpgradeBanner from "@/components/panel/UpgradeBanner";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 interface MotorSummaryWidgetProps {
   barbershopId: string;
@@ -15,7 +16,7 @@ interface MotorSummaryWidgetProps {
  * - Si es PREMIUM pero sin datos aún: muestra estado pendiente.
  * - Si es PREMIUM con datos: muestra el snapshot en cards.
  *
- * Lee SOLO de MotorSnapshot (resultado ya calculado), nunca de tablas de visitas/clientes.
+ * Lee SOLO de MotorSnapshot (resultado ya calculated), nunca de tablas de visitas/clientes.
  * Esto es obligatorio por la arquitectura del Motor (doc 19, Sección 1).
  */
 export default async function MotorSummaryWidget({ barbershopId }: MotorSummaryWidgetProps) {
@@ -24,6 +25,13 @@ export default async function MotorSummaryWidget({ barbershopId }: MotorSummaryW
   if (!isPremium) {
     return null;
   }
+
+  // Obtener la vertical del negocio para aplicar colores según GabineteOS vs BarberOS
+  const barbershop = await prisma.barbershop.findUnique({
+    where: { id: barbershopId },
+    select: { vertical: true },
+  });
+  const terms = getTenantTerms(barbershop?.vertical);
 
   // Premium: leer el snapshot más reciente
   const snapshot = await prisma.motorSnapshot.findFirst({
@@ -36,10 +44,17 @@ export default async function MotorSummaryWidget({ barbershopId }: MotorSummaryW
     return (
       <div className="border border-[#2a2520] bg-[#131110] p-8">
         <div className="flex items-center gap-3 mb-4">
-          <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#d97644]">
+          <span style={{ color: terms.accentColor }} className="font-mono text-[10px] tracking-[0.3em] uppercase">
             Motor de Conocimiento
           </span>
-          <span className="px-2 py-0.5 rounded text-[10px] bg-amber-950/40 text-amber-400 border border-amber-700/50 font-mono">
+          <span
+            style={{
+              color: terms.accentColor,
+              borderColor: `${terms.accentColor}66`,
+              backgroundColor: `${terms.accentColor}1A`,
+            }}
+            className="px-2 py-0.5 rounded text-[10px] border font-mono font-bold"
+          >
             PREMIUM
           </span>
         </div>
@@ -80,10 +95,17 @@ export default async function MotorSummaryWidget({ barbershopId }: MotorSummaryW
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#d97644]">
+          <span style={{ color: terms.accentColor }} className="font-mono text-[10px] tracking-[0.3em] uppercase">
             Motor de Conocimiento
           </span>
-          <span className="px-2 py-0.5 rounded text-[10px] bg-amber-950/40 text-amber-400 border border-amber-700/50 font-mono">
+          <span
+            style={{
+              color: terms.accentColor,
+              borderColor: `${terms.accentColor}66`,
+              backgroundColor: `${terms.accentColor}1A`,
+            }}
+            className="px-2 py-0.5 rounded text-[10px] border font-mono font-bold"
+          >
             👑 PREMIUM
           </span>
         </div>
