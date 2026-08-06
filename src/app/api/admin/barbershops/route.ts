@@ -34,6 +34,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const barbershops = await prisma.barbershop.findMany({
+      where: {
+        NOT: {
+          vertical: { in: ["GABINETE", "SALON", "GIMNASIO", "GYM"] },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(barbershops);

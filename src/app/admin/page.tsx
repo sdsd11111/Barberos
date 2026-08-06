@@ -28,7 +28,7 @@ export default function AdminDashboard() {
   const [adminSecret, setAdminSecret] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
-  const [filterVertical, setFilterVertical] = useState<"ALL" | "BARBERIA" | "GABINETE">("ALL");
+  const [filterVertical, setFilterVertical] = useState<"ALL" | "BARBERIA" | "GABINETE">("BARBERIA");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -539,11 +539,10 @@ export default function AdminDashboard() {
                 </label>
                 <select
                   value={vertical}
-                  onChange={(e) => setVertical(e.target.value as "BARBERIA" | "GABINETE")}
+                  onChange={(e) => setVertical(e.target.value as "BARBERIA")}
                   className="w-full px-3 py-2 font-mono text-xs bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] focus:outline-none focus:border-[#d97644]"
                 >
-                  <option value="BARBERIA">💈 Barbería</option>
-                  <option value="GABINETE">💅 Gabinete de Belleza / Salón</option>
+                  <option value="BARBERIA">💈 Barbería Exclusivo</option>
                 </select>
               </div>
 
