@@ -97,7 +97,7 @@ export default function RegistrationForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
       {error && (
         <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-500 text-sm font-mono text-center">
           {error}
@@ -111,6 +111,7 @@ export default function RegistrationForm({
         <input
           type="text"
           name="name"
+          autoComplete="name"
           value={formData.name}
           onChange={handleChange}
           placeholder="Ej. Juan Pérez"
@@ -126,6 +127,7 @@ export default function RegistrationForm({
         <input
           type="tel"
           name="whatsapp"
+          autoComplete="tel"
           value={formData.whatsapp}
           onChange={handleChange}
           placeholder="Ej. 0991234567"
@@ -144,6 +146,7 @@ export default function RegistrationForm({
         <div className="grid grid-cols-2 gap-4">
           <select
             name="birthDay"
+            autoComplete="bday-day"
             value={formData.birthDay}
             onChange={handleChange}
             className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3.5 focus:border-[#d97644] focus:outline-none transition-colors font-sans appearance-none"
@@ -156,6 +159,7 @@ export default function RegistrationForm({
           </select>
           <select
             name="birthMonth"
+            autoComplete="bday-month"
             value={formData.birthMonth}
             onChange={handleChange}
             className="w-full bg-[#0a0807] border border-[#2a2520] text-[#f3ece1] p-3.5 focus:border-[#d97644] focus:outline-none transition-colors font-sans appearance-none"
