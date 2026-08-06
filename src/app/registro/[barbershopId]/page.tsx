@@ -50,6 +50,7 @@ export default async function QRRegistrationPage({
             <RegistrationForm
               barbershopId={barbershopId}
               barbershopName={barbershop.name}
+              vertical={barbershop.vertical}
             />
           </div>
         </div>

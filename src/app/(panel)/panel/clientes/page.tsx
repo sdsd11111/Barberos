@@ -6,6 +6,7 @@ import PanelHero from "@/components/redesign/PanelHero";
 import MetricTile from "@/components/redesign/MetricTile";
 import ClientesTabs from "@/components/panel/ClientesTabs";
 import ExportDataButton from "@/components/panel/ExportDataButton";
+import CustomerRegistrationQRCard from "@/components/panel/CustomerRegistrationQRCard";
 import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 export default async function ClientesPage({
@@ -184,6 +185,13 @@ export default async function ClientesPage({
           accent="green"
         />
       </div>
+
+      {/* TARJETA QR DE REGISTRO DE CLIENTES */}
+      <CustomerRegistrationQRCard
+        barbershopId={barbershopId}
+        barbershopName={barbershop?.name || "Tu Negocio"}
+        vertical={barbershop?.vertical}
+      />
 
       {/* TABS DE CLIENTES */}
       <ClientesTabs

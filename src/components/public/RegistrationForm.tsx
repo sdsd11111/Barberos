@@ -1,16 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { getTenantTerms } from "@/lib/tenant-dictionary";
 
 interface RegistrationFormProps {
   barbershopId: string;
   barbershopName: string;
+  vertical?: string | null;
 }
 
 export default function RegistrationForm({
   barbershopId,
   barbershopName,
+  vertical,
 }: RegistrationFormProps) {
+  const terms = getTenantTerms(vertical);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -191,7 +195,8 @@ export default function RegistrationForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-[#d97644] text-[#0a0807] hover:bg-[#e08b60] disabled:bg-[#d97644]/50 disabled:cursor-not-allowed font-mono text-sm tracking-[0.2em] uppercase py-4 transition-colors mt-4"
+        style={{ backgroundColor: terms.accentColor }}
+        className="w-full text-[#0a0807] font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-mono text-sm tracking-[0.2em] uppercase py-4 transition-all mt-4 rounded"
       >
         {loading ? "Registrando..." : "Completar Registro"}
       </button>
