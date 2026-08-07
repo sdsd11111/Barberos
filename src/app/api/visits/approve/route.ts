@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
 
     let message = "";
     if (updatedCustomer.cutsCount >= barbershop.requiredCuts) {
-      message = `✂️ ¡Tu check-in ha sido aprobado!\n\nTu progreso: ${progressBar}\n\n🎉 ¡Felicidades! Has ganado tu premio. Menciónalo en tu próxima visita.\n\n📌 *Asegúrate de guardarnos en tus contactos para que tus cortes se registren correctamente.*`;
+      message = `✂️ ¡Tu check-in ha sido aprobado!\n\nTu progreso: ${progressBar}\n\n🎉 ¡FELICIDADES! Has completado tus cortes y ganado tu RECOMPENSA GRATUITA. 🎁\n\n📌 *Reclama tu premio directamente en caja en tu próxima visita.* ¡Comparte la experiencia con tus amigos y recomendados para que ellos también aprovechen sus recompensas!\n\n📌 *Asegúrate de guardarnos en tus contactos para que tus cortes se registren correctamente.*`;
     } else {
       message = `✂️ ¡Tu check-in ha sido aprobado!\n\nTu progreso: ${progressBar}\n\n¡Te faltan ${remaining} cortes para tu premio!\n\n📌 *Asegúrate de guardarnos en tus contactos para que tus cortes se registren correctamente.*`;
     }

@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     let message = "";
     if (customer.cutsCount >= requiredCuts) {
-      message = `✂️ ¡Corte registrado!\n\nTu progreso: ${progressBar}\n\n🎉 ¡Felicidades! Has ganado tu premio. Menciónalo en tu próxima visita.\n\nPor favor, responde del 1 al 5 para calificar la atención de hoy.`;
+      message = `✂️ ¡Corte registrado!\n\nTu progreso: ${progressBar}\n\n🎉 ¡FELICIDADES! Has completado tus cortes y ganado tu RECOMPENSA GRATUITA. 🎁\n\n📌 *Reclama tu premio directamente en caja en tu próxima visita.* ¡Comparte la experiencia con tus amigos y recomendados para que ellos también aprovechen sus recompensas!\n\nPor favor, responde del 1 al 5 para calificar la atención de hoy.`;
     } else {
       message = `✂️ ¡Corte registrado!\n\nTu progreso: ${progressBar}\n\n¡Te faltan ${remaining} cortes para tu premio!\n\nPor favor, responde del 1 al 5 para calificar la atención de hoy.`;
     }
