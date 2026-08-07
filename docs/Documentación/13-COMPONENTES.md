@@ -4,7 +4,7 @@ titulo: Librería de Componentes
 categoria: tecnico
 estado: activo
 sprint: fase-1-piloto-activo
-ultima_revision: 2026-07-29
+ultima_revision: 2026-08-07
 relacionado:
   - 09-ROADMAP-TECNICO
   - 06-DASHBOARD
@@ -14,7 +14,7 @@ relacionado:
 
 # 13-COMPONENTES.md
 
-> Versión: 2.0
+> Versión: 3.0
 >
 > Estado: Activo
 >
@@ -32,7 +32,7 @@ relacionado:
 
 Inventariar los componentes ya construidos y los pendientes, para que el desarrollo (Antigravity/Abel) no reinvente lo existente y mantenga consistencia visual y funcional.
 
-> **Nota 2026-07-29:** Sprint E (Rediseño Visual del Panel) introdujo un sistema de componentes premium en `src/components/redesign/` que reemplaza los bloques sólidos apilados del panel anterior. Todo nuevo desarrollo del panel debe usar estos componentes. Los componentes heredados (sidebar fijo, métricas en grid, etc.) siguen activos pero son candidatos a reemplazo gradual.
+> **Nota 2026-08-07:** Sprint E (Rediseño Visual del Panel) introdujo un sistema de componentes premium en `src/components/redesign/` que reemplaza los bloques sólidos apilados del panel anterior. Sprint F agregó la familia de formularios públicos (`CrearCuentaForm`, `AlianzaForm`), la navegación transversal (`NavPublic`, `FooterPublic`), `DirectorChatWidget` para chat libre con el Director IA, `ConfigTabs` para separar Configuración de WhatsApp, `BarberosView`/`StaffManager` para gestión de equipo, `CustomerRegistrationQRCard` para compartir el QR de registro y la **reescritura completa de la landing** (`src/components/landing/`) con 16 secciones cinematográficas. Todo nuevo desarrollo del panel debe usar los componentes de `redesign/`. Los componentes heredados (sidebar fijo, métricas en grid, etc.) siguen activos pero son candidatos a reemplazo gradual.
 
 ---
 
@@ -125,6 +125,147 @@ Inventariar los componentes ya construidos y los pendientes, para que el desarro
 - Tooltip monoespaciado que aparece en hover.
 - Usa `usePathname()` para detectar ruta activa.
 - En el panel se muestra en móvil y tablet; en desktop coexiste con el sidebar tradicional.
+
+---
+
+# Componentes del Sprint F (2026-07-29 → 2026-08-07)
+
+> Todos los componentes nuevos siguen los tokens visuales y la paleta definidos en la sección "Sistema de Rediseño Visual" arriba. **No inventar estilos nuevos.**
+
+## `DirectorChatWidget` (`src/components/panel/`)
+
+- Client Component.
+- Variante conversacional del Director IA (preguntas libres del dueño).
+- Mismo backend que `DirectorWidget` (`POST /api/director/chat`) pero con interfaz de chat.
+- Renderiza burbujas de mensaje, indicador de "escribiendo", botón de envío con throttleo.
+- **Restricciones del prompt (ver `src/app/api/director/chat/route.ts`):**
+  - El modelo NUNCA ejecuta acciones — solo recomienda.
+  - El modelo NUNCA menciona el nombre de un LLM, proveedor o tecnología. Si le preguntan directamente, responde con calidez sin detalles.
+  - El modelo NUNCA inventa cifras, porcentajes, fechas, tendencias o nombres de clientes que no estén en `DATOS_DEL_NEGOCIO`.
+  - Lenguaje sin tecnicismos: "retención" → "clientes que volvieron", "Lifetime Value" → "lo que realmente vale ese cliente", "clientes inactivos" → "clientes que hace tiempo no regresan".
+- Protegido con `checkPremiumAccess()` (PRO recibe `UpgradeBanner`).
+
+## `ConfigTabs` (`src/components/panel/`)
+
+- Client Component.
+- Tabs píldora para separar Configuración de Barbería (`ConfigForm`) de Configuración de WhatsApp (`WhatsAppContent`) en `/panel/configuracion`.
+- Variante `pill` (default) coherente con `SectionTabs`.
+- Persistencia de la tab activa en query string para compartir URLs.
+
+## `WhatsAppContent` (`src/components/panel/`)
+
+- Client Component.
+- Contenido de la página `/panel/whatsapp` (separada de `/panel/configuracion` desde Sprint F).
+- Renderiza el QR fresco de Evolution API con `getFreshQR(instance)` vía `GET /api/barbershop/qr`.
+- Muestra estado actual de la instancia (`CONNECTED` / `WAITING_QR` / `DISCONNECTED`) y botón de refresh manual.
+- Polling cada 30s mientras el estado no sea `CONNECTED`.
+
+## `BarberosView` (`src/components/panel/`)
+
+- Client Component.
+- Vista de gestión de equipo desde `/panel/barberos`.
+- Lista, crea y edita registros de `BarberStaff` por barbería.
+- Soporte para foto de perfil (URL o `photoUrl` LongText).
+- Pre-existe un error de hidratación preexistente (no causado por el rediseño) — mantener `suppressHydrationWarning` hasta investigar.
+
+## `StaffManager` (`src/components/panel/`)
+
+- Client Component.
+- Formulario / lista de barberos consumido por `BarberosView`.
+- Campos: nombre, rol (`BARBER` default), `photoUrl`.
+
+## `CustomerRegistrationQRCard` (`src/components/panel/`)
+
+- Client Component.
+- Tarjeta para compartir el QR de auto-registro de clientes desde el panel.
+- Genera URL pública `/registro/[barbershopId]` con QR descargable (PNG).
+- Usada por el barbero para imprimir y pegar en el mostrador.
+
+## `ExportDataButton` (`src/components/panel/`)
+ — YA NO ES RUTA PRIMARIA
+
+- `src/app/(public)/login/page.tsx` — UI de login, actualmente reescrita a PIN (ver `LoginPIN` abajo).
+- `src/app/api/auth/request-link/route.ts` — genera `MagicToken` (crypto 32 bytes), expiración 15 min, envío por Evolution API. Sigue activo.
+- `src/app/api/auth/verify/` — ruta de verificación del token. Sigue activo.
+- Modelo `MagicToken` en el schema (`usedAt`, `expiresAt`).
+- **Estado 2026-08-07:** Ya no es la ruta primaria de acceso. El PIN lo reemplazó. Se mantiene para casos de recuperación o soporte. No eliminar — solo dejar de priorizar.
+
+## `LoginPIN` (NUEVO — ruta primaria desde 2026-08-07)
+
+- `src/app/(public)/login/page.tsx` — UI de login, input único de PIN de 6-7 dígitos. Auto-detecta sesión activa vía `/api/barbershop/status` y redirige al panel.
+- `src/app/api/auth/login-pin/route.ts` — busca `Barbershop` por `loginPin`, genera JWT con `jose` HS256, expiración 365 días, setea cookie `session` httpOnly + secure + sameSite=lax + `expires: oneYearFromNow`.
+- **`Barbershop.loginPin`** — campo de string, único por barbería, generado al crear la cuenta.
+- **Crítico para PWA en Safari/Chrome móvil:** la cookie debe usar `expires` (no solo `maxAge`) para sobrevivir force-quit del navegador.
+- **Verificador de sesión `/api/barbershop/status`:** consulta `verifySession()` sin romper si falla. Usado por `/login` para redirigir al panel si ya hay sesión válida.
+- **URL canónica:** `/login` (indexable). `/acceso` hace redirect 308 a `/login`
+- Formulario público de la Alianza Comercial (`/alianza`).
+- Captura: nombre, cédula (10 dígitos EC), celular, nombre del negocio, dirección, método de pago (`transferencia`/`payphone`/`efectivo`/`otro`), días de pago (1-30), zona de territorio (opcional), ciudad/fecha de firma.
+- Validación con Zod (`alianza-schema.ts`). Botón de envío grande con disclaimer legal.
+- Al enviar, llama a `POST /api/alianza` y muestra el PDF generado en pantalla con botón de descarga.
+
+## `CrearCuentaForm` (`src/components/crear-cuenta/`)
+
+- Client Component.
+- Formulario de auto-registro de nuevas barberías (`/crear-cuenta`).
+- Captura: nombre de la barbería, WhatsApp del negocio, PIN propuesto, ciudad, datos del dueño.
+- Al enviar, redirige a `/crear-cuenta/confirmacion` con instrucciones para el primer acceso.
+
+## `RegistrationForm` (`src/components/public/`)
+
+- Client Component.
+- Formulario de auto-registro de clientes por QR (`/registro/[barbershopId]`).
+- Captura: nombre, WhatsApp, fecha de nacimiento (Día/Mes), canal de adquisición.
+- Validación Zod + rate limit persistente vía `POST /api/clientes/registro`.
+
+## Componentes de la Landing Pública (`src/components/landing/`)
+
+> Reescritos en Sprint F alineados con [[15-BRAND-KIT-BRIEFING]]. La landing ahora es una secuencia cinematográfica de 16 secciones con scroll narrativo, animaciones GSAP + Framer Motion, y cursor personalizado.
+
+| Componente | Función |
+|---|---|
+| `CinematicScene` | Contenedor base de escenas con safe-zone central, vignette y color grading. |
+| `Hero` | Hero inicial con copywriting de entrada + CTA primario. |
+| `Preguntas` | Sección de preguntas retóricas que llevan al problema. |
+| `Problema` | Visualización del problema que vive el dueño. |
+| `Creencia` | Reframe de la creencia limitante que el dueño tiene. |
+| `Sistema` | Presentación del sistema (cómo funciona BarberOS). |
+| `Storytelling` | Narrativa de la historia de BarberOS. |
+| `Futuro` | Visualización del futuro con BarberOS. |
+| `Fundadores` | Autoridad fundacional (César). |
+| `EscenaSlider` | Slider horizontal de escenas con scroll lock. |
+| `Reveal` | Animación de reveal en scroll. |
+| `MarqueeDivisor` | Divisor animado tipo marquee. |
+| `Transicion` | Transición entre secciones. |
+| `VideoScrollSection` | Sección con video pinned que cambia según scroll. |
+| `VideoFundador` | Video del fundador (César). |
+| `VideoFAQ` | FAQ en formato video. |
+| `CTAFinal` | CTA final antes del footer. |
+| `CustomCursor` | Cursor personalizado (desktop). |
+| `ScrollSequence` | Orquestador de la secuencia de scroll. |
+
+## Componentes públicos transversales (`src/components/public/`)
+
+| Componente | Función |
+|---|---|
+| `NavPublic` | Navegación pública (cabecera). Coherente con landing. |
+| `FooterPublic` | Footer público con links y datos de contacto. |
+| `FAQSection` | Sección de FAQ reutilizable. |
+| `FeatureTabs` | Tabs de features reutilizables. |
+| `CTABlock` | Bloque CTA reutilizable. |
+| `StructuredData` | JSON-LD para SEO (Organization, WebSite, Product, FAQ). |
+| `LLMVisibilityContent` | Contenido optimizado para ser citado por LLMs (sección invisible-visible para arañas). |
+
+## `ReferralForm` (`src/components/`)
+
+- Client Component.
+- Formulario legacy de registro de vendedores (referidos simples sin Alianza).
+- Mantenido en código por compatibilidad con flujos donde no se requiere Alianza formal.
+
+## `RegisterServiceWorker` (`src/components/`)
+
+- Client Component.
+- Registra el Service Worker PWA para push notifications (`public/sw.js`).
+- Se monta en el layout del panel.
 
 ---
 

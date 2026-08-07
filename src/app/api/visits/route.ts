@@ -134,6 +134,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (profileIdToUse) {
+      await prisma.customerProfile.update({
+        where: { id: profileIdToUse },
+        data: { cutsCount: { increment: 1 } }
+      });
+    }
+
     // Crear registro de visita con checkinMethod y hora
     await prisma.barberVisit.create({
       data: {

@@ -4,7 +4,7 @@ titulo: Roadmap Técnico
 categoria: tecnico
 estado: activo
 sprint: fase-1-piloto-activo
-ultima_revision: 2026-07-29
+ultima_revision: 2026-08-07
 relacionado:
   - 13-COMPONENTES
   - 06-DASHBOARD
@@ -15,7 +15,7 @@ relacionado:
 
 # 09-ROADMAP-TECNICO.md
 
-> Versión: 1.0
+> Versión: 2.0
 >
 > Estado: Activo
 >
@@ -48,6 +48,38 @@ Define **cuándo** construir cada cosa, y por qué ese orden protege el negocio.
 - **Sprint 7 (dashboard con métricas reales): ✅ Completado.** Dashboard consume métricas en vivo de PostgreSQL filtradas por `barbershopId` de sesión.
 - **Sprint 8 (PWA Push Notifications): ✅ Completado (2026-07-21).** Service Worker, `PushNotificationManager`, `src/lib/push.ts` con auto-limpieza de endpoints 410 Gone.
 - Hallazgo no documentado previamente: existe un SuperAdmin (`/admin`) funcional para onboarding y gestión de `planStatus`, sin lógica que aplique las suspensiones todavía.
+
+---
+
+**Sprint F — Alianza Comercial + Login PIN + Comisiones Admin (✅ Completado — 2026-07-29 → 2026-08-07):**
+- [x] Reemplazo del "Acuerdo Corto" de WhatsApp por Alianza Comercial formal con `AlianzaContract` 1:1, PDF firmado digitalmente (`alianza-pdf.tsx`), persistido en MySQL (`LongBlob`).
+- [x] Reescritura de `/login` para usar **PIN de 6-7 dígitos** en lugar de Magic Link. Sesión JWT persistente 365 días.
+- [x] `/acceso` ahora es redirect 308 a `/login` (URL canónica indexable única).
+- [x] `/api/barbershop/status` para auto-redirect de sesión activa.
+- [x] `/api/cron/check-connections` (Sprint G) sincroniza `connectionStatus` con Evolution API.
+- [x] `/api/barbershop/qr` dedicado para QR fresco.
+- [x] `/api/admin/comisiones` + `/api/admin/comisiones/[id]` para gestión de comisiones.
+- [x] `/api/director/chat` + `DirectorChatWidget` para chat libre con el Director IA.
+- [x] Página `/alianza` con `AlianzaForm`.
+- [x] Página `/crear-cuenta` con `CrearCuentaForm`.
+- [x] Página `/r/[id]` para redirect de QR legacy.
+- [x] `/panel/whatsapp` separado de `/panel/configuracion` (`ConfigTabs`).
+- [x] `/panel/barberos` con `BarberosView` + `StaffManager`.
+- [x] Reescritura completa de la landing en 16 secciones cinematográficas (`src/components/landing/`).
+- [x] `Barbershop.currentBoxCode` (código de caja rotativo, default `RV55`).
+- [x] `Barbershop.loginPin` (PIN único por barbería).
+- [x] `Barbershop.businessInfo` (texto declarado por el dueño, fuente 2 del Director IA).
+- [x] `Barbershop.vertical` (BARBERIA | SALON | OTRO).
+- [x] `Barbershop.sales8-07):**
+- 4 barberías reales operativas en BD de producción: Probando Barberos (PREMIUM ACTIVE), Chechebarber (PRO ACTIVE), Monique (PRO TRIAL), Que? (PREMIUM TRIAL).
+- El sistema está validado para operar multi-tenant sin caídas. Sprints A, B, C, D, E, F y G
+- [x] `ReferralVendedor.cedula` (unique, nullable para legados).
+- [x] `ReferralLead`, `ReferralComision`, `AlianzaContract` modelos nuevos.
+- [x] `WalletConfig` para alinear schema con DB.
+- [x] Sistema de códigos de caja rotativos (`boxcode.ts`).
+- [x] Normalización de teléfonos (E.164) en `phone-normalizer.ts`.
+- [x] Zona horaria Ecuador (`time-ec.ts`) y catálogo de planes (`planes.ts`).
+- [x] Diccionario multi-tenant cacheado (`tenant-dictionary.ts`).
 
 ---
 
@@ -84,7 +116,8 @@ Esta fase está cerrada. El contenido histórico se conserva en `BITACORA.md` (s
 **Capas ya implementadas:**
 1. ✅ **Motor de Conocimiento — capa Determinística:** `src/lib/motor.ts` + `/api/cron/motor` (3am) + tablas `CustomerProfile` / `ProfileMotorContext` / `MotorSnapshot` / `TestExclusion`. Calcula frecuencia por perfil, riesgo (`AT_RISK` / `DELAYED` / `NORMAL` / `INSUFFICIENT_DATA`), métricas de equipo (solo visitas con barbero real) y distribución horaria. Ver [[07-MOTOR-DE-CONOCIMIENTO]].
 2. ✅ **Agente 1 (Director General IA):** Groq Llama 3.3 70B con fallback determinístico. Disclaimer obligatorio de incertidumbre. Detección temprana de Atrasados + Riesgo Crítico. Ver [[08-ARQUITECTURA-IA]] y [[19-INSTRUCCION-MOTOR-DIRECTOR]].
-3. ✅ **Control de Acceso por planType:** `src/lib/plan-guard.ts`. PRO ve banner de upgrade en lugar de pantallas rotas.
+   - **Sprint F agregó:** endpoint `/api/director/chat` + `DirectorChatWidget` para chat libre conversacional. Mismo `SYSTEM_PROMPT` con reglas duras contra tecnicismos, alucinaciones y ejecución automática.
+3. ✅ **Control de Acceso por planType:** `src/lib/plan-guard.ts` con `checkPremiumAccess()` (APIs) e `isPremiumBarbershop()` (RSC). PRO ve banner de upgrade en lugar de pantallas rotas.
 
 **Pendiente en esta fase:**
 - Agentes especializados (Clientes, Equipo, Reputación, Comercial, Contenido) — se activan uno a uno según demanda real observada en Fase 1.

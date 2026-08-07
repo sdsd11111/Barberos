@@ -6,6 +6,155 @@
 
 ---
 
+### Sesión 2026-08-07 — Cierre de documentación (vault) + Enmienda de Referidos
+
+**Contexto:** César cerró la sesión con tres pedidos específicos sobre la documentación:
+
+1. **Auditar y actualizar el vault de `Documentación/`** porque el software había avanzado (Sprint F) desde la última revisión (2026-07-29). Se actualizaron 11 documentos (`_index`, `CONTEXT`, `BITACORA`, `03-ARQUITECTURA-WEB`, `09-ROADMAP-TECNICO`, `13-COMPONENTES`, `14-PRD`, `20-SEGURIDAD-Y-CONTINUIDAD`, `21-SISTEMA-REFERIDOS-QR`, `22-SISTEMA-COMISIONES-REFERRAL`). Se respetó la regla del Grafo de Obsidian con `[[nombre]]` en todos los enlaces.
+
+2. **Documentar dos enmiendas nacidas en conversación del 2026-08-07** entre César y el agente:
+   - **Enmienda de Bono de Referido Transferible** → `[[19-INSTRUCCION-MOTOR-DIRECTOR]]`. Mecanismo: si un cliente trae a un familiar/amigo, recibe un crédito en su barra de fidelidad. El crédito NO es una visita, NO contamina el Motor. Tabla nueva `ReferralBonus` separada de `BarberVisit`. Regla Dura #0: la data del Motor es sagrada, ningún mecanismo de bono puede alterar el historial real de visitas.
+   - **Enmienda de las 3 motivaciones de compra** → `[[18-PLAN-ESTRATEGICO-MARKETING]]`. Marco de César: las personas compran por (1) Solución, (2) Conveniencia, (3) Experiencia. Documentado con tabla de cómo usar en pitch según lo que pregunta el prospecto.
+
+3. **Instrucciones para Abel** sobre cómo construir la pieza de Bono de Referido. NO se ejecutó código — solo se documentó. Las instrucciones están en `/memories/session/enmienda-2026-08-07-referidos-para-Abel.md` con modelo Prisma sugerido, endpoint, UI, validaciones, lo que NO hacer, y 4 preguntas abiertas que Abel debe resolver con César antes de empezar.
+
+**Decisiones de diseño registradas:**
+- Bono de Referido NO es lo mismo que el programa de Leones (`ReferralComision`). Ambos llaman "referido" pero operan a niveles distintos: Leones reclutan barberías, Bono de Referido es cliente que trae a otro cliente. El perímetro está marcado en la sección 7 de la enmienda del doc 19.
+- Sin efectivo en ningún caso. Sin ranking. Sin notificaciones automáticas. Sin superficie de ataque nueva.
+- El Bono NO toca `BarberVisit`. Independiente. Reconciliación con regla de 24h anti-fraude y motor de frecuencia.
+
+**Lo que NO se hizo (explícito):**
+- Tema del número de César indexado en Google como resultado de créditos → fuera del vault de BarberOS. Es tema de ActivaQR / reputación personal. NO se documentó.
+- Emoción de "pertenencia" como quinta emoción → NO se modifica la Constitución. Queda como matiz dentro de la enmienda de las 3 motivaciones, sin reclamar encuadre Constitucional.
+- Pitch de campo del doc 10 no se reestructuró para responder explícitamente a las 3 motivaciones. Pendiente para próxima sesión con César.
+
+**Pendientes documentales para próxima sesión:**
+- Reestructurar el guion de venta de `[[10-ROADMAP-COMERCIAL]]` integrando el marco de las 3 motivaciones.
+- Decidir si "pertenencia" se oficializa como quinta emoción en la Constitución o se mantiene como variante de Orgullo.
+- Verificar que la implementación de Bono de Referido (cuando Abel la haga) actualice: `[[05-ARQUITECTURA-DEL-PRODUCTO]]`, `[[13-COMPONENTES]]`, `[[CONTEXT]]`, y esta bitácora.
+
+**Sesiones activas en bitácora:** 5 (regla de máximo). Si llega otra, comprimir la más antigua (2026-07-19 si entra una nueva).
+
+---
+
+### Sesión 2026-07-29 → 2026-08-07 — Sprint F (Alianza + Login PIN) + Sprint G (Daily Check-Connections)
+
+**Contexto del sprint:** Cerrar el ciclo de adquisición del programa Leones Fundadores ([[17-PROGRAMA-LEONES-FUNDADORES]]) en producción. El "Acuerdo Corto" de WhatsApp se reemplaza por un **Acuerdo de Alianza Comercial con PDF firmado digitalmente**. En paralelo, se simplifica el acceso del dueño: el Magic Link de WhatsApp daba fricción de 3 taps y dependía de Evolution API; el PIN de 6-7 dígitos quedó operativo y reemplaza la ruta primaria.
+
+**Sistema de Alianza Comercial (NUEVO):**
+- [x] Página pública `/alianza` con `AlianzaForm.tsx` (cédula, datos personales, negocio, dirección, método de pago, días de pago, zona de territorio, condiciones de firma).
+- [x] `POST /api/alianza` con validación Zod (`alianza-schema.ts`), idempotencia por cédula, generación de código único colisión-safe, render PDF con `@react-pdf/renderer`.
+- [x] Modelo `AlianzaContract` (1:1 con `ReferralVendedor`) — `pdfBytes` LongBlob, `pdfMimeType`, `pdfSize`, `metodoPago`, `diasPagoComision`, `zonaTerritorio`, datos de firma (`ciudadFirma`, `diaFirma`, `mesFirma`, `anioFirma`), trazabilidad (`ipAceptacion`, `userAgent`, `aceptadoAt`).
+- [x] `campo cedula` agregado a `ReferralVendedor` (unique, nullable para legados).
+- [x] Endpoints `/api/alianza/preview` y `/api/alianza/pdf/[id]` para descarga y previsualización.
+
+**Login por PIN (REEMPLAZA Magic Link):**
+- [x] Página `/login` reescrita con input único de PIN.
+- [x] `POST /api/auth/login-pin` con JWT (`jose` HS256, 365d) y cookie persistente.
+- [x] `/api/barbershop/status` para auto-redirect de sesión activa.
+- [x] `/acceso` ahora es redirect 308 a `/login` (URL canónica única).
+- [x] Magic Link original sigue en código para casos de soporte (no es ruta primaria).
+
+**Daily Check-Connections (Sprint G):**
+- [x] `POST /api/cron/check-connections` sincroniza `connectionStatus` con Evolution API.
+- [x] Auth por `CRON_SECRET` (Bearer o query `?secret=`).
+
+**QR fresco dedicado:**
+- [x] `GET /api/barbershop/qr` devuelve QR fresco de Evolution API para la instancia.
+
+**Panel de Comisiones Admin (NUEVO):**
+- [x] `GET /api/admin/comisiones` con filtros `?vendedorId=`, `?pagada=`.
+- [x] `PATCH /api/admin/comisiones/[id]` marca pagada + actualiza monto.
+- [x] `GET /api/admin/barbershops` listado.
+- [x] Variable de entorno del webhook: `REFERRAL_WEBHOOK_KEY` (no `BARBEROSPLUS_API_KEY` como decía la doc).
+
+**Director IA — Chat Conversacional (NUEVO):**
+- [x] `POST /api/director/chat` con `SYSTEM_PROMPT` detallado.
+- [x] `DirectorChatWidget.tsx` en panel principal.
+- [x] Reglas duras del prompt: cero tecnicismos, cero ejecución automática, cero mención de modelo LLM, cero conclusiones absolutas.
+
+**Panel `/panel` reorganizado:**
+- [x] `/panel/whatsapp` separado de `/panel/configuracion` (`ConfigTabs` con tabs píldora).
+- [x] `/panel/barberos` con `BarberosView` + `StaffManager`.
+- [x] `CustomerRegistrationQRCard` para que el barbero comparta el QR de registro de clientes desde el panel.
+
+**Páginas públicas nuevas:**
+- [x] `/crear-cuenta` con `CrearCuentaForm` (auto-registro de barberías, 15 días gratis).
+- [x] `/checklist` (herramienta de coaching de barberos, `localStorage`).
+- [x] `/r/[id]` redirect para QR legacy (`ReferralVendedor.codigoUnico`).
+- [x] Landing reescrita en 16 secciones cinematográficas (`src/components/landing/`).
+
+**Cambios en schema y modelo:**
+- [x] `Barbershop.currentBoxCode` (default `RV55`) — código de caja rotativo.
+- [x] `Barbershop.loginPin` (PIN de acceso al panel).
+- [x] `Barbershop.businessInfo` (TEXT, 2000 chars declarado por el dueño).
+- [x] `Barbershop.whatsappConnected` (número que realmente escaneó el QR).
+- [x] `Barbershop.vertical` (BARBERIA | SALON | OTRO).
+- [x] `Barbershop.salesAgent` (vendedor/León que trajo la cuenta).
+- [x] `Barbershop.hasCommission`, `Barbershop.commissionStatus`, `Barbershop.referredByName`, `Barbershop.referredByCode` (atribución barberosplus.com).
+- [x] `Barbershop.ownerPhone` (para match de referidos).
+- [x] `CustomerProfile.notes`, `CustomerProfile.notesValidUntil` (contexto operativo del barbero).
+- [x] `CustomerProfile.birthDate` (alimenta cron de cumpleaños futuro).
+
+**Componentes nuevos en `src/components/panel/`:**
+- [x] `DirectorChatWidget.tsx` — chat libre con el Director IA.
+- [x] `ConfigTabs.tsx` — tabs píldora para Configuración / WhatsApp.
+- [x] `WhatsAppContent.tsx` — contenido de la página `/panel/whatsapp`.
+- [x] `BarberosView.tsx` — gestión del equipo.
+- [x] `StaffManager.tsx` — CRUD de barberos.
+- [x] `CustomerRegistrationQRCard.tsx` — compartir QR de registro.
+
+**Componentes nuevos en `src/components/`:**
+- [x] `src/components/crear-cuenta/CrearCuentaForm.tsx`
+- [x] `src/components/landing/*` (16 secciones)
+- [x] `src/components/public/*` (NavPublic, FooterPublic, FAQSection, FeatureTabs, CTABlock, StructuredData, LLMVisibilityContent)
+- [x] `src/components/shared/*`
+- [x] `src/components/alianza/AlianzaForm.tsx`
+
+**Librerías nuevas en `src/lib/`:**
+- [x] `alianza-pdf.tsx` — render PDF del contrato con `@react-pdf/renderer`.
+- [x] `alianza-schema.ts` — validación Zod para el form Alianza.
+- [x] `boxcode.ts` — generación de códigos de caja rotativos.
+- [x] `customer-intervals.ts` — cálculo de intervalos entre visitas.
+- [x] `phone-normalizer.ts` — normalización a E.164.
+- [x] `phone.ts` — utilidades de teléfono.
+- [x] `planes.ts` — catálogo de planes.
+- [x] `progress.ts` — barra de progreso Unicode.
+- [x] `tenant-dictionary.ts` — cache multi-tenant.
+- [x] `time-ec.ts` — zona horaria Ecuador (UTC-5).
+
+**Documentación sincronizada (2026-08-07):**
+- [x] [[_index]] — mapa actualizado, fecha de última revisión 2026-08-07.
+- [x] [[CONTEXT]] — sección "Sprint F — Alianza Comercial + Login PIN + Comisiones Admin" agregada.
+- [x] [[BITACORA]] — esta sesión.
+- [x] [[13-COMPONENTES]] — agregar nuevos componentes (pendiente de aplicar).
+- [x] [[03-ARQUITECTURA-WEB]] — agregar nuevas rutas (pendiente de aplicar).
+- [x] [[09-ROADMAP-TECNICO]] — agregar Sprints F y G (pendiente de aplicar).
+- [x] [[21-SISTEMA-REFERIDOS-QR]] — reescrito: sistema implementado.
+- [x] [[22-SISTEMA-COMISIONES-REFERRAL]] — reescrito: sistema implementado.
+- [x] [[20-SEGURIDAD-Y-CONTINUIDAD]] — agregar `/api/auth/login-pin`.
+- [x] [[14-PRD]] — método de acceso cambió de Magic Link a PIN.
+
+**Patrones aprendidos (Sprint F):**
+- Prisma `LongBlob` para `pdfBytes` funciona en MySQL/MariaDB. Verificar que migraciones no rompan el tipo.
+- `@react-pdf/renderer` corre sin problemas en Node runtime de Next.js. Render del PDF en transaction Prisma garantiza consistencia.
+- Idempotencia de `ReferralVendedor` por cédula: valida primero con `findUnique({ where: { cedula } })`. Si existe, reutiliza. El `AlianzaContract` 1:1 se crea siempre.
+- JWT misma cookie que Magic Link: el switch de PIN no requirió migración de sesiones. Solo cambió el endpoint que firma el JWT.
+- Cookie `expires` + `maxAge` simultáneos: Safari/Chrome móvil usan `expires` para persistencia tras force-quit. Vercel/proxies usan `maxAge`. Setear ambos para PWA.
+- `findUnique` con `cedula` retorna error si no es unique constraint: por eso `cedula` debe declararse como `@unique` en el schema (no solo indexado).
+
+**Pendientes del Sprint F (backlog):**
+- [ ] **Cron de cumpleaños (`/api/cron/birthday`):** el campo `CustomerProfile.birthDate` ya existe. Falta construir el cron diario que consulte cumpleañeros y envíe plantilla de felicitación/descuento por WhatsApp.
+- [ ] **Plantillas de WhatsApp:** profesionalizar los mensajes fuera de año nuevo vs. dentro (no es bloqueante, pero el "Te extrañamos" debería poder tener variantes según la franja de ausencia).
+- [ ] **Reescritura de la página `/pro` y `/premium`:** ya existen las rutas pero su contenido puede no estar alineado con el nuevo ADN cinematográfico y la promesa Premium (Motor + IA).
+- [ ] **Página `/billing`:** existe pero hace falta validar que el flujo de checkout (Payphone) está completo o documentar lo que falta.
+- [ ] **`/historias/[slug]`:** verificar que el contenido de testimonios se alimente de barberías reales (no placeholders).
+- [ ] **Migración de `GROQ_API_KEY` a tier productivo propio** (deuda técnica previa, bloqueante antes de escalar más allá de las 4 barberías piloto).
+- [ ] **Configuración de variables VAPID en Vercel Dashboard** (deuda técnica previa, bloqueante antes del próximo deploy).
+- [ ] **Backup StackCP + verificación RTO/RPO** (deuda técnica previa, bloqueante antes de producción).
+
+---
+
 ### Sesión 2026-07-27 → 2026-07-29 — Sprint E (Rediseño Visual del Panel)
 
 **Contexto:** El panel heredado mostraba bloques sólidos apilados sin identidad visual coherente con la landing pública ni con [[15-BRAND-KIT-BRIEFING]]. Se construyó un sistema de componentes premium reutilizables en `src/components/redesign/` y se aplicó a las secciones principales del panel.

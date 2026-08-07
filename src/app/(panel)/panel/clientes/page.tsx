@@ -41,6 +41,17 @@ export default async function ClientesPage({
   });
   const staffMap = new Map(staffList.map((s) => [s.id, s.name]));
 
+  // Obtener historial de redenciones y transferencias de la barbería
+  const redemptions = await prisma.loyaltyRedemption.findMany({
+    where: { barbershopId },
+    orderBy: { redeemedAt: "desc" },
+  });
+
+  const transfers = await prisma.cutTransfer.findMany({
+    where: { barbershopId },
+    orderBy: { createdAt: "desc" },
+  });
+
   // Obtener todas las visitas aprobadas de la barbería
   const allVisits = await prisma.barberVisit.findMany({
     where: {
@@ -73,6 +84,30 @@ export default async function ClientesPage({
         : profile.cutsCount;
     const isRecurrent = activeCutsCount >= 2;
 
+    const profileRedemptions = redemptions
+      .filter((r) => r.profileId === profile.id)
+      .map((r) => ({
+        id: r.id,
+        cutsAtRedemption: r.cutsAtRedemption,
+        redeemedAt: r.redeemedAt.toISOString(),
+      }));
+
+    const profileTransfersGiven = transfers
+      .filter((t) => t.fromProfileId === profile.id)
+      .map((t) => ({
+        id: t.id,
+        toProfileId: t.toProfileId,
+        createdAt: t.createdAt.toISOString(),
+      }));
+
+    const profileTransfersReceived = transfers
+      .filter((t) => t.toProfileId === profile.id)
+      .map((t) => ({
+        id: t.id,
+        fromProfileId: t.fromProfileId,
+        createdAt: t.createdAt.toISOString(),
+      }));
+
     const history = visits.map((v) => ({
       id: v.id,
       createdAt: v.createdAt.toISOString(),
@@ -95,6 +130,9 @@ export default async function ClientesPage({
       isRecurrent,
       totalVisits: approvedVisits.length,
       history,
+      redemptions: profileRedemptions,
+      transfersGiven: profileTransfersGiven,
+      transfersReceived: profileTransfersReceived,
     };
   });
 
@@ -122,6 +160,9 @@ export default async function ClientesPage({
         comment: v.comment,
         staffName: v.staffId ? staffMap.get(v.staffId) || "Sin asignar" : "Sin asignar",
       })),
+      redemptions: [],
+      transfersGiven: [],
+      transfersReceived: [],
     });
   }
 

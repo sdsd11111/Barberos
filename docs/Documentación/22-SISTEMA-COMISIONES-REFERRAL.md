@@ -1,17 +1,19 @@
----
+﻿---
 id: 22-sistema-comisiones-referral
 titulo: Sistema de Comisiones por Referidos
 categoria: comercial
-estado: planning
+estado: activo-implementado
+sprint: fase-1-piloto-activo
+ultima_revision: 2026-08-07
 relacionado:
   - 21-SISTEMA-REFERIDOS-QR
-  - 00-CONSTITUCION
+  - 00-Constitución
+  - 17-PROGRAMA-LEONES-FUNDADORES
+  - 20-SEGURIDAD-Y-CONTINUIDAD
+  - 24-REPORTE-FINAL-INTEGRACION
 ---
 
 # 22-SISTEMA-COMISIONES-REFERRAL.md
-
-## Resumen del Flujo
-
 ```
 [1. VENDEDOR crea Barbería en /admin]
            ↓
@@ -225,6 +227,8 @@ model ReferralComision {
 ### POST /api/webhook/referral-sale
 Recibe ventas de barberosplus.com.
 
+> **Variable de entorno:** `REFERRAL_WEBHOOK_KEY` (no `BARBEROSPLUS_API_KEY` como decía la doc previa). Header: `x-api-key: <REFERRAL_WEBHOOK_KEY>`.
+
 **Request:**
 ```json
 {
@@ -262,13 +266,30 @@ Recibe ventas de barberosplus.com.
 }
 ```
 
-**Response - Error (401/500):**
+**Response - Error (401/409):**
 ```json
 {
   "success": false,
   "error": "Unauthorized"
 }
 ```
+
+```json
+{
+  "success": false,
+  "error": "Transaction already processed"
+}
+```
+
+**Flujo interno:**
+1. Validar `x-api-key` contra `REFERRAL_WEBHOOK_KEY`.
+2. Buscar `transactionId` en `ReferralComision`. Si existe, devolver `409 Conflict` (idempotencia).
+3. Normalizar `client.phones` con `normalizePhones()` (E.164).
+4. Buscar `ReferralLead` por `telefono IN normalizedPhones` AND `capturedAt >= ahora - 30 días` AND `converted = false`.
+5. Ordenar por `capturedAt ASC` (first-touch) y tomar el primero.
+6. Marcar `converted = true` + `convertedAt = now`.
+7. Crear `ReferralComision` con `transactionId`, `clienteNombre`, `telefonos` (JSON array), `pagada = false`.
+8. Devolver `success: true, matched: true, referrer: {...}`.
 
 ---
 
@@ -321,19 +342,45 @@ Marcar comisión como pagada.
 ---
 
 ## Vistas Necesarias
+ (estado al 2026-08-07)
 
-### 1. Tab en /admin: "Comisiones"
-Accesible desde el tabs existing: Barberías | Vendedores | **Comisiones**
+> **Todos los pendientes originales están cerrados.** El sistema está en producción. Pendientes menores en backlog:
 
-**Tabla de Comisiones:**
-| Vendedor | Cliente | Transaction ID | Fecha | Estado | Acción |
-|----------|---------|---------------|-------|--------|--------|
-| Juan P.  | Carlos M.| VENTA-10029  | 27/07 | Pendiente | [Marcar pagada] |
+- [ ] **Webhook de creación de barbería (BarberOS → barberosplus.com):** la integración bidireccional está documentada en [[24-REPORTE-FINAL-INTEGRACION]] y [[23-REPORTE-PROGRAMADOR-BARBEROPLUS]]. Pendiente sincronización de `phonePersonal` en el payload de salida (hoy va vacío).
+- [ ] **Notificación al León cuando se asigna una comisión:** hoy el León debe entrar a `/admin` para ver sus comisiones. No hay push ni email.
+- [ ] **Cálculo automático de monto vs asignación manual:** hoy el monto es opcional y se asigna a mano en `PATCH /api/admin/comisiones/[id]`. Si se decide calcular automáticamente (% sobre el plan), ese cálculo debe vivir en un cron semanal.
+- [ ] **Dashboard de León:** vista con sus comisiones y meses pagados. Construir en `/leon/[id]` cuando exista demanda real.
 
-**Filtros:**
-- Por vendedor
-- Por estado (pagada/pendiente)
-- Por fecha
+---
+
+## Anexo — Decisiones de diseño tomadas durante la implementación
+
+### Variable de entorno
+
+- El header compartido con barberosplus.com se llama `REFERRAL_WEBHOOK_KEY` (no `BARBEROSPLUS_API_KEY` como decía la doc previa).
+- Default local: `default_key` (rechaza todas las requests en producción). Requiere configuración explícita en Vercel.
+
+### Idempotencia
+
+- `ReferralComision.transactionId` es único (`@unique` no documentado en doc previa — agregado durante implementación).
+- `POST /api/webhook/referral-sale` retorna `409 Conflict` si el `transactionId` ya fue procesado.
+
+### Normalización de teléfonos
+
+- Helper `src/lib/phone-normalizer.ts` con función `normalizePhones(phones: string[]): string[]`.
+- Acepta formatos: `0991234567`, `+593991234567`, `593991234567`, `099 123 4567`.
+- Salida única: `593991234567` (E.164 sin `+`).
+
+### First Touch Attribution
+
+- Ventana de búsqueda: 30 días desde `capturedAt`.
+- Orden: `capturedAt ASC` (el más antiguo gana).
+- Marca el `ReferralLead` como `converted = true` para no volver a matchearlo.
+
+### Modelo de Barbería con referente
+
+- `Barbershop` agregados los campos `hasCommission`, `commissionStatus` (`PENDING` | `CONFIRMED` | `REJECTED` | `NO_COMMISSION`), `referredByName`, `referredByCode`, `ownerPhone`, `salesAgent`.
+- Estos campos se alimentan del webhook 1 (BarberOS → barberosplus.com) en la respuesta de creación de barbería.
 
 ### 2. Detalle de Vendedor (/admin?vendedor=X)
 Ver todas las comisiones de un vendedor específico.
@@ -362,3 +409,4 @@ Ver todas las comisiones de un vendedor específico.
 2. **Teléfono negocio vs personal** - El teléfono del negocio es el que se conecta a BarberOS, el personal es el del representante/dueño (para hacer match cuando el cliente escriba desde su número privado)
 3. **Mostrar comisiones** - Sí, el sistema mostrará cuándo hay comisión y cuándo no
 4. **El vendedor ya tiene código QR** - Sí, el sistema ya captura el código por el cual llega el lead
+

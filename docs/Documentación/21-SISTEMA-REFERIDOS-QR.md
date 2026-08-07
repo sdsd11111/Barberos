@@ -1,19 +1,23 @@
----
+﻿---
 id: 21-sistema-referidos-qr
-titulo: Sistema de Referidos QR
+titulo: Sistema de Referidos QR + Alianza Comercial
 categoria: comercial
-estado: draft
-sprint:下一个
+estado: activo-implementado
+sprint: fase-1-piloto-activo
+ultima_revision: 2026-08-07
 relacionado:
-  - 00-CONSTITUCION
+  - 00-Constitución
   - 08-ARQUITECTURA-IA
+  - 17-PROGRAMA-LEONES-FUNDADORES
+  - 22-SISTEMA-COMISIONES-REFERRAL
+  - 20-SEGURIDAD-Y-CONTINUIDAD
 ---
 
 # 21-SISTEMA-REFERIDOS-QR.md
 
 ## Objetivo
 
-Crear un sistema de códigos QR personales para referidos/vendedores. Cada vendedor tendrá un código QR único que, al escanearse, enviará un mensaje de WhatsApp predefinido a César con un código de referencia.
+Crear un sistema de códigos QR personales para Leones / Aliados Comerciales. Cada vendedor firma digitalmente un **Acuerdo de Alianza** que se persiste como PDF en la base de datos y recibe un código QR único de 8 caracteres. Al escanear el QR, el prospecto es redirigido al WhatsApp de César o al `googleMapsUrl` de la barbería afiliada.
 
 ---
 
@@ -197,12 +201,128 @@ const getWhatsAppUrl = (codigo: string) =>
 
 ---
 
-##Pendientes
+## Pendientes (estado al 2026-08-07)
 
-- [ ] Agregar modelo `ReferralVendedor` a schema.prisma
-- [ ] Crear migración
-- [ ] Implementar API routes
-- [ ] Crear formulario `/registro`
-- [ ] Crear vista `/superadmin`
-- [ ] Implementar generación de QR
-- [ ] Agregar botón "Vendedores" en `/admin`
+> **Todos los pendientes originales están cerrados.** El sistema fue migrado a Alianza Comercial formal. Pendientes actuales (en backlog):
+
+- [ ] **Cron de cumpleaños (`/api/cron/birthday`):** no es parte del sistema de referidos, pero `CustomerProfile.birthDate` ya está en BD. *(Backlog general, no bloqueante del sistema de Leones.)*
+- [ ] **Renovación de Alianza:** la AlianzaContract no tiene `vigenciaHasta`. Las firmas se asumen de duración indefinida mientras el León esté activo. Si se decide renovar periódicamente, agregar campo y recordatorio.
+- [ ] **Reasignación de código tras inactividad:** la regla de "15 días sin activaciones" del programa Leones no está todavía automatizada. Hoy se hace manualmente en `/admin`.
+
+---
+
+## Anexo — Implementación real (Sprint F, 2026-07-29 → 2026-08-07)
+
+### Modelos Prisma efectivamente desplegados
+
+```prisma
+model ReferralVendedor {
+  id          String   @id @default(cuid())
+  nombre      String
+  celular     String
+  negocio     String
+  direccion   String
+  codigoUnico String   @unique // 8 chars alfanuméricos (sin O/I)
+  // Nuevos (Sprint F):
+  cedula      String?  @unique // Cédula 10 dígitos EC. Nullable para registros legacy.
+  activo      Boolean  @default(true)
+  scansCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  leads       ReferralLead[]
+  comisiones  ReferralComision[]
+  alianza     AlianzaContract?
+}
+
+model ReferralLead {
+  id            String   @id @default(cuid())
+  vendedorId    String
+  telefono      String   // Normalizado E.164
+  codigoQr      String
+  clienteNombre String?
+  capturedAt    DateTime @default(now())
+  converted     Boolean  @default(false)
+  convertedAt   DateTime?
+
+  vendedor      ReferralVendedor @relation(fields: [vendedorId], references: [id])
+}
+
+model ReferralComision {
+  id            String   @id @default(cuid())
+  vendedorId    String
+  leadId        String?
+  transactionId String   @unique // Evita comisiones duplicadas
+  clienteNombre String
+  telefonos     String   // JSON array
+  monto         Float?
+  pagada        Boolean  @default(false)
+  pagadaAt      DateTime?
+  createdAt     DateTime @default(now())
+
+  vendedor      ReferralVendedor @relation(fields: [vendedorId], references: [id])
+}
+
+model AlianzaContract {
+  id               String   @id @default(cuid())
+  vendedorId       String   @unique
+  fechaAsignacion  DateTime @default(now())
+  zonaTerritorio   String?
+  diasPagoComision Int
+  metodoPago       String   // "transferencia" | "payphone" | "efectivo" | "otro"
+  ciudadFirma      String
+  diaFirma         Int
+  mesFirma         String
+  anioFirma        Int      @default(2026)
+
+  pdfBytes         Bytes    @db.LongBlob
+  pdfMimeType      String   @default("application/pdf")
+  pdfSize          Int
+
+  ipAceptacion     String?
+  userAgent        String?  @db.Text
+  aceptadoAt       DateTime @default(now())
+
+  vendedor         ReferralVendedor @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+}
+```
+
+### Flujo público de captura de Alianza
+
+```
+[Visitante] → /alianza (AlianzaForm)
+   ↓ POST /api/alianza con datos
+[Validación Zod (alianza-schema.ts)]
+   ↓
+[Idempotencia por cédula — reuse si existe]
+   ↓
+[Generate codigoUnico 8 chars alfanuméricos]
+   ↓
+[Render PDF con @react-pdf/renderer (alianza-pdf.tsx)]
+   ↓
+[Prisma transaction: upsert ReferralVendedor + create AlianzaContract]
+   ↓
+[Return { vendedorId, alianzaId, codigo, pdfUrl }]
+   ↓
+[UI muestra PDF inline + botón descarga]
+```
+
+### Rate limit y seguridad
+
+- `POST /api/alianza`: protegido por rate-limit de Next.js (no persistente). Para producción real, mover a `RateLimitAttempt`.
+- `GET /api/alianza/pdf/[id]`: solo retorna PDFs de AlianzaContracts propios (sin auth por ahora — pendiente agregar `ADMIN_SECRET_KEY` o sesión del León).
+- `GET /api/alianza/preview`: solo para preview del PDF antes de enviar (no persiste).
+
+### Redirect de QR legacy
+
+URL `/r/[id]` busca `ReferralVendedor` por `codigoUnico`:
+- Si la barbería afiliada tiene `googleMapsUrl`, redirige allí.
+- Si no, redirige al WhatsApp de César (+593 96 341 0409).
+- Incrementa `scansCount` (métrica de adopción).
+
+### Decisiones técnicas que se tomaron en el camino
+
+- **Idempotencia por cédula** en vez de crear registros duplicados. Si la Alianza se firma dos veces con la misma cédula, se reutiliza el `ReferralVendedor` y se crea un `AlianzaContract` adicional.
+- **PDF en `LongBlob`:** @react-pdf/renderer entrega `Buffer`. Se guarda como `Bytes` con `LongBlob`. Para volúmenes altos, mover a S3/Cloudflare R2 en una futura iteración.
+- **Mismo alfabeto del código QR** que `/api/referidos`: 8 chars sin `O/I` para evitar confusión lectora.
+- **Decisión de `cedula` como `@unique`:** permite `findUnique` y previene duplicados. Los registros legacy sin Alianza siguen funcionando con `cedula: null`.
+

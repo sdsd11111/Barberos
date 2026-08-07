@@ -6,12 +6,13 @@ titulo: Plan Estratégico de Marketing y Posicionamiento
 categoria: comercial
 estado: activo — versión inicial, vivo
 sprint: lanzamiento-inmediato
-ultima_revision: 2026-07-24
+ultima_revision: 2026-08-07
 relacionado:
   - 02-ARQUITECTURA-ESTRATEGICA
   - 10-ROADMAP-COMERCIAL
   - 11-ROADMAP-SEO
   - 17-PROGRAMA-LEONES-FUNDADORES
+  - 04-SISTEMA-DE-COMUNICACION
 ```
 
 ## Naturaleza del documento
@@ -103,3 +104,66 @@ Basado en el Brand Kit (doc. 15) y la Big Idea ya definida: **"Saber vs. Adivina
 - **Canal de conversión de la pauta:** WhatsApp directo, sin inversión en presencia de redes sociales como canal de venta.
 
 > **TAREA PENDIENTE (César):** El punto 3 sigue abierto (el número exacto de ciudades/barberías que marca la salida de Horizonte 1). Si Abel construye el geotargeting y el resto de la infraestructura antes de que tú definas el número, alguien va a tener que decidir "a sensación" cuándo encender medios — exactamente el riesgo que este documento advierte. Vale la pena que ese número quede fijado antes de que lo necesites en caliente, no cuando ya estés por lanzar.
+
+---
+
+## Enmienda 2026-08-07 — Las 3 razones por las que el dueño te compra
+
+**Decisión tomada en conversación del 2026-08-07 entre César y el agente:**
+
+César articuló un marco condensado de las 3 motivaciones universales de compra — observado en un video de marketing y validado contra la realidad de campo de BarberOS. Este marco se incorpora al Plan Estratégico como **mapa de decisiones de pitch** para que cualquier conversación de venta (León, dueño a dueño, قصة de éxito) responda conscientemente a al menos una de estas tres motivaciones.
+
+### Marco de las 3 motivaciones de compra
+
+> "Las personas compran por tres cosas. No son las más tecnológicas, son las que se enfocan en que sea simple."
+
+#### 1. Solución a un problema concreto
+
+El cliente tiene un dolor identificable. La propuesta entra y dice: *"Eso que te duele, aquí está la solución."*
+
+- En BarberOS: el problema es la **administración por intuición** (Constitución Art. 6 — "administrar por intuición" como enemigo). El dueño no sabe cuántos clientes tiene, no sabe quién los trae, no sabe cuánto se va por la puerta.
+- Mecánica concreta: el pitch de campo ([[10-ROADMAP-COMERCIAL]] sección "Guion de venta") ya está construido alrededor de esto. Las 5 preguntas incómodas (cifra fantasma, cruce con gastos fijos, creer vs. saber, fuga de clientela, pregunta que no se suaviza) son la traducción de esta motivación a palabras.
+- **Cuidado:** no prometer solución a algo que el producto aún no entrega. Ver [[19-INSTRUCCION-MOTOR-DIRECTOR]] Enmienda 2026-08-07 — Bono de Referido Transferible. Esa pieza hoy no existe en código; se debe presentar como dirección, no como funcionalidad viva.
+
+#### 2. Conveniencia (cero fricción)
+
+El problema y la solución pueden existir, pero si activarla requiere esfuerzo, el dueño no la compra. Las grandes empresas que ganan no son las más tecnológicas — son las más simples.
+
+- En BarberOS: la promesa de venta central (**"no necesitas usuario ni contraseña, no hay dashboards que aprender"**) es la traducción operacional de esta motivación.
+- Mecánica concreta:
+  - Check-in por WhatsApp (no por app que nadie descarga).
+  - Login por PIN de 6-7 dígitos (no por magic link que falla, no por usuario/contraseña que se olvida).
+  - Aprobación de check-in con un toque (no con un formulario).
+  - `Stack Tecnológico de Cero Fricción` documentado en [[12-UX]]: cada pantalla adicional compite contra el tiempo del barbero cortando cabello.
+- **Cuidado:** la conveniencia sin solución es solo entretención ([[02-ARQUITECTURA-ESTRATEGICA]]). Las tres motivaciones operan juntas; no se puede vender conveniencia pura.
+
+#### 3. Experiencia que se diferencia de la competencia
+
+Si la app no solo resuelve el problema y es fácil, sino que la experiencia de uso lo hace **recibir reconocimiento del cliente** (reseñas, recomendación, estatus), el dueño está dispuesto a pagar más por ese servicio.
+
+- En BarberOS: la experiencia está construida alrededor del **reconocimiento del cliente** como retorno emocional al dueño ([[04-SISTEMA-DE-COMUNICACION]] — el cliente se siente parte de algo, recibe un trato diferenciado por su fidelidad). El dueño ve subir su reputación pública (Google Reviews automáticos al calificar con 5) y privada (panel que lo hace sentir que tiene una empresa moderna).
+- Mecánica concreta:
+  - Sistema de reseñas Google automático post-calificación 5 ([[04-SISTEMA-DE-COMUNICACION]] + máquina de estados en [[CONTEXT]]).
+  - Director IA como "gerente digital" ([[08-ARQUITECTURA-IA]]) — el dueño siente que tiene un asesor 24/7.
+  - Sistema de Rediseño Visual ([[13-COMPONENTES]] sección "Sistema de Rediseño Visual") — el dueño se siente operando una empresa premium, no una barbería más.
+  - Bono de Referido Transferible (Enmienda [[19-INSTRUCCION-MOTOR-DIRECTOR]] 2026-08-07) — el cliente se siente parte de la comunidad.
+- **Cuidado:** experiencia sin sustancia es postureo. Si la app se ve premium pero el Motor falla o el Director IA alucina, la experiencia se destruye. La experiencia se construye **sobre** la solución y la conveniencia, no en lugar de ellas.
+
+### Cómo usar este marco en pitch
+
+| Si el prospecto está escuchando... | La motivación dominante es... | Tu respuesta de pitch debe... |
+|---|---|---|
+| *"¿Y esto qué hace?"* | (1) Solución | Contar el dolor exacto que el sistema quita. No decir "sistema de fidelización" — decir "la próxima vez que un cliente se vaya sin volver, tú vas a saber por qué". |
+| *"¿Y es difícil de usar?"* | (2) Conveniencia | Llevar al celular y mostrar: un toque, un PIN, una aprobación. Cero tutorial. |
+| *"¿Y mis clientes lo van a notar?"* | (3) Experiencia | Hablar del mensaje de WhatsApp que recibe el cliente, del premio, de la reseña automática. Mostrar cómo el cliente se siente atendido. |
+
+**Regla absoluta:** nunca prometer una motivación que el producto aún no entrega. Verificar primero en [[CONTEXT]] qué piezas son reales y cuáles están en dirección. Si la duda existe, mejor decir *"eso viene en la próxima capa"* que prometer fecha.
+
+### Relación con el resto del vault
+
+- **[[02-ARQUITECTURA-ESTRATEGICA]]** — Define el "antes/después" del dueño. Este marco es la justificación psicológica de ese antes/después.
+- **[[10-ROADMAP-COMERCIAL]]** — El guion de venta debe reestructurarse para responder explícitamente a las 3 motivaciones. Pendiente para próxima sesión.
+- **[[11-ROADMAP-SEO]]** — El contenido orgánico atrae al Avatar 2 (dueño comparador). Este marco explica qué está comparando: ¿solución?, ¿conveniencia?, ¿experiencia? El keyword research debe alinearse.
+- **[[04-SISTEMA-DE-COMUNICACION]]** — El tono de marca debe sentirse como respuesta simultánea a las 3 motivaciones: empático (solución), simple (conveniencia), premium (experiencia).
+- **[[17-PROGRAMA-LEONES-FUNDADORES]]** — El León debe ser entrenado para activar las 3 motivaciones en su pitch de campo. Especialmente la 3, porque el León vende por experiencia, no por spec.
+- **[[Skill de Guiones BarberOS]]** — Toda pieza publicitaria debe declarar explícitamente cuál de las 3 motivaciones ataca como eje principal.

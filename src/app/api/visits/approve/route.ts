@@ -114,6 +114,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Sincronizar el contador del perfil individual (para loyaltyMode BY_PROFILE)
+    if (visit.profileId) {
+      await prisma.customerProfile.update({
+        where: { id: visit.profileId },
+        data: { cutsCount: { increment: 1 } },
+      });
+    }
+
     // Construir mensaje de WhatsApp
     const progressBar = getProgressBar(updatedCustomer.cutsCount, barbershop.requiredCuts);
     const remaining = barbershop.requiredCuts - updatedCustomer.cutsCount;

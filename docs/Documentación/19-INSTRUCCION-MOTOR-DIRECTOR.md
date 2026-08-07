@@ -133,9 +133,160 @@ Esta regla es prioritaria porque afecta directamente la confiabilidad de las tre
 
 **Duración de visita: no se captura por defecto en V1.** Se agrega como opción configurable en ajustes de la barbería, para el dueño que quiera activarla. El cálculo de capacidad en V1 es por conteo de visitas en franja horaria, sin duración — el Director debe comunicar esto siempre en términos aproximados, nunca como cifra exacta de ocupación.
 
-**Servicios por visita (múltiples):** una visita puede incluir varios servicios. Se registran como una **lista simple de etiquetas** (ej. `["corte", "barba"]`), exclusivamente para que el Motor sepa qué tipo de servicios se prestaron. **Confirmado: cero precio, cero cobro, cero total, cero funcionalidad de caja registradora.** Esto es una herramienta de fidelización y conocimiento, no de contabilidad ni punto de venta — coherente con [[14-PRD]], que excluye integraciones POS de forma explícita. No construir ningún campo de precio ni total asociado a esta lista de etiquetas.
+**Servicios por visita (múltiples):** una visita puede incluir varios servicios. Se registran como una **lista simple de etiquetas** (ej: `["corte", "barba"]`), exclusivamente para que el Motor sepa qué tipo de servicios se prestaron. **Confirmado: cero precio, cero cobro, cero total, cero funcionalidad de caja registradora.** Esto es una herramienta de fidelización y conocimiento, no de contabilidad ni punto de venta — coherente con [[14-PRD]], que excluye integraciones POS de forma explícita. No construir ningún campo de precio ni total asociado a esta lista de etiquetas.
 
 Con esta reducción de alcance (sin cobro), el registro de servicios múltiples lo puede hacer el mismo rol `BARBER` ya existente, sin necesidad de crear un rol adicional de "caja".
+
+---
+
+# ENMIENDA 2026-08-07 — Bono de Referido Transferible (Cliente Final)
+
+```yaml
+id: 19-instruccion-motor-director-enmienda-2026-08-07
+titulo: Enmienda — Bono de Referido Transferible (Cliente Final)
+categoria: inteligente
+estado: activo — reemplaza cualquier discusión previa sobre "comisión para cliente final"
+sprint: pendiente-construccion
+ultima_revision: 2026-08-07
+relacionado:
+  - 17-PROGRAMA-LEONES-FUNDADORES (afecta perímetro — Leo el párrafo 3 antes de implementar)
+  - 14-PRD
+  - 08-ARQUITECTURA-IA
+  - 00-Constitución (Art. 4 — integridad del dato)
+```
+
+> **Naturaleza de esta enmienda:** no reemplaza el documento base 19. Lo amplía con un mecanismo de adquisición incentivada por el cliente final, manteniendo intacta la lógica del Motor. Es una regla de producto, no un workaround.
+
+## 0. Contexto y diagnóstico
+
+El sistema de fidelidad actual (5x1) es **solo retención**. Cuando una barbería tiene una base estable de clientes que ya vienen, no necesita más ese mecanismo; pero mientras sigue intentando crecer, el 5x1 no le ayuda a **traer** clientes nuevos. Sin capa de adquisición, el dueño paga el corte gratis del 5x1 sin recuperar la inversión en flujo nuevo.
+
+Necesidad validada por César en conversación del 2026-08-07: si un cliente trae a un familiar o amigo a cortarse, ese "esfuerzo de traer" debería traducirse en avance hacia su próximo corte gratis. Es una capa de **adquisición incentivada por el cliente**, no una comisión en efectivo.
+
+## 1. Regla dura #0 — La data del Motor es sagrada
+
+> **Ningún mecanismo de bono o referido puede alterar el historial real de visitas de un perfil.**
+
+El Motor de Conocimiento ([[07-MOTOR-DE-CONOCIMIENTO]]) se ancla en la línea de tiempo real de cada perfil para generar las recomendaciones de:
+
+- Días en que el cliente suele regresar.
+- Horarios donde la barbería tiene más o menos gente.
+- Fechas hito para promociones dirigidas.
+- Ritmo normal → atraso → riesgo de pérdida.
+
+**Si por implementar el referido removemos, fusionamos o reasignamos una visita real, el Motor deja de ser confiable.** Eso es exactamente lo que la Constitución Art. 4 prohíbe ("Nunca mostraremos un dato sin interpretación") y la sección 2 de este documento refuerza ("las visitas de otra persona no identificada nunca deben fusionarse con el historial de un perfil real").
+
+**Implicación directa:** el Bono de Referido es una operación **independiente** de la visita. No se crea, no se modifica, no se borra `BarberVisit` para dárselo a otro perfil.
+
+## 2. Definiciones
+
+| Concepto | Definición |
+|---|---|
+| **Visita** | Evento de negocio. Un perfil, un corte, una fila en `BarberVisit`. Alimenta el Motor. |
+| **Perfil referido** | La persona real que fue traída por el referente. Tiene su propia visita, su propio historial. |
+| **Bono de Referido** | Movimiento en el contador de fidelidad del **referente**. No es una visita. No es un evento de negocio. Es un crédito de premio. |
+
+## 3. Mecanismo — Bono de Referido Transferible
+
+### 3.1 Disparo
+
+El barbero registra los cortes de la jornada de la forma habitual (cada persona con su perfil o como CF). En un toque adicional, después de registrar la visita de un **perfil referido**, el barbero abre un mini-modal:
+
+> *"¿Este corte fue traído por algún cliente de la casa? ¿A quién le sumo el bono?"*
+
+- Búsqueda por nombre o WhatsApp del referente.
+- Selección del perfil del referente.
+- Confirmación: se registra el bono.
+
+### 3.2 Efecto
+
+- El **perfil referido** mantiene su visita en `BarberVisit` con su propio `profileId`, su propio `createdAt`, su propio `staffId`, su propio `checkinMethod`.
+- El **perfil referente** recibe un crédito en su contador de fidelidad. Esto es un **incremento en `cutsCount` del referente** (modo `BY_PROFILE`) o en el contador de la cuenta (modo `BY_ACCOUNT`), según la configuración de la barbería.
+- El barbero no necesita entender la diferencia técnica — solo marca "este se lo trajo Fulano" y el sistema hace lo correcto.
+
+### 3.3 Lo que NO se hace
+
+- **No se crea `BarberVisit` para el referente.** Si César trajo a su papá y a su hermano, las filas en `BarberVisit` son tres: la del papá, la del hermano, ninguna de César. César solo ve aumentar su barra de progreso.
+- **No se modifica `createdAt`, `profileId`, `staffId` de ninguna visita existente.**
+- **No se borra ni edita ninguna visita histórica para "transferirla".** Eso sería falsificar el historial.
+- **No se permite el auto-referido.** César no puede referirse a sí mismo. Esto se valida en backend: `referenteProfileId !== profileId.del.corte.actual`.
+
+## 4. Persistencia mínima en BD (recomendación, no decisión final)
+
+```prisma
+// Nueva tabla — modela el evento de asignación del bono, no la visita
+model ReferralBonus {
+  id              String   @id @default(cuid())
+  barbershopId    String
+  referenteProfileId String  // FK a CustomerProfile — quien recibe el bono
+  visitaTriggerId String   // FK a BarberVisit — la visita del referido que disparó el bono
+  assignedAt      DateTime @default(now())
+  assignedByStaffId String? // FK a BarberStaff — barbero que hizo la asignación
+
+  @@index([barbershopId, assignedAt])
+  @@index([referenteProfileId])
+  @@index([visitaTriggerId])
+}
+```
+
+**Por qué una tabla separada y no un campo en `CustomerProfile`:**
+
+- Auditable: sabemos exactamente cuándo, por qué visita y por qué barbero se asignó cada bono.
+- Reversible: si hay disputa, se borra el `ReferralBonus` y `cutsCount` se recalcula.
+- Compatible con el cron del Motor: el snapshot puede contar `ReferralBonus` por separado sin tocar `BarberVisit`.
+
+**Cálculo del `cutsCount` del referente:**
+
+```
+cutsCount.referente = (
+  BarberVisit aprobadas con profileId = referente  // visitas reales
+  + COUNT(ReferralBonus donde referenteProfileId = referente)  // bonos recibidos
+)
+```
+
+Recalcular este valor en cada asignación o durante el cron nocturno del Motor — decisión del constructor, pero la fórmula es esta.
+
+## 5. Reglas duras
+
+1. **Sin efectivo.** El bono es exclusivamente avance en el contador de fidelidad. No se entrega dinero al cliente en ningún caso. Coherente con la lógica de "no somos un sistema de pagos" de la sección 7 de este documento.
+2. **El bono acelera el mismo contador del referente, no crea uno paralelo.** Una sola barra de progreso. Una sola cosa que explicar.
+3. **El costo lo asume 100% el dueño de la barbería.** Igual que el corte gratis del 5x1. No es gasto de BarberOS ni se subsidia desde la plataforma.
+4. **Sin ranking ni competencia entre referentes.** Por ahora el bono es individual y silencioso. Si en el futuro se quiere gamificar, se hace en una versión posterior y separada.
+5. **No se notifica automáticamente al cliente que trae referidos.** El barbero le informa verbalmente en el momento. Cero mensajes automáticos nuevos por ahora.
+6. **El referido no tiene que ser perfil.** Si el cliente referido entra como CF (Consumidor Final), el barbero puede asignar el bono al referente de todas formas — la visita del referido queda como `BARBER_ASSISTED_ANONYMOUS` y el bono se asigna por separado. Esto NO contamina el Motor porque la visita CF nunca entró al historial de un perfil real.
+
+## 6. Compatibilidad con el Motor de Conocimiento
+
+Esta enmienda **no rompe ninguna capa existente**:
+
+- **Motor (cron nocturno):** sigue calculando sobre `BarberVisit` aprobadas con `checkinMethod !== 'BARBER_ASSISTED_ANONYMOUS'`. Los `ReferralBonus` no entran al cálculo de frecuencia porque NO son visitas. El Motor sigue diciendo la verdad.
+- **Director IA:** puede mencionar la cantidad de bonos que un cliente ha recibido si el dueño pregunta "¿quién me trae más gente?", pero esto debe ser explícitamente solicitado, no aparecer por defecto en `/panel`. La sugerencia accionable es derivar al barbero a premiar a esos clientes con un gesto manual (un servicio extra, un descuento verbal), no automatizar nada.
+- **Snapshot del Motor:** las métricas de clientes no cambian. Si en una versión futura se quiere reportar "clientes que más refieren", eso va en una dimensión nueva del snapshot, no se mezcla con visitas reales.
+
+## 7. Fuera de alcance (explícito)
+
+- Notificación automática al referido.
+- Sistema de ranking o competencia entre referentes.
+- Comisiones en dinero electrónico o efectivo (ni a BarberOS ni a la barbería).
+- Multiplicadores o combos (trae 3 y te doy 2 bonos — no, 1 bono por referido).
+- Bono canjeable por servicios de otras barberías — esto ya existe como `ReferralComision` para Aliados/Leones y se mantiene separado. **El perimetro de los Leones ([[17-PROGRAMA-LEONES-FUNDADORES]]) y el perimetro del Bono de Referido son distintos y NO se cruzan.** Un León es un adulto que recluta barberías; un referente de bono es un cliente que trae a un amigo. Mismas palabras, productos distintos.
+
+## 8. Pitch de campo — cómo explicarlo sin prometer lo que no existe
+
+Coherente con la regla de "Cero Anécdotas Sintéticas" y anti-promesa de la Skill de Guiones y [[04-SISTEMA-DE-COMUNICACION]]:
+
+> *"Si traes a un amigo o familiar, te acercamos un paso más a tu próximo corte gratis. Eso ya está en la dirección del producto — no te lo voy a vender como que ya está listo, pero es la próxima capa."*
+
+Eso refuerza la narrativa de "el que entra primero" sin mentir.
+
+## 9. Preguntas abiertas — para resolver antes de construir
+
+1. ¿El bono se asigna **en el momento** del corte del referido, o el barbero puede hacerlo después (ej. al cierre del día)? Mi recomendación: en el momento, para evitar discrecionalidad.
+2. ¿Tiene fecha de expiración el bono? Mi recomendación: no. Un crédito en barra de fidelidad no caduca.
+3. ¿Se puede transferir un bono ya asignado? Mi recomendación: no. Solo el barbero con rol OWNER puede revertir (borrar `ReferralBonus` y recalcular `cutsCount` del referente).
+4. ¿El barbero puede asignar bonos a perfiles de OTRA barbería si el cliente se cambió? Mi recomendación: no. El bono es por barbería, va con `barbershopId`.
+
+Estas preguntas quedan abiertas para que el constructor (Abel) las responda con César antes de empezar.
 
 ### C. Dimensión Equipo — calificaciones y comentarios por barbero
 

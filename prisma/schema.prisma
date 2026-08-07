@@ -331,3 +331,34 @@ model WalletConfig {
   plans         String?  @db.LongText
   updatedAt     DateTime
 }
+
+// CutTransfer: transferencia de 1 corte entre clientes (sistema de referidos).
+// Un cliente (from) transfiere 1 corte de su contador al referidor (to).
+// Restricción: solo 1 transferencia por par (fromProfile → toProfile) por barbería.
+model CutTransfer {
+  id             String   @id @default(cuid())
+  barbershopId   String
+  fromProfileId  String   // Cliente que da el corte (el referido)
+  toProfileId    String   // Cliente que recibe el corte (el referidor)
+  createdAt      DateTime @default(now())
+
+  @@unique([barbershopId, fromProfileId, toProfileId])
+  @@index([barbershopId])
+  @@index([fromProfileId])
+  @@index([toProfileId])
+}
+
+// LoyaltyRedemption: registro de cada vez que un cliente reclama su premio gratuito.
+// Al reclamar, se resetea cutsCount a 0. Esto guarda el historial de canjes.
+model LoyaltyRedemption {
+  id               String   @id @default(cuid())
+  barbershopId     String
+  profileId        String   // Perfil que reclamó
+  customerId       String   // Cuenta (BarberCustomer)
+  cutsAtRedemption Int      // cutsCount al momento del canje
+  redeemedAt       DateTime @default(now())
+
+  @@index([barbershopId])
+  @@index([profileId])
+  @@index([customerId])
+}

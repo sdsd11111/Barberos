@@ -3,8 +3,8 @@ id: 14-prd
 titulo: Product Requirements Document
 categoria: tecnico
 estado: activo
-sprint: fase-0-completada
-ultima_revision: 2026-07-19
+sprint: fase-1-piloto-activo
+ultima_revision: 2026-08-07
 relacionado:
   - 09-ROADMAP-TECNICO
   - 13-COMPONENTES
@@ -12,7 +12,7 @@ relacionado:
 
 # 14-PRD.md
 
-> Versión: 1.0
+> Versión: 2.0
 >
 > Estado: Activo
 >
@@ -60,9 +60,11 @@ Toda funcionalidad del producto existe para sostener una de estas cuatro emocion
 
 # Usuarios y roles
 
-- **Dueño (OWNER)** — usa el panel, aprueba/rechaza check-ins, ve métricas.
+- **Dueño (OWNER)** — usa el panel, aprueba/rechaza check-ins, ve métricas. Accede por **PIN de 6-7 dígitos** (`Barbershop.loginPin`) desde 2026-08-07 (reemplaza el Magic Link anterior).
 - **Barbero (BARBER)** — puede registrar cortes, no accede a configuración ni reportes completos (dependiendo de Sprint 5).
 - **Cliente final** — no tiene cuenta ni login. Interactúa exclusivamente vía WhatsApp.
+- **Aliado Comercial (León)** — no tiene cuenta en el panel. Firma digitalmente un `AlianzaContract` con PDF persistido. Accede a `/r/[id]` para ver su QR. Sin vista de comisiones propia todavía (backlog).
+- **SuperAdmin** — solo accesible vía `ADMIN_SECRET_KEY` Bearer. Onboarding de barberías, gestión de comisiones, toggle de planes.
 
 ---
 
