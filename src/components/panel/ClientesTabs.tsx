@@ -335,46 +335,77 @@ function CustomerDetailModal({
         {showTransferModal && (
           <div className="p-4 bg-[#1a1715] border-b border-[#3a332c] space-y-3">
             <div className="flex justify-between items-center">
-              <h4 className="font-mono text-xs uppercase tracking-wider text-[#d97644] font-bold">
-                Transferir 1 corte a cliente referidor
+              <h4 className="font-mono text-xs uppercase tracking-wider text-[#d97644] font-bold flex items-center gap-1.5">
+                <span>🔄</span> Buscar cliente referidor (a quien se sumará el corte)
               </h4>
               <button
                 onClick={() => setShowTransferModal(false)}
                 className="text-xs font-mono text-[#5c554c] hover:text-[#f3ece1]"
               >
-                Cancelar
+                ✕ Cancelar
               </button>
             </div>
             <p className="text-xs font-sans text-[#a89e90]">
-              Selecciona el cliente que lo refirió para sumarle 1 corte a su contador y restarle 1 a este cliente. (Máx 1 transfer por par).
+              Escribe el nombre o WhatsApp del cliente que lo recomendó. Elige al cliente de la lista de coincidentes para darle su corte.
             </p>
 
-            <input
-              type="text"
-              placeholder="Buscar referidor por nombre o WhatsApp..."
-              value={searchTarget}
-              onChange={(e) => setSearchTarget(e.target.value)}
-              className="w-full bg-[#0a0807] border border-[#2a2520] px-3 py-1.5 text-xs font-mono text-[#f3ece1] outline-none rounded"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Escribe nombre o número (ej: Carlos o 593...)"
+                value={searchTarget}
+                onChange={(e) => {
+                  setSearchTarget(e.target.value);
+                  setTargetProfileId("");
+                }}
+                className="w-full bg-[#0a0807] border border-[#2a2520] focus:border-[#d97644] px-3 py-2 text-xs font-mono text-[#f3ece1] outline-none rounded"
+              />
+            </div>
 
-            <select
-              value={targetProfileId}
-              onChange={(e) => setTargetProfileId(e.target.value)}
-              className="w-full bg-[#0a0807] border border-[#2a2520] px-3 py-2 text-xs font-mono text-[#f3ece1] outline-none rounded"
-            >
-              <option value="">-- Seleccionar cliente referidor --</option>
-              {possibleTargets.map((pt) => (
-                <option key={pt.id} value={pt.id}>
-                  {pt.name || "Perfil sin nombre"} (+{pt.whatsapp}) - Cortes: {pt.cutsCount}
-                </option>
-              ))}
-            </select>
+            {/* Lista de Coincidentes en Tiempo Real */}
+            <div className="max-h-40 overflow-y-auto space-y-1.5 bg-[#0a0807] border border-[#2a2520] p-2 rounded">
+              {possibleTargets.length === 0 ? (
+                <p className="text-[11px] font-mono text-[#5c554c] p-2 italic text-center">
+                  {searchTarget ? "No se encontraron clientes coincidentes" : "Escribe para buscar o selecciona de la lista completa abajo..."}
+                </p>
+              ) : (
+                possibleTargets.map((pt) => {
+                  const isSelected = targetProfileId === pt.id;
+                  return (
+                    <div
+                      key={pt.id}
+                      onClick={() => setTargetProfileId(pt.id)}
+                      className={`p-2.5 rounded border text-xs font-mono cursor-pointer transition-all flex items-center justify-between ${
+                        isSelected
+                          ? "bg-[#d97644]/20 border-[#d97644] text-[#f3ece1]"
+                          : "bg-[#131110] border-[#2a2520] text-[#a89e90] hover:border-[#3a3530] hover:text-[#f3ece1]"
+                      }`}
+                    >
+                      <div>
+                        <p className="font-bold text-[#f3ece1]">
+                          {pt.name || "Perfil sin nombre"}
+                        </p>
+                        <p className="text-[10px] text-[#5c554c]">
+                          📱 +{pt.whatsapp} {pt.customerName && `(${pt.customerName})`}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] px-2 py-0.5 bg-[#2a2520] rounded text-[#d97644]">
+                          {pt.cutsCount} cortes
+                        </span>
+                        {isSelected && <span className="ml-2 text-emerald-400">✓ Seleccionado</span>}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-1">
               <button
                 onClick={handleTransfer}
                 disabled={!targetProfileId || isTransferring}
-                className="bg-[#d97644] hover:bg-[#c86533] text-white font-mono text-xs py-1.5 px-4 rounded uppercase tracking-wider font-bold transition-colors disabled:opacity-50"
+                className="bg-[#d97644] hover:bg-[#c86533] text-white font-mono text-xs py-2 px-5 rounded uppercase tracking-wider font-bold transition-colors disabled:opacity-40"
               >
                 {isTransferring ? "Transferiendo..." : "Confirmar Transferencia"}
               </button>
@@ -715,6 +746,7 @@ export default function ClientesTabs({
       : "todos") as "todos" | "nuevos" | "recurrentes"
   );
   const [selectedCustomer, setSelectedCustomer] = useState<EnrichedCustomer | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const tabs = [
     {
@@ -735,8 +767,19 @@ export default function ClientesTabs({
   ];
 
   const filtered = customers.filter((c) => {
-    if (activeTab === "nuevos") return c.isNewThisMonth;
-    if (activeTab === "recurrentes") return c.isRecurrent;
+    // Filtro por tab
+    if (activeTab === "nuevos" && !c.isNewThisMonth) return false;
+    if (activeTab === "recurrentes" && !c.isRecurrent) return false;
+
+    // Buscador global
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase();
+      const matchName = (c.name || "").toLowerCase().includes(q);
+      const matchCustomerName = (c.customerName || "").toLowerCase().includes(q);
+      const matchWhatsapp = (c.whatsapp || "").includes(q);
+      return matchName || matchCustomerName || matchWhatsapp;
+    }
+
     return true;
   });
 
@@ -769,13 +812,30 @@ export default function ClientesTabs({
         ))}
       </div>
 
-      {/* Ordenamiento y búsqueda */}
-      {filtered.length > 0 && (
-        <div className="font-mono text-[10px] text-[#5c554c]">
-          Mostrando <span className="text-[#f3ece1]">{filtered.length}</span>{" "}
-          {activeTab === "todos" ? "clientes" : activeTab === "nuevos" ? "clientes nuevos este mes" : "clientes recurrentes"} (haz clic en cualquiera para ver su historial)
+      {/* Buscador Global de Clientes */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="relative flex-1">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#5c554c]">🔍</span>
+          <input
+            type="text"
+            placeholder="Buscar por nombre, cuenta o WhatsApp..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#131110] border border-[#2a2520] focus:border-[#d97644] pl-9 pr-8 py-2 text-xs font-mono text-[#f3ece1] outline-none rounded-lg transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#5c554c] hover:text-[#f3ece1]"
+            >
+              ✕
+            </button>
+          )}
         </div>
-      )}
+        <div className="font-mono text-[10px] text-[#5c554c] shrink-0">
+          Mostrando <span className="text-[#f3ece1]">{filtered.length}</span> perfiles
+        </div>
+      </div>
 
       {/* Grid de tarjetas */}
       {filtered.length === 0 ? (
