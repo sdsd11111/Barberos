@@ -158,14 +158,18 @@ export async function POST(request: NextRequest) {
 
 
     const { requiredCuts, evolutionInstance, evolutionApiKey } = barbershop;
-    const progressBar = getProgressBar(customer.cutsCount, requiredCuts);
-    const remaining = requiredCuts - customer.cutsCount;
+    const cutsInCurrentCycle = customer.cutsCount % requiredCuts === 0 && customer.cutsCount > 0
+      ? requiredCuts
+      : customer.cutsCount % requiredCuts;
+
+    const progressBar = getProgressBar(cutsInCurrentCycle, requiredCuts);
+    const remaining = requiredCuts - cutsInCurrentCycle;
 
     let message = "";
-    if (customer.cutsCount >= requiredCuts) {
+    if (cutsInCurrentCycle >= requiredCuts) {
       message = `✂️ ¡Corte registrado!\n\nTu progreso: ${progressBar}\n\n🎉 ¡FELICIDADES! Has completado tus cortes y ganado tu RECOMPENSA GRATUITA. 🎁\n\n📌 *Reclama tu premio directamente en caja en tu próxima visita.* ¡Comparte la experiencia con tus amigos y recomendados para que ellos también aprovechen sus recompensas!\n\nPor favor, responde del 1 al 5 para calificar la atención de hoy.`;
     } else {
-      message = `✂️ ¡Corte registrado!\n\nTu progreso: ${progressBar}\n\n¡Te faltan ${remaining} cortes para tu premio!\n\nPor favor, responde del 1 al 5 para calificar la atención de hoy.`;
+      message = `✂️ ¡Corte registrado!\n\nTu progreso: ${progressBar}\n\n¡Te faltan ${remaining} cortes para tu premio!\n\nPor favor, responde del 1 al 5 me para calificar la atención de hoy.`;
     }
 
     await sendWhatsAppMessage({

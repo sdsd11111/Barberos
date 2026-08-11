@@ -37,11 +37,40 @@ export default function ApprovalQueue({ barbershopId }: ApprovalQueueProps) {
       }
     };
 
-    // Polling cada 1 segundo para respuestas instantáneas en live
-    fetchPending();
-    const interval = setInterval(fetchPending, 1000);
+    let interval: NodeJS.Timeout | null = null;
 
-    return () => clearInterval(interval);
+    const startPolling = () => {
+      if (interval) clearInterval(interval);
+      fetchPending();
+      // Polling cada 4 segundos (optimizado para consumo Vercel)
+      interval = setInterval(fetchPending, 4000);
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        startPolling();
+      }
+    };
+
+    if (!document.hidden) {
+      startPolling();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [barbershopId]);
 
   const handleApprove = async (visitId: string) => {

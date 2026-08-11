@@ -123,11 +123,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Construir mensaje de WhatsApp
-    const progressBar = getProgressBar(updatedCustomer.cutsCount, barbershop.requiredCuts);
-    const remaining = barbershop.requiredCuts - updatedCustomer.cutsCount;
+    const requiredCuts = barbershop.requiredCuts;
+    const cutsInCurrentCycle = updatedCustomer.cutsCount % requiredCuts === 0 && updatedCustomer.cutsCount > 0
+      ? requiredCuts
+      : updatedCustomer.cutsCount % requiredCuts;
+
+    const progressBar = getProgressBar(cutsInCurrentCycle, requiredCuts);
+    const remaining = requiredCuts - cutsInCurrentCycle;
 
     let message = "";
-    if (updatedCustomer.cutsCount >= barbershop.requiredCuts) {
+    if (cutsInCurrentCycle >= requiredCuts) {
       message = `✂️ ¡Tu check-in ha sido aprobado!\n\nTu progreso: ${progressBar}\n\n🎉 ¡FELICIDADES! Has completado tus cortes y ganado tu RECOMPENSA GRATUITA. 🎁\n\n📌 *Reclama tu premio directamente en caja en tu próxima visita.* ¡Comparte la experiencia con tus amigos y recomendados para que ellos también aprovechen sus recompensas!\n\n📌 *Asegúrate de guardarnos en tus contactos para que tus cortes se registren correctamente.*`;
     } else {
       message = `✂️ ¡Tu check-in ha sido aprobado!\n\nTu progreso: ${progressBar}\n\n¡Te faltan ${remaining} cortes para tu premio!\n\n📌 *Asegúrate de guardarnos en tus contactos para que tus cortes se registren correctamente.*`;

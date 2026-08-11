@@ -62,25 +62,52 @@ export default function WhatsAppContent({ vertical }: { vertical?: string | null
       }
     };
 
-    init();
+    let statusInterval: NodeJS.Timeout | null = null;
+    let qrInterval: NodeJS.Timeout | null = null;
 
-    const interval = setInterval(async () => {
-      const newStatus = await fetchStatus();
-      if (newStatus === "CONNECTED") {
-        setQrcode(null);
-      }
-    }, 3000);
+    const startPolling = () => {
+      stopPolling();
+      // Si ya está conectado, no necesitamos hacer polling continuo agresivo
+      if (status === "CONNECTED") return;
 
-    const qrInterval = setInterval(async () => {
-      if (status !== "CONNECTED") {
+      statusInterval = setInterval(async () => {
+        const newStatus = await fetchStatus();
+        if (newStatus === "CONNECTED") {
+          setQrcode(null);
+          stopPolling();
+        }
+      }, 6000);
+
+      qrInterval = setInterval(async () => {
         fetchQR();
+      }, 30000);
+    };
+
+    const stopPolling = () => {
+      if (statusInterval) clearInterval(statusInterval);
+      if (qrInterval) clearInterval(qrInterval);
+      statusInterval = null;
+      qrInterval = null;
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else if (status !== "CONNECTED") {
+        startPolling();
       }
-    }, 25000);
+    };
+
+    if (!document.hidden && status !== "CONNECTED") {
+      startPolling();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
-      clearInterval(qrInterval);
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [status]);
 
